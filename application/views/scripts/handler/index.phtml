@@ -1,0 +1,26 @@
+<div class="controls">
+  <?= $this->tabs ?>
+  <h1>Handlers</h1>
+  <div class='action-bar'>
+  </div>
+
+<?= $this->qlink(
+    $this->translate('Add a trap handler'),
+    'trapdirector/handler/add',
+    null,
+    array(
+        'class' => 'icon-plus',
+        'title' => $this->translate('Create a new trap service')
+    ))
+?>  
+ <?= $this->filterEditor // TODO : implement filters?> (filters not implemented)<br />  
+ <?= $this->table->getPaginator(); ?> 
+
+</div>
+
+
+<div class="content">
+
+<?= $this->table->render(); ?>
+
+</div>

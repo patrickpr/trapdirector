@@ -1,0 +1,70 @@
+<div class="controls">
+  <?= $this->tabs ?>
+  <h1>Trap Detail</h1>
+  <div class='action-bar'>
+ 
+<?= $this->qlink(
+    $this->translate('Add a trap handler'),
+    $this->addHandlerUrl,
+    null,
+    array(
+        'class' => 'icon-plus',
+        'title' => $this->translate('Create a new trap service')
+    ))
+?>
+  </div>
+
+</div>
+
+
+<div class="content">
+<table>
+<tbody>
+<?php
+  foreach ($this->rowset as $key => $val) 
+  {
+	  echo '<tr><td>';
+	  echo $val[0];
+	  echo '</td><td>';
+	  echo $val[2];
+	  echo "</td></tr>\n";
+  }
+?>
+</tbody>
+</table>
+<hr>	
+<?php
+	if ($this->data == true)
+	{
+?>
+<h3> Additional data </h3>
+<table><thead>
+<?php
+	foreach ($this->data_title as $key => $val)
+	{
+		echo '<th> ' . $val[0] . "</th>\n";
+	}	
+?>
+</thead><tbody>
+<?php
+	foreach ($this->data_val as $key => $val)
+	{
+		echo '<tr>';
+		foreach ($val as $vkey => $vval)
+		{
+				echo '<td> ' . $vval . "</td>\n";
+		}
+		echo "</tr>\n";
+	}
+?>
+</tbody>
+</table>
+<?php
+	}
+	else
+	{
+		echo '<p>No additional data</p>';
+	}
+?>
+
+</div>

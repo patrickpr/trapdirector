@@ -1,0 +1,605 @@
+<div class="controls">
+  <?= $this->tabs ?>
+  <h1>Add trap handler</h1>
+  <div class='action-bar'>
+  </div>
+
+</div>
+
+
+<div class="content">
+
+<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="/icingaweb2/trapdirector/handler/add_form" method="post">
+	
+	<input type="hidden" name="db_rule" id="id_Hidden_db_rule"
+		value="<?= $this->hostid ?>" >
+	<input type="hidden" name="hostid" id="id_Hidden_hostid"
+		value="<?= $this->ruleid ?>">
+	<fieldset id="fieldset-trap_definition" class=""><legend>Main properties</legend>
+		<!-- Host name selection -->
+		<div class="control-group">
+			<div class="control-label-group">
+				<span id="id_hostfilter_span_label">
+					<label for="id_hostfilter" class="control-label optional">Host name</label>
+				</span>
+			</div>
+			<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list"
+				oninput="hostFilterGet()"
+				value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+			<datalist id="hosts_list">
+				<!-- <optgroup label=""> -->
+<?php
+	foreach($this->hostlist as $hostopt)
+	{ // Seems useless : TODO
+		echo '<option>' . $hostopt . '<option>';
+	}
+?>
+			</datalist>
+		</div>
+		
+		<!-- Service name selection -->
+		<div class="control-group">
+			<div class="control-label-group">
+				<span>
+					<label for="id_service" class="control-label optional">Service</label>
+				</span>
+			</div>
+			<select name="service" id="id_service" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+				<option value="-1" selected>Enter host first</option>
+			</select>		
+		</div>	
+		
+		<!-- trap OID selection -->
+		<div class="control-group">
+			<select name="mibs" id="id_mainMibs" empty_option="Select MIB" autosubmit="" 
+				onChange="TrapNameGet('id_mainMibs','id_mainMibs_Trap')">
+				<option value='-1'>...</option>
+<?php  // Set mib list
+	foreach ($this->mibList AS $MIB) 
+	{
+		echo '<option value=' . $MIB;
+		if ($MIB==$this->mib)  // select option if current MIB
+		{
+			echo ' selected ';
+		}
+		echo '>'.$MIB.'</option>'."\n";
+	}
+?>			
+			</select>
+			<select name="mibs_trap" id="id_mainMibs_Trap" empty_option="Select MIB First" 
+				autosubmit="" onChange="selectTrapName()">
+<?php
+		if (count($this->trapListForMIB)==0)
+		{
+			echo "<option value='-1'>&lt;-- Select MIB First</option>\n";
+			$execute_trap_select=false;
+		}
+		else
+		{
+			$execute_trap_select=true; // do actions like if user selected this
+			foreach ($this->trapListForMIB as $key => $val)
+			{
+				echo '<option value=' . $key;
+				if ($val == $this->name)
+				{
+					echo ' selected ';
+				}
+				echo '>'.$val.'</option>'."\n";
+			}
+		}
+?>				
+				
+			</select>			
+		</div>
+
+		<div class="control-group">
+			<div class="control-label-group">
+				<span id="id_mainoid_span_label">
+					<label for="id_mainoid" class="control-label optional">Trap OID</label>
+				</span>
+			</div>			
+			<input type="text" name="mainoid" id="id_mainoid" placeholder="Enter oid" 
+			value="<?= $this->mainoid ?>" > 
+			<span id="id_mainoid_trapname"> MIB::name </span>
+			<button type="button" disabled id="id_mainoid_add_objects" onclick="onclickAddObjects()">
+				Add objects
+			</button>
+		</div>
+
+		<!-- Revert OK timeout selection -->
+		<div class="control-group">
+			<div class="control-label-group">
+				<span id="id_revertOK_span_label">
+					<label for="id_revertOK" class="control-label optional">Revert OK (s)</label>
+				</span>
+			</div>
+			<input type="text" name="revertOK" id="id_revertOK" placeholder="Revert time"
+			 value="<?=  $this->revertOK ?>">
+		</div>
+		
+	</fieldset>
+	
+	<fieldset id="fieldset-objects_definition" class=""><legend>Trap Objects definition</legend>
+
+		<div class="control-group">
+			<div class="control-label-group">
+			<span id="id_trapdataElmts_span_1">
+					<label for="id_trapdataNewOID" class="control-label optional">Add an OID</label>
+				</span>
+			</div>
+			<input type="text" name="trapdataElmts_1" id="id_trapdataNewOID" value="" placeholder="Enter oid"> 
+			<button type="button" id="button_oid_add" onclick="click_button_oid_add()">Add</button>
+		</div>
+		<table class="simple common-table">
+			<thead>
+				<tr>
+					<th>Shortcut</th><th>OID</th><th>MIB</th><th>Name</th>
+					<th>Value</th><th>type</th><th>Delete</th>
+				</tr>
+			</thead>
+			<tbody id="obj_table_body">
+				<!--
+				<tr id='obj_table_oid_1'>
+					<td id='obj_table_oid_1_SC'>$1</td>
+					<td>.1.3.6.1.2.1.1.2.5</td><td>IF-MIB</td><td>coldStart</td>
+					<td>value</td><td>type</td>
+					<td>
+						<button type="button" onclick="click_button_table_del(1)">
+							Del.
+						</button>
+					</td>
+				</tr>
+				-->
+			</tbody>
+		</table>
+	</fieldset>
+
+	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>	
+	<!-- Output Display -->
+	<div class="control-group">
+		<div class="control-label-group">
+			<span id="id_display_label">
+				<label for="id_display" class="control-label optional">Display in Icinga</label>
+			</span>
+		</div>
+		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
+			value="<?= $this->display ?>" 
+			>
+
+	</div>
+	<div class="control-group">
+		<div class="control-label-group">
+			<span id="id_rules_label">
+				<label for="id_rules" class="control-label optional">Rule</label>
+			</span>
+		</div>
+		<input type="text" name="rules" id="id_rules" value="" placeholder="Rules to evaluate">
+	</div>
+	<div class="control-group">
+		<div class="control-label-group">
+			<span id="id_rule_action_label">
+				<label for="id_rule_action_true" class="control-label optional">Action if rule matches</label>
+			</span>
+		</div>
+		<select name="service" id="id_rule_action_true" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+				<option value="-1" selected>Nothing</option>
+				<option value="0" >OK</option>
+				<option value="1" >Warning</option>
+				<option value="2" >Critical</option>
+				<option value="3" >Unknown</option>
+		</select>		
+		<div class="control-label-group">
+			<span id="id_rule_action_false_label">
+				<label for="id_rule_action_false" class="control-label optional">Action if rule does not match</label>
+			</span>
+		</div>
+		<select name="service" id="id_rule_action_false" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+				<option value="-1" selected>Nothing</option>
+				<option value="0" >OK</option>
+				<option value="1" >Warning</option>
+				<option value="2" >Critical</option>
+				<option value="3" >Unknown</option>
+		</select>			
+	</div>		
+	</fieldset>
+	
+	<div class="control-group">
+		<div class="control-label-group">
+			<span >
+				<label id="id_submit_main_label" for="id_submit_main" class="control-label optional">Create Handler</label>
+			</span>
+		</div>
+		<input type="submit" name="submit" id="id_submit_main" value="Create">
+	</div>
+
+	</form>
+
+</div>
+
+<script type='text/javascript'>
+
+hostHelper='/icingaweb2/trapdirector/helper/gethosts';
+serviceHelper='/icingaweb2/trapdirector/helper/getservices';
+trapfrommmibHelper='/icingaweb2/trapdirector/helper/gettraps';
+translateoidHelper='/icingaweb2/trapdirector/helper/translateoid';
+getobjectsHelper='/icingaweb2/trapdirector/helper/gettrapobjects';
+form_submit='/icingaweb2/trapdirector/handler/handlerform';
+objectsList=[
+	//{1:[1,'.1.3.6.1.2.1.1.2.5','IF-MIB','ifindex','1','Integer (1...32222)]}
+];
+objectsList_id=1;
+count_id=1;
+
+function displayWarning(message)
+{
+	// for now
+	alert(message);
+}
+
+function setToUpdate()
+{
+	$("#id_submit_main").val("Update");
+	$("#id_submit_main_label").html("Update Rule");
+}
+
+function submitMain()
+{
+	// Check everything
+	// Hostname
+	if ($("#id_Hidden_hostid").val() == -1 ) { displayWarning("Invalid hostname");return; }
+	if ($("#id_service").val() == -1 ) { displayWarning("Invalid service");return; }
+	
+	var oidRegexp = /^[\.\d]+$/;
+	if ( ! oidRegexp.test($("#id_mainoid").val())  ) { displayWarning("Invalid oid");return; }
+	
+	var timeRegexp = /^[\d]*$/;
+	var revertOK=$("#id_revertOK").val()
+	if (revertOK=='') revertOK=0;
+	if ( ! timeRegexp.test(revertOK)  ) { displayWarning("Invalid Revert OK value");return; }
+
+	newRule=$("#id_rules").val();
+	newDisplay=$("#id_display").val();
+	for (i=1;i<objectsList_id;i++)
+	{	// TODO : only works if count_id<10....		
+		if (objectsList[i][0]==null) continue;
+		var objRegexp = new RegExp("\\$"+objectsList[i][0],"g");
+		newRule=newRule.replace(objRegexp,'$OID('+ objectsList[i][1] +')');
+		newDisplay=newDisplay.replace(objRegexp,'$OID('+ objectsList[i][1] +')');	
+		
+	}
+	// Do ajax call
+	$.ajax({
+			url: form_submit,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"db_rule"		: 	$("#id_Hidden_db_rule").val(),
+				"hostid"		:	$("#id_Hidden_hostid").val(),
+				"hostname"		:	$("#id_hostfilter").val(),
+				"serviceid"		:	$("#id_service").val(),
+				"serviceName"	:	$("#id_service  option:selected").text(),
+				"oid"			:	$("#id_mainoid").val(),
+				"revertOK"		:	revertOK,
+				"display"		:	newDisplay,
+				"rule"			:	newRule,
+				"ruleMatch"		:	$("#id_rule_action_true").val(),
+				"ruleNoMatch"	:	$("#id_rule_action_false").val(),				
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					$("#id_Hidden_db_rule").val(data.id);
+					setToUpdate();
+					displayWarning("Saved");
+					
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});	
+	
+}
+
+function onclickAddObjects()
+{
+	// Get mib
+	trap=$("#id_mainoid").val();
+	//alert(hostInput);
+	$.ajax({
+			url: getobjectsHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"trap": trap,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					trapObjectsList=data.objects;
+					// Put host list in <option> for user to choose.
+					for(var key in trapObjectsList)
+					{
+						//alert(key);
+						click_button_oid_add_cb(
+							key,
+							trapObjectsList[key]['mib'],
+							trapObjectsList[key]['name'],
+							'',  // Value
+							trapObjectsList[key]['type']
+						);
+						  
+					}				
+				} 
+				else 
+				{
+						//alert ("Error");
+						html='<option selected>'+data.status+'<option>';
+						
+				}
+				$("#"+selectUpdate).html(html);
+			}
+	});	
+}
+
+function click_button_oid_add()
+{// first resolve oid if possible then continue in click_button_oid_add_cb
+	add_oid=$("#id_trapdataNewOID").val();
+	translateOID(add_oid,click_button_oid_add_cb);
+}
+
+function click_button_oid_add_cb(oid,mib,name,value,type)
+{
+	ido=objectsList_id;
+	addarray=[count_id,oid,mib,name,''];
+	objectsList[objectsList_id]=addarray;
+	objectsList_id++;
+	count_id++;
+	
+	htm=	"<tr id='obj_table_oid_"+ido+"'>\n";
+	htm += 	"	<td id='obj_table_oid_"+ido+"_SC'>$"+(count_id-1)+"</td>\n";
+	htm +=	"	<td>"+oid+"</td>\n";
+	htm +=	"	<td>"+mib+"</td>\n";
+	htm +=	"	<td>"+name+"</td>\n";
+	htm +=	"	<td>"+value+"</td>\n";	
+	htm +=	"	<td>"+type+"</td>\n";
+	htm +=	"	<td><button type='button' onclick='click_button_table_del("+ido+")'>";
+	htm +=	"		Del.</button></td>\n";
+	htm +=	"</tr>\n";
+
+	$("#obj_table_body").append(htm);
+}
+
+// Delete button for each row in objects table. 
+//	@param rowid : id of row.
+function click_button_table_del(rowid)
+{
+	//alert("Delete #obj_table_oid_"+rowid);
+	// first check if there is no reference in rule or display
+	displayVal=$("#id_display").val();
+	ruleVal=$("#id_rules").val();
+	rowNumRef=$("#obj_table_oid_"+rowid+"_SC").html();
+	//alert(displayVal+" : "+rowNumRef+"#"+"#obj_table_oid_"+rowid+"_SC");
+	if (displayVal!= '' && displayVal.indexOf(rowNumRef) !== -1)
+	{
+		//TODO : display alert in a better way
+		displayWarning("Remove reference to object ("+rowNumRef+") in display before deleting");
+		$("#id_display").focus();
+		return;
+	}
+	if (ruleVal != '' && ruleVal.indexOf(rowNumRef) !== -1)
+	{
+		//TODO : display alert in a better way
+		displayWarning("Remove reference to object ("+rowNumRef+") in rules before deleting");
+		$("#id_rules").focus();
+		return;
+	}	
+	$("#obj_table_oid_"+rowid).remove();
+	objectsList[rowid]=null;
+	// renumber without gaps ? Must then renumber in display & rule :  TODO
+	//newcount=1;
+	
+}
+
+function translateOID(oid,callback)
+{
+	$.ajax({
+			url: translateoidHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"oid": oid,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					callback(oid,data.mib,data.name,'',data.type);				
+				} 
+				else 
+				{
+					callback(oid,'not found','not found');		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});
+}
+
+function selectTrapName()
+{
+	trapInput=$("#id_mainMibs_Trap").val();
+	if (trapInput == -1) return; // do nothing if "..." is selected
+	$("#id_mainoid").val(trapInput);
+	
+	mib=$("#id_mainMibs option:selected" ).text();
+	name=$("#id_mainMibs_Trap option:selected" ).text();
+	$("#id_mainoid_trapname").html(" "+mib+"::"+name+" ");
+	$("#id_mainoid_add_objects").prop( "disabled", false );
+}
+
+function TrapNameGet(selectMib,selectUpdate)
+{
+	// Get mib
+	hostInput=$("#"+selectMib).val();
+	//alert(hostInput);
+	$.ajax({
+			url: trapfrommmibHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"mib": hostInput,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					trapList=data.traps;
+					// Put host list in <option> for user to choose.
+					html='<option value="-1">...</option>';
+					for(var key in trapList)
+					{
+						  html+='<option value="'+key+'" >'+trapList[key]+'</option>';
+						  
+					}					
+				} 
+				else 
+				{
+						//alert ("Error");
+						html='<option selected>'+data.status+'<option>';
+						
+				}
+				$("#"+selectUpdate).html(html);
+			}
+	});
+
+}
+
+function serviceGet()
+{
+	// Get Host name
+	host=$("#id_hostfilter").val();
+	// Get service list
+	
+	$.ajax({
+			url: serviceHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"host": host,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					serviceList=data.services;
+					// Set host object id
+					hostid=data.hostid;
+					$("#id_Hidden_hostid").val(hostid);
+					html='';
+					serviceList.forEach(function (service){
+						html+='<option value='+service[0]+'>'+service[1]+'</option>';
+					});
+					$("#id_service").html(html);
+				} 
+				else 
+				{
+					html='<option value=-1 selected>'+data.status+'<option>'
+					$("#id_service").html(html);
+					//alert ("Error");
+				}
+			}
+	});
+	// Put host list in <option> for user to choose.
+
+	
+}
+
+function hostFilterGet()
+{
+	// Get host list
+	hostInput=$("#id_hostfilter").val();
+	$.ajax({
+			url: hostHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"hostFilter": hostInput,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					hostList=data.hosts;
+					//alert(hostList);
+					html='';
+					hostList.forEach(function (host){
+						html+='<option >'+host+'</option>';
+					});
+					$("#hosts_list").html(html);					
+				} 
+				else 
+				{
+						//alert ("Error");
+				}
+			}
+	});
+	// Put host list in <option> for user to choose.
+
+}
+
+$(function() {
+
+	$( "#id_submit_main" ).click(function( event ) {
+		event.preventDefault();
+		submitMain();
+	});
+<?php if ($this->serviceGet == true) { echo "serviceGet();\n" ; } ?>	
+// TODO : Set select if $this->serviceSet is not null;
+
+<?php if ($execute_trap_select == true) { echo "selectTrapName();\n" ;} ?>
+
+<?php if ($this->setToUpdate == true) { echo "setToUpdate();\n" ;} ?>
+
+<?php
+	foreach ( $this->objectList as $trapObj )
+	{
+		echo 'click_button_oid_add_cb(';
+		echo '"' . $trapObj[0] . '","' . // oid
+				$trapObj[1] . '","' . // mib
+				$trapObj[2] . '","' . //name 
+				preg_replace("/\"/",'\"', $trapObj[3]) . '","' . // value
+				$trapObj[4] .'"'; //type
+		echo ");\n";
+	}
+?>
+});
+
+</script>

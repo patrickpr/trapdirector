@@ -1,0 +1,77 @@
+<div class="controls">
+    <?= /** @var \Icinga\Web\Widget\Tabs $tabs */ $tabs ?>
+</div>
+
+<div class="content">
+	<?php
+		function printok($dispMessage) { 
+			echo '<p style="background-color:#00D500; font-weight:bold; font-size:110%">';
+			echo $dispMessage . '</p>';
+		}
+		function printwarn($dispMessage) { 
+			echo '<p style="background-color:#FFE555; font-weight:bold; font-size:110%">';
+			echo $dispMessage . '</p>';
+		}
+
+		if ($errorDetected != null) {
+			printwarn( 'DB error detected in app ');
+		}
+		if ($db_error == 0) {
+			printok($message[0][0]);			
+		} 
+		else 
+		{
+			for ($i=1;$i<$db_error;$i++) {
+				printok($message[$i][0]);
+			}
+			printwarn($message[$db_error][1]);
+			if ($message[$db_error][2]!='') 
+			{
+				echo "<p style='font-size:110%;font-weight:bold;'>Configure it here : <a href=". $message[$db_error][2] .">". $message[$db_error][2] ."</a></p></br>";
+			}
+		}
+	?>
+    <?= /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $form */ $form ?>
+	<hr>
+	
+	<h2> Installation instructions </h2>
+	<ul>
+	<li>
+	<p> Create database (skip if using existing one): <br><br>
+			<em>mysql -u root -e "create database &lt;database name&gt;;"
+			</em></p>
+	<p> Create user and assign rights : <br><br>
+			<em>
+			mysql -u root -e "grant usage on *.* to &lt;user&gt;@localhost identified by '&lt;password&gt;';" <br>
+			mysql -u root -e "grant all privileges on &lt;database name&gt;.* to &lt;user&gt;@localhost ;" <br> 
+			</em></p>
+	</li>
+	<li>
+	<p> Create database on Icingaweb2 (skip if already done) : <a href='resource'>Ressource config</a></p>
+	</li>
+	<li>
+	<p> Set database name and table prefix on this page </p>	
+	</li>
+	<li>
+	<p> Create schema of database : <a href='../trapdirector/settings/createschema'>Create Schema</a> </p>
+	</li>
+	<li> <p>Set up snmptrapd.conf (usualy in /etc/snmp/) to add a traphandle:<br><br>
+		<em>
+		traphandle default <?= $this->traps_in_config ?> <br><br>
+		</em>
+		Also set up community that will be accepted (here 'public'): <br><br>
+		<em>
+		authCommunity   log,execute,net public 
+		</em><br><br>
+		When sending sensitive data or on insecure network set up snmpv3 user <br><br>
+		<em>
+		createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey" <br>
+		authUser        log,execute,net trapuser
+		</em>		
+		</p>
+	</li>	
+	</ul>
+	<p> Enjoy ! </p>
+			
+		
+</div>

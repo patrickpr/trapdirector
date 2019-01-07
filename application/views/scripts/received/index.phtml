@@ -1,0 +1,15 @@
+<div class="controls">
+  <?= $this->tabs ?>
+  <h1>List of received traps</h1>
+
+ <?= $this->filterEditor // TODO : implement filters?> (filters not implemented)<br />  
+ <?= $this->table->getPaginator(); ?> 
+</div>
+
+<div class="content" data-base-target="_next">
+  
+
+<?= $this->table->render(); ?>
+
+
+</div>
