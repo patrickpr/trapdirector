@@ -1,5 +1,5 @@
 # trapdirector
-Icingaweb2 module fro receiving and handling snmp traps
+Icingaweb2 module for receiving and handling snmp traps
 
 Projet objective : 
 
