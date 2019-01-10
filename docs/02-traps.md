@@ -120,6 +120,8 @@ $5 = 3  &  $3 = 2 | $4 = 1 : works like : ($5 = 3  &  $3 = 2) | $4 = 1 . Better 
 
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing'
 
+Then click on save to save and activate your rule for next trap.
+
 
 Adding rule from scratch
 ---------------
