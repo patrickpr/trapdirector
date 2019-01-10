@@ -5,7 +5,7 @@ Requirements
 ---------------
 
 * Icingaweb2 and php7
-* net-snmp for snmptrad
+* net-snmp for snmptrapd
 * net-snmp-utils for snmptranslate
 * mysql/mariadb database
 
@@ -37,7 +37,7 @@ The options are
 * Database : the DB where traps will be stored
 * Prefix : the prefix for all database tables
 * IDO Database : the IDO database set up with IcingaWeb2
-* Icingaweb2 config dir : configuration directory in case of uncommon installation of 
+* Icingaweb2 config dir : configuration directory in case of uncommon installation of icingaweb2
 * snmptranslate binary : default should be OK
 * Path for mibs : must include net-snmp standard mibs (in /usr/share/snmp/mibs by default) and local mibs (in /usr/share/icingaweb2/modules/trapdirector/mibs)
 The value by default should be OK)
@@ -58,5 +58,33 @@ Then go back to module configuration, database should be OK :
 
 ![install-4](img/install-4.jpg)
 
+Snmptrapd configuration
+------------------------
 
+Now, you must tell snmptrapd to send all traps to the module.
+
+Edit the /etc/snmp/snmptrapd file and add : 
+
+* traphandle default /opt/rh/rh-php71/root/usr/sbin/php-fpm /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
+
+Note : on bottom of configuration page, you will have the php and module directories adapted to your system
+
+Set up the community (still in snmptrapd.conf) : here with "public" 
+
+* authCommunity log,execute,net public
+
+With a v3 user :
+
+* createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
+* authUser log,execute,net trapuser 
+
+Enable & start snmptrad service : 
+
+* systemctl enable snmptrapd
+* systemctl start snmptrapd
+
+Now all traps received by the system will be redirected to the trapdirector module.
+
+
+Now have a look at the doc : ![traps](02-traps.md)
  

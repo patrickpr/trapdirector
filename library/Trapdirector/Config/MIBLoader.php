@@ -4,10 +4,11 @@
 
 namespace Icinga\Module\TrapDirector\Config;
 
+// TODO : create a cache of some kind.
 class MIBLoader
 {
 	protected $filename; //< string file loaded
-	
+
 	// TODO : put all in protected after debug done
 	public $mibList; //< array of all mibs
 	/*  traps : 

@@ -1,11 +1,13 @@
-CREATE TABLE `traps_db_config` (
+CREATE TABLE `#PREFIX#db_config` (
   `id` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
   `value` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `traps_received` (
+INSERT INTO #PREFIX#db_config (`name`,`value`) VALUES ('db_version',1);
+
+CREATE TABLE `#PREFIX#received` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `source_ip` varchar(45) DEFAULT NULL,
   `source_port` smallint(5) unsigned DEFAULT NULL,
@@ -18,9 +20,9 @@ CREATE TABLE `traps_received` (
   `source_name` varchar(256) DEFAULT NULL,
   `trap_name_mib` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `traps_received_data` (
+CREATE TABLE `#PREFIX#received_data` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `oid` varchar(256) DEFAULT NULL,
   `value` varchar(1024) DEFAULT NULL,
@@ -29,10 +31,10 @@ CREATE TABLE `traps_received_data` (
   `oid_name_mib` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_trap_id_idx` (`trap_id`),
-  CONSTRAINT `FK_trap_id` FOREIGN KEY (`trap_id`) REFERENCES `traps_received` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8;
+  CONSTRAINT `FK_trap_id` FOREIGN KEY (`trap_id`) REFERENCES `#PREFIX#received` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `traps_rules` (
+CREATE TABLE `#PREFIX#rules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ip4` varchar(20) DEFAULT NULL,
   `ip6` varchar(42) DEFAULT NULL,
@@ -49,4 +51,5 @@ CREATE TABLE `traps_rules` (
   `modified` datetime DEFAULT NULL,
   `modifier` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+

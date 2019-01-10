@@ -76,6 +76,15 @@ class TrapsConfigForm extends ConfigForm
         );
 		$this->addElement(
             'text',
+            'config_snmptranslate_dirs',
+            array(
+                    'required'      => true,
+                    'label'         => $this->translate('Path for mibs'),
+					'value'			=> '/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs',
+             )
+        );		
+		$this->addElement(
+            'text',
             'config_icingacmd',
             array(
                     'required'      => true,

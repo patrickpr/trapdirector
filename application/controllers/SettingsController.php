@@ -7,6 +7,9 @@ use Icinga\Web\Url;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
+
+use Trap;
+
 class SettingsController extends TrapsController
 {
   public function indexAction()
@@ -24,8 +27,8 @@ class SettingsController extends TrapsController
 		1	=>	array('Database set in config.ini','No database in config.ini',''),
 		2	=>	array('Database exists in Icingaweb2 config','Database does not exist in Icingaweb2 : ',
 					Url::fromPath('config/resource')),
-		3	=>	array('Database credentials OK','Database does not exist or invalid credentials : ','',
-					Url::fromPath('config/resource')),
+		3	=>	array('Database credentials OK','Database does not exist/invalid credentials/no schema : ',
+					Url::fromPath('trapdirector/settings/createschema')),
 		4	=>	array('Schema is set','Schema is not set for ',
 					Url::fromPath('trapdirector/settings/createschema')),					
 		5	=>	array('Schema is up to date','Schema is outdated :',
@@ -33,7 +36,7 @@ class SettingsController extends TrapsController
 	);
 		
 	$dberror=$this->getDb(true); // Get DB in test mode
-
+	
 	$this->view->db_error=$dberror[0];
 	switch ($dberror[0]) 
 	{
@@ -82,13 +85,39 @@ class SettingsController extends TrapsController
 
   public function createschemaAction()
   {
-	  $this->checkModuleConfigPermission();
-	$this->getTabs()->add('get',array(
+	$this->checkModuleConfigPermission();
+	$this->getTabs()->add('create_schema',array(
 		'active'	=> true,
 		'label'		=> $this->translate('Create Schema'),
 		'url'		=> Url::fromRequest()
 	));
-	echo "<div> Not Implemented </div>";
+	// check if needed
+	
+	$dberror=$this->getDb(true); // Get DB in test mode
+	
+	if ($dberror[0] == 0)
+	{
+		echo 'Schema already exists <br>';
+	}
+	else
+	{
+		echo 'Creating schema : <br>';
+		
+		echo '<pre>';
+		require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+		
+		$icingaweb2_etc="/etc/icingaweb2";
+		$debug_level=4;
+		$Trap = new Trap($icingaweb2_etc);
+		$Trap->setLogging($debug_level,'display');
+		
+		$prefix=$this->Config()->get('config', 'database_prefix');
+		$schema=$this->Module()->getBaseDir() . 
+			'/SQL/schema_v'. $this->getModuleConfig()->getDbCurVersion() .'.sql';
+		
+		$Trap->create_schema($schema,$prefix);
+		echo '</pre>';
+	}
   }
 
   public function updateschemaAction()

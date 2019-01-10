@@ -1,0 +1,39 @@
+Traps
+===============
+
+NOTE NOTE NOTE NOTE : PROJECT UNDER DEV / SOME SCREEN CAPTURES CAN CHANGE A LOT !
+
+A little about traps
+---------------
+
+TODO.
+
+Have a look here : http://www.net-snmp.org/wiki/
+
+
+Sending traps for testing
+---------------
+
+In the bin directory you have 3 bash files test_trap_v<n>.sh which will send snmp v1, v2 & v3 traps to localhost.
+
+Looking at traps received
+---------------
+
+Go to traps -> received to have a list of received traps
+
+![install-1](img/install-1.jpg)
+
+Install files
+---------------
+
+1. Download latest release and unzip in a temporary directory.
+2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory
+
+Activate module
+---------------
+
+Log in to icingaweb2 go to Configuration -> modules  and activate the trapdirector modules
+
+Go to the configuration tab, it should look like this : 
+
+![install-1](img/install-1.jpg)

@@ -27,7 +27,7 @@ class HandlerController extends TrapsController
 		));
 		$db = $this->getDb();
 		$this->getHandlerListTable()->setConnection($db);
-		
+		$this->getHandlerListTable()->setMibloader($this->getMIB());
 		// Apply pagination limits TODO : error in here, limits are not well set
 		$this->view->table=$this->applyPaginationLimits($this->getHandlerListTable(),$this->getModuleConfig()->itemListDisplay());		
 		
@@ -50,17 +50,20 @@ class HandlerController extends TrapsController
 		$this->view->hostlist=array(); // host list to input datalist
 		$this->view->hostname=''; // Host name in input text
 		$this->view->serviceGet=false; // Set to true to get list of service if only one host set
-		$this->view->serviceSet=''; // Set service among services (must have serviceGet=true).
+		$this->view->serviceSet=null; // Set service among services (must have serviceGet=true).
 		$this->view->mainoid=''; // Trap OID
 		$this->view->mib=''; // Trap mib
 		$this->view->name=''; // Trap name
 		$this->view->trapListForMIB=array(); // Trap list if mib exists for trap
 		$this->view->objectList=array(); // objects sent with trap
 		$this->view->display=''; // Initial display
+		$this->view->rule=''; // rule display
 		$this->view->revertOK=''; // revert OK in seconds
 		$this->view->hostid=-1; // normally set by javascript serviceGet()
-		$this->view->ruleid=-1;
-		$this->view->setToUpdate=false;
+		$this->view->ruleid=-1; // Rule id in DB for update & delete
+		$this->view->setToUpdate=false; // set form as update form
+		$this->view->setRuleMatch=false; // set action on rule match (null does default)
+		$this->view->setRuleNoMatch=false; // set action on rule no match (null does default)
 		// Get Mib List from file
 		$this->view->mibList=$this->getMIB()->getMIBList();
 		
@@ -167,13 +170,20 @@ class HandlerController extends TrapsController
 			$ruleid=$this->params->get('ruleid');
 			$this->view->ruleid=$ruleid;
 			$this->view->setToUpdate=true;
-			
+
+			// Get rule info in DB
 			$ruleDetail=$this->getRuleDetail($ruleid);
 			$this->view->hostname=$ruleDetail->host_name;
 			$this->view->revertOK=$ruleDetail->revert_ok;
+			$this->view->setRuleMatch=$ruleDetail->action_match;
+			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch; 
+
+			
 			// Tell JS to get services when page is loaded
 			$this->view->serviceGet=true;
-			$this->view->serviceSet=$ruleDetail->service_name;
+			// get service id for form to set :
+			$serviceID=$this->getServiceIDByName($ruleDetail->service_name);
+			$this->view->serviceSet=$serviceID[0]->id;
 
 			$this->view->mainoid=$ruleDetail->trap_oid;
 			$oidName=$this->getMIB()->translateOID($ruleDetail->trap_oid);
@@ -190,8 +200,8 @@ class HandlerController extends TrapsController
 			$curObjectList=array();
 			$index=1; // TODO must make sure the index is the same than in display
 			// check in display & rule for : OID(<oid>)
-			while ( preg_match('/OID\(([\.0-9]+)\)/',$display,$matches) ||
-					preg_match('/OID\(([\.0-9]+)\)/',$rule,$matches))
+			while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
+					preg_match('/_OID\(([\.0-9]+)\)/',$rule,$matches))
 			{
 				$curOid=$matches[1];
 				if (($object=$this->getMIB()->translateOID($curOid)) != null)
@@ -212,22 +222,18 @@ class HandlerController extends TrapsController
 						'not found',
 						'',
 						'not found'
-					));					
+					));
 				}
-				$display=preg_replace('/OID\('.$curOid.'\)/','\$'.$index,$display);
-				$rule=preg_replace('/OID\('.$curOid.'\)/','\$'.$index,$display);
+				$display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index,$display);
+				$rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index,$rule);
 				$index++;
 			}
 			// set display
 			$this->view->display=$display;
 			$this->view->rule=$rule;
 			
-			$this->view->objectList=$curObjectList;
-			//TODO : $ruleDetail->action_match  /  $ruleDetail->action_nomatch
-			
+			$this->view->objectList=$curObjectList; 			
 		}
-
-
 	}
 
 	/** Validate form and output message to user  
@@ -254,8 +260,26 @@ class HandlerController extends TrapsController
 			'action_nomatch'=>	array('post' => 'ruleNoMatch','val' => -1,'db'=>true),					
 			'ip4'			=>	array('post' => null,'val' => null,'db'=>true),
 			'ip6'			=>	array('post' => null,'val' => null,'db'=>true),
-			
+			'action_form'	=>	array('post' => 'action_form','db'=>false)
 		);
+		
+		if (isset($postData[$params['action_form']['post']]) 
+			&& $postData[$params['action_form']['post']] == 'delete' )
+		{
+			try
+			{
+				$this->deleteRule($postData[$params['db_rule']['post']]);
+			}
+			catch (Exception $e)
+			{
+				$this->_helper->json(array('status'=>$e->getMessage()));
+				return;
+			}
+			$this->_helper->json(array(
+				'status'=>'OK',
+				'redirect'=>'../handler/'
+			));
+		}		
 		foreach ($params as $key => $value)
 		{
 			if ($params[$key]['post']==null) continue; // data not sent in post vars
@@ -273,7 +297,7 @@ class HandlerController extends TrapsController
 				}
 			}
 		}
-		
+
 		try 
 		{
 			$hostAddr=$this->getHostInfoByID($params['hostid']['val']);
@@ -314,6 +338,7 @@ class HandlerController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->_helper->json(array('status'=>$e->getMessage()));
+			return;
 		}
 		$this->_helper->json(array('status'=>'OK', 'id' => $ruleID));
 		

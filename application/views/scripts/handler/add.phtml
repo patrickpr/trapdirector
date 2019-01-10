@@ -12,9 +12,9 @@
 <form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="/icingaweb2/trapdirector/handler/add_form" method="post">
 	
 	<input type="hidden" name="db_rule" id="id_Hidden_db_rule"
-		value="<?= $this->hostid ?>" >
+		value="<?= $this->ruleid ?>" >
 	<input type="hidden" name="hostid" id="id_Hidden_hostid"
-		value="<?= $this->ruleid ?>">
+		value="<?= $this->hostid ?>">
 	<fieldset id="fieldset-trap_definition" class=""><legend>Main properties</legend>
 		<!-- Host name selection -->
 		<div class="control-group">
@@ -173,7 +173,8 @@
 				<label for="id_rules" class="control-label optional">Rule</label>
 			</span>
 		</div>
-		<input type="text" name="rules" id="id_rules" value="" placeholder="Rules to evaluate">
+		<input type="text" name="rules" id="id_rules" placeholder="Rules to evaluate"
+		 value="<?= $this->rule ?>" >
 	</div>
 	<div class="control-group">
 		<div class="control-label-group">
@@ -210,6 +211,7 @@
 			</span>
 		</div>
 		<input type="submit" name="submit" id="id_submit_main" value="Create">
+		<button type="button" name="delete" id="id_delete_main" value="Delete" disabled>Delete</button>
 	</div>
 
 	</form>
@@ -235,11 +237,55 @@ function displayWarning(message)
 	// for now
 	alert(message);
 }
+function displayOK(message)
+{
+	// for now
+	alert(message);
+}
 
 function setToUpdate()
 {
 	$("#id_submit_main").val("Update");
 	$("#id_submit_main_label").html("Update Rule");
+	$("#id_delete_main").prop( "disabled", false )
+}
+
+function deleteMain()
+{
+	if ($("#id_Hidden_db_rule").val() == -1)
+	{
+		displayWarning("No rule to delete");
+		return;
+	}
+	// Do ajax call
+	$.ajax({
+			url: form_submit,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"db_rule"		: 	$("#id_Hidden_db_rule").val(),
+				"action_form"	:	'delete'
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					displayOK("Rule deleted");
+					window.location.replace(data.redirect);
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});	
 }
 
 function submitMain()
@@ -263,8 +309,8 @@ function submitMain()
 	{	// TODO : only works if count_id<10....		
 		if (objectsList[i][0]==null) continue;
 		var objRegexp = new RegExp("\\$"+objectsList[i][0],"g");
-		newRule=newRule.replace(objRegexp,'$OID('+ objectsList[i][1] +')');
-		newDisplay=newDisplay.replace(objRegexp,'$OID('+ objectsList[i][1] +')');	
+		newRule=newRule.replace(objRegexp,'_OID('+ objectsList[i][1] +')');
+		newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');	
 		
 	}
 	// Do ajax call
@@ -285,7 +331,8 @@ function submitMain()
 				"display"		:	newDisplay,
 				"rule"			:	newRule,
 				"ruleMatch"		:	$("#id_rule_action_true").val(),
-				"ruleNoMatch"	:	$("#id_rule_action_false").val(),				
+				"ruleNoMatch"	:	$("#id_rule_action_false").val(),
+				"action_form"	:	'save'
 			},
 	        success: function (data) 
 			{
@@ -294,7 +341,7 @@ function submitMain()
 				{
 					$("#id_Hidden_db_rule").val(data.id);
 					setToUpdate();
-					displayWarning("Saved");
+					displayOK("Saved");
 					
 				} 
 				else 
@@ -347,16 +394,15 @@ function onclickAddObjects()
 				else 
 				{
 						//alert ("Error");
-						html='<option selected>'+data.status+'<option>';
-						
+						displayWarning(data.status);		
 				}
-				$("#"+selectUpdate).html(html);
 			}
 	});	
 }
 
 function click_button_oid_add()
 {// first resolve oid if possible then continue in click_button_oid_add_cb
+	//alert('add 1');
 	add_oid=$("#id_trapdataNewOID").val();
 	translateOID(add_oid,click_button_oid_add_cb);
 }
@@ -496,7 +542,7 @@ function TrapNameGet(selectMib,selectUpdate)
 
 }
 
-function serviceGet()
+function serviceGet(serviceSet=null)
 {
 	// Get Host name
 	host=$("#id_hostfilter").val();
@@ -525,6 +571,10 @@ function serviceGet()
 						html+='<option value='+service[0]+'>'+service[1]+'</option>';
 					});
 					$("#id_service").html(html);
+					if (serviceSet != null)
+					{
+						$('#id_service').val(serviceSet);	
+					}
 				} 
 				else 
 				{
@@ -581,12 +631,30 @@ $(function() {
 		event.preventDefault();
 		submitMain();
 	});
-<?php if ($this->serviceGet == true) { echo "serviceGet();\n" ; } ?>	
-// TODO : Set select if $this->serviceSet is not null;
+	
+	$( "#id_delete_main").click(function( event ) {
+		event.preventDefault();
+		deleteMain();
+	});
+<?php 
+	if ($this->serviceGet == true) { 
+		echo "serviceGet(";
+		if ($this->serviceSet != null) // add param to service get to set service after ajax call
+			{ echo $this->serviceSet;}		
+		echo ");\n" ;  
+	}
+?>
 
 <?php if ($execute_trap_select == true) { echo "selectTrapName();\n" ;} ?>
 
 <?php if ($this->setToUpdate == true) { echo "setToUpdate();\n" ;} ?>
+
+<?php 
+	if ($this->setRuleNoMatch !=null ) 
+		{ echo "$('#id_rule_action_false').val(".$this->setRuleNoMatch.");\n" ;}
+	if ($this->setRuleMatch !=null ) 
+		{ echo "$('#id_rule_action_true').val(".$this->setRuleMatch.");\n" ;} 	
+?>
 
 <?php
 	foreach ( $this->objectList as $trapObj )

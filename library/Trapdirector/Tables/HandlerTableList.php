@@ -18,6 +18,7 @@ use Icinga\Web\Widget\Paginator;
 
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Tables\TrapTable;
+use Icinga\Module\TrapDirector\Config\MIBLoader;
 use stdClass;
 
 
@@ -26,6 +27,10 @@ class HandlerTableList extends TrapTable
 {	
 	// Db connection : getConnection / setConnection
 	protected $connection;
+	
+	// translate
+	protected $doTranslate=false;
+	protected $MIB;
 	
 	// Filters 
 	
@@ -37,13 +42,19 @@ class HandlerTableList extends TrapTable
 		// TODO : check moduleconfig is set
 		return $this->moduleConfig->getHandlerListTitles();
 	}
+	
+	public function setMibloader($mibloader)
+	{
+		$this->MIB=$mibloader;
+		$this->doTranslate=true;
+	}
 	// ******************  Render table in html  
     public function __toString()
     {
         return $this->render();
     }
 	
-	public function render() // TODO
+	public function render()
 	{
 		$data=$this->getTable();
 		$view = $this->getView();
@@ -78,7 +89,22 @@ class HandlerTableList extends TrapTable
 				// Check missing value
 				if (property_exists($row, $rowkey)) 
 				{
-					$val = ($rowkey=='timestamp') ?  strftime('%T',$row->$rowkey) : $row->$rowkey;
+					if ($rowkey == 'trap_oid' && $this->doTranslate==true)
+					{
+						$oidName=$this->MIB->translateOID($row->$rowkey);
+						if ($oidName==null)
+						{
+							$val = $row->$rowkey;
+						}
+						else
+						{
+							$val=$oidName['name'];
+						}
+					}
+					else
+					{
+						$val = $row->$rowkey;
+					}
 				} else {
 					$val = '-';
 				}

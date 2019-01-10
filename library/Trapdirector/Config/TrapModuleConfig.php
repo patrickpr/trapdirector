@@ -34,6 +34,9 @@ class TrapModuleConfig
 	// Minimum DB version 
 	public function getDbMinVersion() { return 1;}
 	
+	// Current DB version 
+	public function getDbCurVersion() { return 1;}
+	
 	// DB columns to display in view table (prefix is set for table in getTrapTableName)
 	// Note : must have 'id' and 'timestamp'
 	public function getTrapListDisplayColumns()

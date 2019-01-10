@@ -87,6 +87,15 @@ class TrapsController extends Controller
 			try 
 			{
 				$db=$dbconn->getConnection();
+			}
+			catch (Exception $e) 
+			{
+				if ($test) return array(3,$DBname,$e->getMessage());
+				$this->redirectNow('trapdirector/settings?dberror=3');
+				return null;
+			}
+			try
+			{
 				$query = $db->select()
 					->from($this->getModuleConfig()->getDbConfigTableName(),'value')
 					->where('name=\'db_version\'');
@@ -103,13 +112,15 @@ class TrapsController extends Controller
 					$this->redirectNow('trapdirector/settings?dberror=5');
 					return null;
 				}
-			} catch (Exception $e) 
+			}
+			catch (Exception $e) 
 			{
 				if ($test) return array(3,$DBname,$e->getMessage());
-				$this->redirectNow('trapdirector/settings?dberror=3');
+				$this->redirectNow('trapdirector/settings?dberror=4');
 				return null;
 			}
 		}
+		if ($test) return array(0,'');
 		return $dbconn;
 	}
 
@@ -125,8 +136,9 @@ class TrapsController extends Controller
 			$this->redirectNow('trapdirector/settings?dberror=1');
 			return null;
 		}
-		$this->trapDB=$this->getDbByName($dbresource,$test,true);
-		if ($test == true) return 0;
+		$retDB=$this->getDbByName($dbresource,$test,true);
+		if ($test == true) return $retDB;
+		$this->trapDB=$retDB;
 		return $this->trapDB;
 	}
 	
@@ -134,7 +146,7 @@ class TrapsController extends Controller
 	{
 		if ($this->icingaDB != null && $test = false) return $this->icingaDB;
 		// TODO : get ido database by config or directly in icingaweb2 config
-		$dbresource='icinga_ido';
+		$dbresource=$this->Config()->get('config', 'IDOdatabase');;
 
 		$this->icingaDB=$this->getDbByName($dbresource,$test,false);
 		if ($test == true) return 0;
@@ -282,6 +294,29 @@ class TrapsController extends Controller
 		return $db->fetchAll($query);
 	}	
 
+	/** Get services object id by name in IDO database
+	*	does not catch exceptions
+	*	@param $name service name
+	*	@return int  service id
+	*/
+	protected function getServiceIDByName($name) 
+	{
+		$db = $this->getIdoDb()->getConnection();
+		if ($name != null)
+		{
+			$query=$db->select()
+					->from(
+						array('s' => 'icinga_services'),
+						array('name' => 's.display_name','id' => 's.service_object_id'))
+					->join(
+						array('a' => 'icinga_objects'),
+						's.service_object_id=a.object_id',
+						'is_active')
+					->where('a.name2=\''.$name.'\' AND a.is_active = 1');
+		}
+		return $db->fetchAll($query);
+	}
+	
 	/** Get object name from object_id  in IDO database
 	*	does not catch exceptions
 	*	@param $id	int object_id (default to null, used first if not null)
@@ -333,13 +368,27 @@ class TrapsController extends Controller
 		$params['modified'] = new 	Zend_Db_Expr('CURRENT_TIMESTAMP()');
 		$params['modifier'] ='me' ;
 		
-		$numRows=$query=$db->update(
+		$numRows=$db->update(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$params,
 			'id='.$ruleID
 		);
 		return $numRows;
 	}	
+	/** Delete rule by id
+	*	@param int rule id
+	*/
+	protected function deleteRule($ruleID)
+	{
+		if (!preg_match('/^[0-9]+$/',$ruleID)) { throw new Exception('Invalid id');  }
+		$db = $this->getDb()->getConnection();
+		
+		$query=$db->delete(
+			$this->getModuleConfig()->getTrapRuleName(),
+			'id='.$ruleID
+		);
+		return $query;		
+	}
 }
 
 		/*

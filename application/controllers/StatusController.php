@@ -5,14 +5,27 @@ namespace Icinga\Module\Trapdirector\Controllers;
 use Icinga\Web\Controller;
 use Icinga\Web\Url;
 
-class StatusController extends Controller
+use Icinga\Module\Trapdirector\TrapsController;
+
+class StatusController extends TrapsController
 {
-  public function getAction()
-  {
-	$this->getTabs()->add('get',array(
-		'active'	=> true,
-		'label'		=> $this->translate('Status'),
-		'url'		=> Url::fromRequest()
-	));    
-  } 
+	public function indexAction()
+	{
+		$this->prepareTabs()->activate('status');	
+	} 
+  
+	public function mibAction()
+	{
+		$this->prepareTabs()->activate('mib');
+	}
+	protected function prepareTabs()
+	{
+		return $this->getTabs()->add('status', array(
+			'label' => $this->translate('Status'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/status')
+		)->add('mib', array(
+			'label' => $this->translate('MIB Management'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/status/mib')
+		);
+	} 
 }
