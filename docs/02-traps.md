@@ -68,6 +68,8 @@ The form is divided in three parts
 
 This part lists all objects that will be used in the display and rules as $<n>.
 
+As you selected a trap, the objects sent with the trap are automaticaly added in here
+
 ![add-from-trap-2](img/add-from-trap-2.jpg)
 
 * 1 : enter OID here to manually add bojects
@@ -95,20 +97,41 @@ Here, the display will be for example : "Trap linkUP received for 3"
 Here you define a rule. Actions if rule matches is defined below.
 
 Here the rule "( $5 = 3 ) & ( $3 = 2) " means : 
+
 If 'ifIndex' is 3 AND ifAdminStatus is 2 THEN rule matches
 
 Rule accepts numbers and strings with these operators : < <= > >= = !=
+
 You can group with parenthesis and logical operators are : | &
+
 To test existence of object, do : ($3)
+
 space are ignored and comparison operators are evaluated before logical ones.
+
 Examples : 
+
 $5 = 3  &  $3 = 2 : works, same as the example
+
 $5 = 3  &  $3 = 2 | $4 = 1 : works like : ($5 = 3  &  $3 = 2) | $4 = 1 . Better with parenthesis !
+
 ($5 = "eth0") & ( $3 = 2) : works as expected
+
 ($5 = "eth0") < $3 : ERROR
 
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing'
 
+
+Adding rule from scratch
+---------------
+TODO
+
+Updating a rule
+---------------
+TODO
+
+Testing a rule
+---------------
+TODO
 
 CURRENT DOC END..... come back in some days
 
