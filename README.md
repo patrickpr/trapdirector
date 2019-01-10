@@ -9,3 +9,10 @@ Projet objective :
 - Be able to decode oid and add mibs
 
 Project status : ongoing developpement
+(Some code is taken directly from trapoola.)
+
+Have a look at : 
+* installation doc : ![installation](doc/01-install.md)
+
+* Ongoing doc : ![Traps](doc/02-traps.md)
+
