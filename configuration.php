@@ -13,8 +13,8 @@ $section = $this->menuSection(N_('Traps'),array (
 	'icon'	=> 'search_petrol.png'
 ));
 
-$section->add(N_('Status'),array(
-	'url'			=> 'trapdirector/status/get',
+$section->add(N_('Status & Mibs'),array(
+	'url'			=> 'trapdirector/status/',
 	'permission' 	=> 'trapdirector/view'
 ));
 

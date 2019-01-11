@@ -7,14 +7,18 @@ class Trap
 	protected $icingaweb2_etc; //< Icinga etc path	
 	protected $trap_module_config; //< config.ini of module	
 	protected $icingaweb2_ressources; //< resources.ini of icingaweb2
-	// Options from config.ini (TODO)
+	// Options from config.ini 
 	protected $snmptranslate='/usr/bin/snmptranslate';
 	protected $snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs';	
 	protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
+	protected $db_prefix='traps_';
+	
+	// Options from config database
+	// None for now
 	
 	// Logs
 	protected $debug_level=2;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
-	protected $alert_output='file'; // alert type : file, syslog, display
+	protected $alert_output='syslog'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
 	protected $syslog_logfile=null; // TODO check if useful
 	
@@ -79,7 +83,36 @@ class Trap
 		{
 			$this->icinga2cmd=$trap_config['config']['icingacmd'];
 		}
+		// table prefix
+		if (!isset($trap_config['config']['database_prefix'])) 
+		{ // not in config : warning 
+			$this->trapLog("No database_prefix in config file: ".$this->trap_module_config,2,'syslog'); 
+		}
+		else
+		{
+			$this->db_prefix=$trap_config['config']['database_prefix'];
+		}	
+		
 
+	}
+
+	/** Get data from db_config
+	*	@param $element name of param
+	*	@return $value (or null)
+	*/	
+	protected function getDBConfig($element)
+	{
+		$db_conn=$this->db_connect_trap();
+		$sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,2,'');
+		}
+		$value=$ret_code->fetch();
+		if ($value != null && isset($value['value']))
+		{
+			return $value['value'];
+		}
+		return null;
 	}
 	
 	/** Send log. Throws exception on critical error
@@ -349,11 +382,19 @@ class Trap
 	*	@param $days : erase traps when more than $days old
 	*	@return : number of lines deleted
 	**/
-	public function eraseOldTraps($days)
+	public function eraseOldTraps($days=0)
 	{
+		if ($days==0)
+		{
+			if (($days=$this->getDBConfig('db_remove_days')) == null)
+			{
+				$this->trapLog('No days specified & no db value : no tap erase' ,2,'');
+				return;
+			}
+		}
 		$db_conn=$this->db_connect_trap();
 		$daysago = strtotime("-".$days." day");
-		$sql= 'delete from traps_received where date_received < "'.date("Y-m-d H:i:s",$daysago).'";"';
+		$sql= 'delete from '.$this->db_prefix.'received where date_received < "'.date("Y-m-d H:i:s",$daysago).'";"';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('Error erasing traps : '.$sql,1,'');
 		}
@@ -384,7 +425,7 @@ class Trap
 			$firstcol=0;
 		}
 
-		$sql= 'INSERT INTO traps_received (' . $insert_col . ') VALUES ('.$insert_val.');';
+		$sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.');';
 
 		$this->trapLog('sql : '.$sql,3,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
@@ -423,7 +464,7 @@ class Trap
 				$firstcol=0;
 			}
 
-			$sql= 'INSERT INTO traps_received_data (' . $insert_col . ') VALUES ('.$insert_val.');';			
+			$sql= 'INSERT INTO '.$this->db_prefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';			
 
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
 				$this->trapLog('Erreur insertion data : ' . $sql,2,'');
@@ -439,7 +480,7 @@ class Trap
 	protected function getRules($ip,$oid)
 	{
 		$db_conn=$this->db_connect_trap();
-		$sql='SELECT * from traps_rules WHERE ( ( ip4=\''.$ip.'\' OR ip6=\''.$ip.'\' ) AND trap_oid=\''.$oid.'\' )';
+		$sql='SELECT * from '.$this->db_prefix.'rules WHERE ( ( ip4=\''.$ip.'\' OR ip6=\''.$ip.'\' ) AND trap_oid=\''.$oid.'\' )';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,2,'');
@@ -695,8 +736,9 @@ class Trap
 		}
 		$item=0;
 		$rule=$this->eval_cleanup($rule);
-		return $this->evaluation($rule,$item);
-			
+		$this->trapLog('Rule after clenup: '.$rule,3,'');
+		
+		return  $this->evaluation($rule,$item);
 	}
 	
 	/** Match rules for current trap and do action
@@ -713,6 +755,7 @@ class Trap
 		//print_r($rules);
 		foreach ($rules as $rkey => $rule)
 		{
+			
 			$host_name=$rule['host_name'];
 			$service_name=$rule['service_name'];
 			
@@ -721,11 +764,13 @@ class Trap
 			try
 			{
 				$this->trapLog('Rule to eval : '.$rule['rule'],3,'');
-				$eval=$this->eval_rule($rule['rule']);
+				$evalr=$this->eval_rule($rule['rule']);
 				
-				if ($eval == true)
+				if ($evalr == true)
 				{
+					//$this->trapLog('rules OOK: '.print_r($rule),3,'');
 					$action=$rule['action_match'];
+					$this->trapLog('action OK : '.$action,3,'');
 					if ($action != -1)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
@@ -733,7 +778,10 @@ class Trap
 				}
 				else
 				{
+					//$this->trapLog('rules KOO : '.print_r($rule),3,'');
+					
 					$action=$rule['action_nomatch'];
+					$this->trapLog('action NOK : '.$action,3,'');
 					if ($action != -1)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);

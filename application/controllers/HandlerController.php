@@ -28,7 +28,7 @@ class HandlerController extends TrapsController
 		$db = $this->getDb();
 		$this->getHandlerListTable()->setConnection($db);
 		$this->getHandlerListTable()->setMibloader($this->getMIB());
-		// Apply pagination limits TODO : error in here, limits are not well set
+		// Apply pagination limits 
 		$this->view->table=$this->applyPaginationLimits($this->getHandlerListTable(),$this->getModuleConfig()->itemListDisplay());		
 		
 		// Set Filter

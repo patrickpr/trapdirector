@@ -11,7 +11,36 @@ class StatusController extends TrapsController
 {
 	public function indexAction()
 	{
-		$this->prepareTabs()->activate('status');	
+		$this->prepareTabs()->activate('status');
+		
+		/************  Trapdb ***********/
+		try
+		{
+			$db = $this->getDb()->getConnection();
+			$query = $db->select()->from(
+				$this->getModuleConfig()->getTrapTableName(),
+				array('COUNT(*)')
+			);			
+			$this->view->trap_count=$db->fetchOne($query);
+			$query = $db->select()->from(
+				$this->getModuleConfig()->getTrapDataTableName(),
+				array('COUNT(*)')
+			);			
+			$this->view->trap_object_count=$db->fetchOne($query);
+			$query = $db->select()->from(
+				$this->getModuleConfig()->getTrapRuleName(),
+				array('COUNT(*)')
+			);			
+			$this->view->rule_count=$db->fetchOne($query);			
+ 			
+			$this->view->trap_days_delete=$this->getDBConfigValue('db_remove_days');
+			
+		}
+		catch (Exception $e)
+		{
+			$this->displayExitError('status',$e->getMessage());
+		}
+		
 	} 
   
 	public function mibAction()

@@ -41,7 +41,6 @@ class TrapsController extends Controller
 			$db_prefix=$this->Config()->get('config', 'database_prefix');
 			if ($db_prefix === null) 
 			{
-				// TODO : send message and display
 				$this->redirectNow('trapdirector/settings?message=No database prefix');
 			}
 			$this->moduleConfig = new TrapModuleConfig($db_prefix);
@@ -389,16 +388,71 @@ class TrapsController extends Controller
 		);
 		return $query;		
 	}
+
+	/** get configuration value
+	*	@param configuration name in db
+	*/
+	protected function getDBConfigValue($element)
+	{
+	
+		$db = $this->getDb()->getConnection();
+		
+		$query=$db->select()
+			->from(
+				$this->getModuleConfig()->getDbConfigTableName(),
+				array('value'=>'value'))
+			->where('name=?',$element);
+		$return_row=$db->fetchRow($query);
+		if ($return_row==null)  // value does not exists
+		{
+			$default=$this->getModuleConfig()->getDBConfigDefaults();
+			if ( ! isset($default[$element])) return null; // no default and not value
+			
+			$this->addDBConfigValue($element,$default[$element]);
+			return $default[$element];
+		}
+		if ($return_row->value == null) // value id empty
+		{
+			$default=$this->getModuleConfig()->getDBConfigDefaults();
+			if ( ! isset($default[$element])) return null; // no default and not value
+			$this->setDBConfigValue($element,$default[$element]);
+			return $default[$element];			
+		}
+		return $return_row->value;		
+	}
+
+	/** add configuration value
+	*	@param name value
+	*/
+	protected function addDBConfigValue($element,$value)
+	{
+	
+		$db = $this->getDb()->getConnection();
+		
+		$query=$db->insert(
+				$this->getModuleConfig()->getDbConfigTableName(),
+				array(
+					'name' => $element,
+					'value'=>$value
+				)
+		);
+		return $query;		
+	}
+
+	/** set configuration value
+	*	@param name value
+	*/
+	protected function setDBConfigValue($element,$value)
+	{
+	
+		$db = $this->getDb()->getConnection();
+		$query=$db->update(
+				$this->getModuleConfig()->getDbConfigTableName(),
+				array('value'=>$value),
+				'name=\''.$element.'\''
+		);
+		return $query;		
+	}
+	
 }
 
-		/*
-		//$query = $db->select()
-            //->distinct()
-            //->from('traps_received', array('date_received,source_ip,trap_oid'))
-            //->where('varname = ?', 'location')
-            //->order('date_received');
-        //print_r($db->fetchCol($query));
-		//print_r($db->fetchAll($query));
-		//print_r($db->fetchRow($query));
-		
-		*/

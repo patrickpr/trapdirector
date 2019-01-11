@@ -1,14 +1,28 @@
 <div class="controls">
   <?= $tabs ?>
-  <h1>Status fo trap receivers</h1>
+  <h1>Status and config of trap receivers</h1>
 </div>
 
 <div class="content">
-  <h2>TODO </h2>
+  <h2>Database</h2>
+  The current trap database contains : <br>
+  
+  <ul>
+	<li> <span id="trap_count"><?= $this->trap_count ?> traps </li>
+	<li> <span id="trap_object_count"><?= $this->trap_object_count ?> trap objects </li>
+	<li> <span id="rule_count"><?= $this->rule_count ?> rules </li>
+  </ul>
+  Traps older than <input type="text" id="input_text" maxlength="4" style="width=4em;"
+  value="<?= $this->trap_days_delete ?>" > days will be dropped.<br>
+  <button type="button" id="button_trap_save">Save</button>
+  <button type="button" id="button_trap_doit">Do it now</button><br>
+  
+  <hr>
+  
+  
   <ul>
     <li>mibs paths check</li>
 	<li>oid translation check</li>
-	<li>database maintenance (remove traps older than...)</li>
 	<li>log destination</li>
   </ul>
 </div>

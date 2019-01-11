@@ -32,6 +32,14 @@ class HandlerTableList extends TrapTable
 	protected $doTranslate=false;
 	protected $MIB;
 	
+	// status
+	protected $status_display=array(
+		-1 => '-',
+		0	=> 'OK',
+		1	=> 'warning',
+		2	=> 'critical',
+		3	=> 'unknown',);
+	
 	// Filters 
 	
     protected $filter;
@@ -89,21 +97,39 @@ class HandlerTableList extends TrapTable
 				// Check missing value
 				if (property_exists($row, $rowkey)) 
 				{
+					switch ($rowkey)
+					{
+						case 'action_match':
+						case 'action_nomatch':
+							$val=$this->status_display[$row->$rowkey];
+						break;
+						case 'trap_oid':
+							if ($this->doTranslate==true)
+							{
+								$oidName=$this->MIB->translateOID($row->$rowkey);
+								if ($oidName==null)
+								{
+									$val = $row->$rowkey;
+								}
+								else
+								{
+									$val=$oidName['name'];
+								}								
+							}
+							else
+							{
+								$val = $row->$rowkey;
+							}
+						default:
+							$val = $row->$rowkey;
+					}
 					if ($rowkey == 'trap_oid' && $this->doTranslate==true)
 					{
-						$oidName=$this->MIB->translateOID($row->$rowkey);
-						if ($oidName==null)
-						{
-							$val = $row->$rowkey;
-						}
-						else
-						{
-							$val=$oidName['name'];
-						}
+
 					}
 					else
 					{
-						$val = $row->$rowkey;
+						
 					}
 				} else {
 					$val = '-';
@@ -126,7 +152,7 @@ class HandlerTableList extends TrapTable
 			$htm .= "<tr>\n";
 		}
 		$htm .= "</tbody></table>\n";
-		$htm .= "Filter : " . $this->filter."<br>\n";
+		//$htm .= "Filter : " . $this->filter."<br>\n";
 		return $htm;
 
 	}
@@ -141,7 +167,7 @@ class HandlerTableList extends TrapTable
 		$db=$this->db();
 		
 		$query = $db->select()->from(
-            $this->moduleConfig->getTrapTableName(),
+            $this->moduleConfig->getTrapRuleName(),
             array('COUNT(*)')
         );
 		
@@ -234,6 +260,7 @@ class HandlerTableList extends TrapTable
             $query->where($this->renderFilter($filter));
         }
 		*/
+		
         return $query;
     }	
 

@@ -163,7 +163,7 @@
 			</span>
 		</div>
 		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
-			value="<?= $this->display ?>" 
+			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>" 
 			>
 
 	</div>
@@ -174,7 +174,7 @@
 			</span>
 		</div>
 		<input type="text" name="rules" id="id_rules" placeholder="Rules to evaluate"
-		 value="<?= $this->rule ?>" >
+		 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" >
 	</div>
 	<div class="control-group">
 		<div class="control-label-group">

@@ -144,22 +144,7 @@ abstract class TrapTable implements Paginatable
         return $this->offset;
     }
 	
-    public function count()
-    {
-        $db = $this->connection()->getConnection();
-        $query = clone($this->getBaseQuery());
-        $query->reset('order')->columns(array('COUNT(*)'));
-        $this->applyFiltersToQuery($query);
-
-		$db=$this->db();
-		
-		$query = $db->select()->from(
-            $this->moduleConfig->getTrapTableName(),
-            array('COUNT(*)')
-        );
-		
-        return $db->fetchOne($query);
-    }
+	abstract function count();
 	
     public function getPaginator()
     {
@@ -232,9 +217,14 @@ abstract class TrapTable implements Paginatable
         return $filterEditor;
     }
 	
+	protected function renderFilter($filter)
+	{ // TODO
+	}
+	
     protected function applyFiltersToQuery($query)
     {
-        /*$filter = null;
+        /*
+		$filter = null;
         $enforced = $this->enforcedFilters;
         if ($this->filter && ! $this->filter->isEmpty()) {
             $filter = $this->filter;
@@ -245,6 +235,7 @@ abstract class TrapTable implements Paginatable
             foreach ($enforced as $f) {
                 $filter->andFilter($f);
             }
+			//$this->renderFilter($filter);
             $query->where($this->renderFilter($filter));
         }
 		*/

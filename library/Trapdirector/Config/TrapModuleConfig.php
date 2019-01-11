@@ -7,6 +7,10 @@ class TrapModuleConfig
 	// Database prefix for tables 
 	protected $table_prefix;
 	
+	protected $DBConfigDefaults=array(
+		'db_remove_days' => 60, // number of days before removing traps
+	);
+	
 	function __construct($prefix)
 	{
 		$this->table_prefix=$prefix;
@@ -29,8 +33,13 @@ class TrapModuleConfig
 	}		
 	
 	// DB table name of db config : prefix 'c'
-	public function getDbConfigTableName() { return array('c' => $this->table_prefix . 'db_config');}
-	
+	public function getDbConfigTableName() 
+	{ 
+		return array('c' => $this->table_prefix . 'db_config');
+	}
+
+	// get default values for dbconfig
+	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
 	// Minimum DB version 
 	public function getDbMinVersion() { return 1;}
 	
@@ -142,8 +151,6 @@ class TrapModuleConfig
 	}
 	// foreign key of trap data table
 	public function trapDataFK() { return 'trap_id';}
-	
-	
 	
 	// Max items in a list
 	public function itemListDisplay() { return 25; }
