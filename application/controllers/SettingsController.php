@@ -106,7 +106,7 @@ class SettingsController extends TrapsController
 		echo '<pre>';
 		require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 		
-		$icingaweb2_etc="/etc/icingaweb2";
+		$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 		$debug_level=4;
 		$Trap = new Trap($icingaweb2_etc);
 		$Trap->setLogging($debug_level,'display');

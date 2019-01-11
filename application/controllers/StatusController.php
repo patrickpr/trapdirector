@@ -41,6 +41,21 @@ class StatusController extends TrapsController
 			$this->displayExitError('status',$e->getMessage());
 		}
 		
+		/*************** Log destination *******************/
+		
+		try
+		{		
+			$this->view->currentLogDestination=$this->getDBConfigValue('log_destination');
+			$this->view->logDestinations=$this->getModuleConfig()->getLogDestinations();
+			$this->view->currentLogFile=$this->getDBConfigValue('log_file');
+			$this->view->logLevels=$this->getModuleConfig()->getlogLevels();
+			$this->view->currentLogLevel=$this->getDBConfigValue('log_level');
+		}
+		catch (Exception $e)
+		{
+			$this->displayExitError('status',$e->getMessage());
+		}		
+		
 	} 
   
 	public function mibAction()

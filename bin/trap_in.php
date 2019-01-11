@@ -11,7 +11,8 @@ $debug_level=4;// 0=No output 1=critical 2=warning 3=trace 4=ALL
 
 $Trap = new Trap($icingaweb2_etc);
 
-$Trap->setLogging($debug_level,'syslog');
+// Set by DB
+//$Trap->setLogging($debug_level,'syslog');
 //$Trap->setLogging($debug_level,'file');
 
 $Trap->eraseOldTraps();

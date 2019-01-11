@@ -9,7 +9,15 @@ class TrapModuleConfig
 	
 	protected $DBConfigDefaults=array(
 		'db_remove_days' => 60, // number of days before removing traps
+		'log_destination' => 'syslog', // Log destination for trap handler
+		'log_file' => '/tmp/trapdirector.log', // Log file
+		'log_level' => 2, // log level
 	);
+	
+	protected $logLevels=array(0=>'No output', 1=>'critical', 2=>'warning', 3=>'trace', 4=>'ALL');
+	public function getlogLevels() { return $this->logLevels;}
+	protected $logDestinations=array('syslog'=>'syslog','file'=>'file','display'=>'display');
+	public function getLogDestinations() { return $this->logDestinations;}
 	
 	function __construct($prefix)
 	{
@@ -38,6 +46,8 @@ class TrapModuleConfig
 		return array('c' => $this->table_prefix . 'db_config');
 	}
 
+	
+	
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
 	// Minimum DB version 

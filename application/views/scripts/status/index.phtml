@@ -6,19 +6,63 @@
 <div class="content">
   <h2>Database</h2>
   The current trap database contains : <br>
-  
   <ul>
 	<li> <span id="trap_count"><?= $this->trap_count ?> traps </li>
 	<li> <span id="trap_object_count"><?= $this->trap_object_count ?> trap objects </li>
 	<li> <span id="rule_count"><?= $this->rule_count ?> rules </li>
   </ul>
-  Traps older than <input type="text" id="input_text" maxlength="4" style="width=4em;"
-  value="<?= $this->trap_days_delete ?>" > days will be dropped.<br>
-  <button type="button" id="button_trap_save">Save</button>
-  <button type="button" id="button_trap_doit">Do it now</button><br>
-  
+  Traps older than <input type="text" id="input_text_trap_days" maxlength="4" style="width:4em;"
+  value="<?= $this->trap_days_delete ?>" /> days will be dropped.<br>
+  <button type="button" id="button_trap_save" onclick='click_button_trap("save")'>Save</button>
+  <button type="button" id="button_trap_doit" onclick='click_button_trap("execute")'>Do it now</button><br>
+
   <hr>
   
+   <h2>Log destination</h2>
+   Logs from the trap receiver will be sent to : <br>
+	<select name="logsel" id="select_log_destination" empty_option="Select ..." autosubmit="">
+<?php
+		if (count($this->logDestinations)==0)
+		{
+			echo "<option value='-1'>Just shout loud</option>\n";
+		}
+		else
+		{
+			foreach ($this->logDestinations as $key => $val)
+			{
+				echo '<option value=' . $key;
+				if ($val == $this->currentLogDestination)
+				{
+					echo ' selected ';
+				}
+				echo '>'.$val.'</option>'."\n";
+			}
+		}
+?>		
+	</select><br><br>
+	For file log : <input type="text" id="input_current_log" maxlength="20"
+	value="<?= $this->currentLogFile ?>" style="width=40em;"> (note : weird error for now when not writable)<br>
+	Log level : <select name="logsel" id="select_log_level" empty_option="Select ..." autosubmit="">
+<?php
+		if (count($this->logLevels)==0)
+		{
+			echo "<option value='-1'>Just shout loud</option>\n";
+		}
+		else
+		{
+			foreach ($this->logLevels as $key => $val)
+			{
+				echo '<option value=' . $key;
+				if ($key == $this->currentLogLevel)
+				{
+					echo ' selected ';
+				}
+				echo '>'.$val.'</option>'."\n";
+			}
+		}
+?>	
+	</select><br>
+	<button type="button" id="button_log_save" onclick='click_button_log()'>Save</button>
   
   <ul>
     <li>mibs paths check</li>
@@ -26,3 +70,92 @@
 	<li>log destination</li>
   </ul>
 </div>
+
+<script type='text/javascript'>
+dbHelper='/icingaweb2/trapdirector/helper/dbmaintenance';
+logHelper='/icingaweb2/trapdirector/helper/logdestination';
+// TODO : put function in a js (duplicate from add.phtml)
+function displayWarning(message)
+{
+	// for now
+	alert(message);
+}
+function displayOK(message)
+{
+	// for now
+	alert(message);
+}
+
+function click_button_log()
+{
+	destination=$("#select_log_destination").val();
+	file=$("#input_current_log").val();
+	level=$("#select_log_level").val();
+	$.ajax({
+			url: logHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"destination"	: 	destination,
+				"file"			:	file,
+				"level"			:	level
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					displayOK("Done");
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});	
+}
+
+
+function click_button_trap(action)
+{
+	days=$("#input_text_trap_days").val();
+	$.ajax({
+			url: dbHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	action,
+				"days"		:	days
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					displayOK("Done");
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});	
+}
+
+$(function() {
+	return;
+});
+
+</script>

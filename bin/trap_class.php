@@ -93,9 +93,17 @@ class Trap
 			$this->db_prefix=$trap_config['config']['database_prefix'];
 		}	
 		
-
+		/***** Database options :  ***/
+		$this->getDBConfigIfSet('log_level',$this->debug_level);
+		$this->getDBConfigIfSet('log_destination',$this->alert_output);
+		$this->getDBConfigIfSet('log_file',$this->debug_file);
 	}
 
+	protected function getDBConfigIfSet($element,&$variable)
+	{
+		$value=$this->getDBConfig($element);
+		if ($value != 'null') $variable=$value;
+	}
 	/** Get data from db_config
 	*	@param $element name of param
 	*	@return $value (or null)

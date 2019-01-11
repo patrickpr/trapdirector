@@ -6,6 +6,7 @@ use Icinga\Web\Controller;
 use Icinga\Web\Url;
 
 use Icinga\Module\Trapdirector\TrapsController;
+use Trap;
 
 class HelperController extends TrapsController
 {
@@ -183,5 +184,165 @@ class HelperController extends TrapsController
 			);
 		}			
 	}
+	
+	/** Save or execute database purge of <n> days
+	*	days=>int 
+	*	action=>save/execute
+	*	return : status=>OK/Message error
+	*/
+	public function dbmaintenanceAction()
+	{
+		
+		$postData=$this->getRequest()->getPost();
+		if (isset($postData['days']))
+		{
+			$days=$postData['days'];
+			if (!preg_match('/^[0-9]+$/',$days))
+			{
+				$this->_helper->json(array('status'=>'invalid days : '.$days));
+			}
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'No days'));
+		}
+		if (isset($postData['action']))
+		{
+			$action=$postData['action'];
+			if ($action != 'save' && $action !='execute')
+			{
+				$this->_helper->json(array('status'=>'unknown action '.$action));
+				return;
+			}
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'No action'));
+			return;
+		}
+		if ($action == 'save')
+		{
+			try
+			{
+				$this->setDBConfigValue('db_remove_days',$days);
+			}
+			catch (Exception $e)
+			{
+				$this->_helper->json(array('status'=>'Save error : '.$e->getMessage() ));
+				return;
+			}
+			$this->_helper->json(array('status'=>'OK'));
+			return;
+		}
+		if ($action == 'execute')
+		{
+			try
+			{
+				require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+				$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+				$debug_level=4;
+				$Trap = new Trap($icingaweb2_etc);
+				$Trap->setLogging($debug_level,'syslog');
+				$Trap->eraseOldTraps($days);
+			}
+			catch (Exception $e)
+			{
+				$this->_helper->json(array('status'=>'execute error : '.$e->getMessage() ));
+				return;
+			}			
+			$this->_helper->json(array('status'=>'OK'));
+		}
+			
+	}	
+
+	/** Save log output to db
+	*	destination=>log destination 
+	*	file=>file name
+	*	level => int 
+	*	return : status=>OK/Message error
+	*/
+	public function logdestinationAction()
+	{
+		
+		$postData=$this->getRequest()->getPost();
+		if (isset($postData['destination']))
+		{
+			$destination=$postData['destination'];
+			$logDest=$this->getModuleConfig()->getLogDestinations();
+			if (!isset($logDest[$destination]))
+			{
+				$this->_helper->json(array('status'=>'invalid destination : '.$destination));
+			}
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'No destination'));
+		}
+		if (isset($postData['file']))
+		{ 
+			$file=$postData['file'];
+/*			if (!touch($file ))
+			{
+				$this->_helper->json(array('status'=>'File not writable :  '.$file));
+				return;
+			}
+			*/
+			// TODO : check why exception/error is not catched 
+			try {
+				touch($file);
+			}
+			catch (Exception $e) 
+			{
+				$this->_helper->json(array('status'=>'File not writable :  '.$file));
+				return;
+			}
+			
+		}
+		else
+		{
+			if ($destination != 'file')
+			{
+				$file=null;
+			}
+			else
+			{
+				$this->_helper->json(array('status'=>'No file'));
+			}
+			return;
+		}
+
+		if (isset($postData['level']))
+		{ 
+			$level=$postData['level'];
+		}
+		else
+		{
+			if ($destination != 'level')
+			{
+				$level=null;
+			}
+			else
+			{
+				$this->_helper->json(array('status'=>'No level'));
+			}
+			return;
+		}
+		
+		try
+		{
+			$this->setDBConfigValue('log_destination',$destination);
+			$this->setDBConfigValue('log_file',$file);
+			$this->setDBConfigValue('log_level',$level);
+		}
+		catch (Exception $e)
+		{
+			$this->_helper->json(array('status'=>'Save error : '.$e->getMessage() ));
+			return;
+		}
+		$this->_helper->json(array('status'=>'OK'));
+		return;
+			
+	}	
+	
 	
 }
