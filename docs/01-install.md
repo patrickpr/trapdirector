@@ -20,6 +20,7 @@ Install files
 
 1. Download latest release and unzip in a temporary directory.
 2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory
+3. trapdirector/mibs/ must be writable by icinga web user to upload mibs from web GUI
 
 Activate module
 ---------------
