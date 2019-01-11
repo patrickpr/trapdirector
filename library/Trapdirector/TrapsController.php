@@ -198,7 +198,11 @@ class TrapsController extends Controller
 		if ($this->MIBData == null)
 		{
 			//TODO : path in config module 
-			$this->MIBData=new MIBLoader($this->Module()->getBaseDir().'/mibs/traplist.txt');
+			$this->MIBData=new MIBLoader(
+				$this->Module()->getBaseDir().'/mibs/traplist.txt',
+				$this->Config()->get('config', 'snmptranslate'),
+				$this->Config()->get('config', 'snmptranslate_dirs')
+			);
 		}
 		return $this->MIBData;
 	}	

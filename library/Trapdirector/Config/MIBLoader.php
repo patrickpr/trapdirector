@@ -8,9 +8,10 @@ namespace Icinga\Module\TrapDirector\Config;
 class MIBLoader
 {
 	protected $filename; //< string file loaded
+	protected $snmptranslate; // < snmp translate binary
+	protected $snmptranslate_dirs; // < mib include dirs
 
-	// TODO : put all in protected after debug done
-	public $mibList; //< array of all mibs
+	protected $mibList; //< array of all mibs
 	/*  traps : 
 		<oid>
 		-> mib
@@ -21,10 +22,15 @@ class MIBLoader
 				->mib
 				->type
 	*/
-	public $traps; //< array of traps
+	protected $traps; //< array of traps
 	
-	public function __construct($file)
+	protected $cache=array(); //< cache of translateoid
+	protected $enable_cache=true;
+	
+	public function __construct($file,$snmptranslate,$snmptranslate_dirs)
 	{
+		$this->snmptranslate=$snmptranslate;
+		$this->snmptranslate_dirs=$snmptranslate_dirs;
 		$input_stream=fopen($file, 'r');
 
 		if ($input_stream==FALSE)
@@ -116,13 +122,14 @@ class MIBLoader
 	*/
 	public function translateOID($oid)
 	{
-		// TODO : get binary & dirs from config / database
-		$snmptranslate='/usr/bin/snmptranslate ';
-		$snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs';
+		if ($this->enable_cache && isset($this->cache[$oid]['name']))
+		{
+			return $this->cache[$oid];
+		}
 		
 		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
 		// Try to get oid name from snmptranslate
-		$translate=exec($snmptranslate . ' -m ALL -M '.$snmptranslate_dirs.
+		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
 		' '.$oid,$translate_output);
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) {
@@ -131,10 +138,16 @@ class MIBLoader
 		$retArray['mib']=$matches[1];
 		$retArray['name']=$matches[2];
 		
-		$translate=exec($snmptranslate . ' -m ALL -M '.$snmptranslate_dirs.' -Td -On ' . $matches[0] .
+		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.' -Td -On ' . $matches[0] .
 			" | grep SYNTAX | sed 's/SYNTAX\t//'"
 		   ,$translate_output);
 		$retArray['type']=$translate;
+		
+		if ($this->enable_cache) {			
+			$this->cache[$oid]['mib']=$retArray['mib'];
+			$this->cache[$oid]['name']=$retArray['name'];
+			$this->cache[$oid]['type']=$retArray['type'];
+		}
 		
 		return $retArray;
 						

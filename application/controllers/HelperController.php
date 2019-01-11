@@ -159,8 +159,8 @@ class HelperController extends TrapsController
 	public function translateoidAction()
 	{
 		// TODO : get binary & dirs from config / database
-		$snmptranslate='/usr/bin/snmptranslate ';
-		$snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs';
+		$snmptranslate=$this->Config()->get('config', 'snmptranslate');
+		$snmptranslate_dirs=$this->Config()->get('config', 'snmptranslate_dirs');
 		
 		$postData=$this->getRequest()->getPost();
 		if (isset($postData['oid']))

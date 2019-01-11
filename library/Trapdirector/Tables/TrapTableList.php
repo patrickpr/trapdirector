@@ -100,7 +100,7 @@ class TrapTableList extends TrapTable
 			$htm .= "<tr>\n";
 		}
 		$htm .= "</tbody></table>\n";
-		$htm .= "Filter : " . $this->filter."<br>\n";
+		//$htm .= "Filter : " . $this->filter."<br>\n";
 		return $htm;
 
 	}
@@ -137,7 +137,7 @@ class TrapTableList extends TrapTable
 		$db=$this->db();
 		
 		$query = $this->getBaseQuery();
-		
+		$this->applyFiltersToQuery($query);
        if ($this->hasLimit() || $this->hasOffset()) {
             $query->limit($this->getLimit(), $this->getOffset());
         }		
@@ -159,6 +159,26 @@ class TrapTableList extends TrapTable
 	
 	// ****************** Filters
 
+	protected $filter_Handler;
+	protected $filter_query='';
+	public function renderFilterHTML()
+	{
+		$htm=' <form id="filter" name="mainFilter" 
+				enctype="application/x-www-form-urlencoded" 
+				action="'.$this->filter_Handler.'" 
+				method="get">';
+		$htm.='<input type="text" name="q" title="Search is simple! Try to combine multiple words" 
+		placeholder="Search..." class="search" value="'.$this->filter_query.'">';
+		$htm.='</form>';
+		return $htm;
+	}
+	
+	public function updateFilter($handler,$filter)
+	{
+		$this->filter_Handler=$handler;
+		$this->filter_query=(isset($filter['q']))?$this->filter_query=$filter['q']:'';
+	}
+	
     protected function getSearchColumns()
     {
         return $this->getColumns();
@@ -192,6 +212,20 @@ class TrapTableList extends TrapTable
 	
     protected function applyFiltersToQuery($query)
     {
+		
+		if ($this->filter_query != '')
+		{
+			$sql='(';
+			$first=1;
+			foreach($this->moduleConfig->getTrapListSearchColumns() as $column)
+			{
+				if ($first==0) $sql.=' OR ';
+				$first=0;
+				$sql.=" ".$column." LIKE  '%".$this->filter_query."%' ";
+			}
+			$sql.=')';
+			$query->where($sql);
+		}
 		// TODO : implement
 		
         /*$filter = null;

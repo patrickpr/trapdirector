@@ -12,7 +12,7 @@
 	<li> <span id="rule_count"><?= $this->rule_count ?> rules </li>
   </ul>
   Traps older than <input type="text" id="input_text_trap_days" maxlength="4" style="width:4em;"
-  value="<?= $this->trap_days_delete ?>" /> days will be dropped.<br>
+  value="<?= $this->trap_days_delete ?>" /> days will be dropped.<br><br>
   <button type="button" id="button_trap_save" onclick='click_button_trap("save")'>Save</button>
   <button type="button" id="button_trap_doit" onclick='click_button_trap("execute")'>Do it now</button><br>
 
@@ -41,7 +41,7 @@
 ?>		
 	</select><br><br>
 	For file log : <input type="text" id="input_current_log" maxlength="20"
-	value="<?= $this->currentLogFile ?>" style="width=40em;"> (note : weird error for now when not writable)<br>
+	value="<?= $this->currentLogFile ?>" style="width=40em;"> (note : weird error for now when not writable)<br><br>
 	Log level : <select name="logsel" id="select_log_level" empty_option="Select ..." autosubmit="">
 <?php
 		if (count($this->logLevels)==0)
@@ -61,14 +61,9 @@
 			}
 		}
 ?>	
-	</select><br>
+	</select><br><br>
 	<button type="button" id="button_log_save" onclick='click_button_log()'>Save</button>
   
-  <ul>
-    <li>mibs paths check</li>
-	<li>oid translation check</li>
-	<li>log destination</li>
-  </ul>
 </div>
 
 <script type='text/javascript'>

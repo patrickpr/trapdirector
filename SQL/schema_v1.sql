@@ -1,9 +1,9 @@
 CREATE TABLE `#PREFIX#db_config` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
-  `value` varchar(100) NOT NULL,
+  `value` mediumtext,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 INSERT INTO #PREFIX#db_config (`name`,`value`) VALUES ('db_version',1);
 
@@ -52,4 +52,3 @@ CREATE TABLE `#PREFIX#rules` (
   `modifier` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
-

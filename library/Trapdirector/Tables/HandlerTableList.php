@@ -104,32 +104,30 @@ class HandlerTableList extends TrapTable
 							$val=$this->status_display[$row->$rowkey];
 						break;
 						case 'trap_oid':
+						
 							if ($this->doTranslate==true)
 							{
 								$oidName=$this->MIB->translateOID($row->$rowkey);
-								if ($oidName==null)
+								if (isset($oidName['name']))
 								{
-									$val = $row->$rowkey;
+									$val=$oidName['name'];
 								}
 								else
 								{
-									$val=$oidName['name'];
+									$val = $row->$rowkey;
 								}								
 							}
 							else
 							{
 								$val = $row->$rowkey;
 							}
+						break;
 						default:
 							$val = $row->$rowkey;
 					}
 					if ($rowkey == 'trap_oid' && $this->doTranslate==true)
-					{
-
-					}
-					else
-					{
-						
+					{					
+							
 					}
 				} else {
 					$val = '-';

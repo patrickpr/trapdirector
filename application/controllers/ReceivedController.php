@@ -28,7 +28,12 @@ class ReceivedController extends TrapsController
 		$this->view->table=$this->applyPaginationLimits($this->getTrapListTable(),$this->getModuleConfig()->itemListDisplay());		
 		
 		// Set Filter
-		$this->view->filterEditor = $this->getTrapListTable()->getFilterEditor($this->getRequest());
+		$postData=$this->getRequest()->getPost();
+		$filter['q']=$this->params->get('q');//(isset($postData['q']))?$postData['q']:'';
+	
+		$this->view->filter=$filter;
+		$this->view->table->updateFilter(Url::fromRequest()->__toString(),$filter);
+		//$this->view->filterEditor = $this->getTrapListTable()->getFilterEditor($this->getRequest());
 
 	}
 

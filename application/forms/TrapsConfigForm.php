@@ -8,12 +8,16 @@ use Zend\Form\Element;
 class TrapsConfigForm extends ConfigForm
 {
 	private $DBList;
+	private $module_base_path;
 	public function init()
 	{
 		$this->setName('form_config_traps');
 		$this->setSubmitLabel($this->translate('Save Changes'));
 	}
-	
+	public function setPaths($module_base_path)
+	{
+		$this->module_base_path=$module_base_path;
+	}
 	public function setDBList($resources)
 	{
 		$this->DBList=$resources;
@@ -80,7 +84,7 @@ class TrapsConfigForm extends ConfigForm
             array(
                     'required'      => true,
                     'label'         => $this->translate('Path for mibs'),
-					'value'			=> '/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs',
+					'value'			=> '/usr/share/snmp/mibs:'.$this->module_base_path.'/mibs',
              )
         );		
 		$this->addElement(

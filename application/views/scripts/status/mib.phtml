@@ -4,12 +4,75 @@
 </div>
 
 <div class="content">
-  <h2>TODO</h2>
+  <h2>To add files directly</h2>
   <ul>
-    <li>Add Mib : for now put file in /usr/share/icingaweb2/module/trapdirector/mibs<br>
-	add run : <br>
+    <li>Put mib file in /usr/share/icingaweb2/module/trapdirector/mibs</li>
+	<li>then run : 
 	/usr/share/icingaweb2/modules/trapdirector/bin/get_traps.sh > /usr/share/icingaweb2/modules/trapdirector/mibs/traplist.txt
 	</li>
-	<li> mib list </li>
+
   </ul>
+   <h2>snmptranslate</h2>
+  
+  Binary (<?= $this->snmptranslate_bin ?>) : 
+	<span style="background-color:<? 
+		if ($this->snmptranslate_state == 'warn') echo "#FFE555";
+		else echo "#00D500"
+	?>; font-weight:bold;"> 
+		<?= $this->snmptranslate ?> </span>
+		
+  <h2>Mib directories</h2>
+  Directories where mibs are found (configured in module configuration) : 
+  <ul>
+<?php 
+	//print_r($this->dirArray);
+	foreach($this->dirArray as $key=>$dir) { echo '<li>'.$dir."</li>\n"; } 
+?>
+  </ul>
+  Add a mib FILE (NOT IMPLEMENTED) :
+  <form id="file-form" action="#" method="POST">
+		<input type="file" id="mib-select" name="mibs[]" multiple/>
+		<button type="submit" id="upload-button">Upload</button>
+  </form>
+   
+
+  <br><br>
+  
+  Files added in MIB directory : 
+  <ul>
+ <?php
+	foreach ($this->fileList as $file)
+	{
+		echo '<li>'.$file."</li>\n";
+	}
+ ?>
+  </ul>
+
+  
 </div>
+
+<script type='text/javascript'>
+mibfileHelper='/icingaweb2/trapdirector/helper/addmibfiles';
+
+// TODO : put function in a js (duplicate from add.phtml)
+function displayWarning(message)
+{
+	// for now
+	alert(message);
+}
+function displayOK(message)
+{
+	// for now
+	alert(message);
+}
+
+function add_mib_files()
+{
+	alert("Not Implemented");
+}
+
+$(function() {
+	return;
+});
+
+</script>

@@ -61,6 +61,40 @@ class StatusController extends TrapsController
 	public function mibAction()
 	{
 		$this->prepareTabs()->activate('mib');
+		
+		// snmptranslate tests
+		$snmptranslate = $this->Config()->get('config', 'snmptranslate');
+		$this->view->snmptranslate_bin=$snmptranslate;
+		$this->view->snmptranslate_state='warn';
+		if (is_executable ( $snmptranslate ))
+		{
+			$translate=exec($snmptranslate . ' 1');
+			if (preg_match('/iso/',$translate))
+			{
+				$this->view->snmptranslate='works fine';
+				$this->view->snmptranslate_state='ok';
+			}
+			else
+			{
+				$this->view->snmptranslate='can execute but no resolution';
+			}
+		}
+		else
+		{
+			$this->view->snmptranslate='cannot execute';
+		}
+	
+		// mib dirs
+		$DirConf=$this->Config()->get('config', 'snmptranslate_dirs');
+		$dirArray=array();
+		$dirArray=explode(':',$DirConf);
+		$this->view->dirArray=$dirArray;
+
+		exec('ls '.$this->Module()->getBaseDir().'/mibs/ | grep -v traplist.txt',$output);
+		//$i=0;$listFiles='';while (isset($output[$i])) $listFiles.=$output[$i++];
+		//$this->view->fileList=explode(' ',$listFiles);
+		$this->view->fileList=$output;
+		
 	}
 	protected function prepareTabs()
 	{

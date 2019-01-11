@@ -45,8 +45,6 @@ class TrapModuleConfig
 	{ 
 		return array('c' => $this->table_prefix . 'db_config');
 	}
-
-	
 	
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
@@ -69,6 +67,18 @@ class TrapModuleConfig
 			//'destination_port'           	=> 't.destination_port',
 		);
 	}
+	public function getTrapListSearchColumns()
+	{
+		return array(
+			't.date_received',
+			't.source_ip',
+			't.trap_name',
+			't.trap_oid',
+			'status',
+			'id',
+			//'destination_port'           	=> 't.destination_port',
+		);
+	}	
 	// Titles display in Trap List table
 	public function getTrapListTitles()
 	{

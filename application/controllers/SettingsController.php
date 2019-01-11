@@ -70,7 +70,7 @@ class SettingsController extends TrapsController
     $this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
 
 	$this->view->form = $form = new TrapsConfigForm();
-
+	$this->view->form->setPaths($this->Module()->getBaseDir());
 	//$form->setRedirectUrl('trapdirector/status');
 	//echo $form->getRedirectUrl();
 	

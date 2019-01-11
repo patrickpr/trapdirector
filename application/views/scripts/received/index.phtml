@@ -2,7 +2,9 @@
   <?= $this->tabs ?>
   <h1>List of received traps</h1>
 
- <?= $this->filterEditor // TODO : implement filters?> (filters not implemented)<br />  
+ <?php //$this->filterEditor ?> 
+ <?= $this->table->renderFilterHTML() ?>
+ <br />
  <?= $this->table->getPaginator(); ?> 
 </div>
 
