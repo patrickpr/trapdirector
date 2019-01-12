@@ -28,9 +28,13 @@ With :
 * Source IP of trap
 * Trap OID (or name if it could be resolved)
 * Status : 
+
 unknown : no rule was found for this trap
+
 done : rule was found and 
+
 error : ...
+
 waiting : trap was received, but no rule was applied for now
 
 Click on a trap to have details
