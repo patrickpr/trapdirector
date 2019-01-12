@@ -14,7 +14,7 @@ Have a look here : http://www.net-snmp.org/wiki/
 Sending traps for testing
 ---------------
 
-In the bin directory you have 3 bash files test_trap_v<n>.sh which will send snmp v1, v2 & v3 traps to localhost.
+In the bin directory you have 3 bash files test_trap_v(1|2|3).sh which will send snmp v1, v2 & v3 traps to localhost.
 
 Looking at traps received
 ---------------
@@ -72,14 +72,14 @@ The form is divided in three parts
 
 2) Trap objects
 
-This part lists all objects that will be used in the display and rules as $<n>.
+This part lists all objects that will be used in the display and rules as $N.
 
 As you selected a trap, the objects sent with the trap are automaticaly added in here
 
 ![add-from-trap-2](img/add-from-trap-2.jpg)
 
 * 1 : enter OID here to manually add bojects
-* 2 : Shortcuts $<n> that will be used in rules
+* 2 : Shortcuts $N that will be used in rules
 * 3 : Value sent by the trap selected earlier
 * 4 : Type of trap as described in MIB
 
@@ -93,7 +93,7 @@ There you will configure :
 
 * 1 : Display
 
-The display string will be sent with status to service. You can use all the $<n> defined above.
+The display string will be sent with status to service. You can use all the $N defined above.
 
 Here, the display will be for example : "Trap linkUP received for 3"
 (if interface index in object is 3).
@@ -129,13 +129,11 @@ $5 = 3  &  $3 = 2 | $4 = 1 : works like : ($5 = 3  &  $3 = 2) | $4 = 1 . Better 
 Then click on save to save and activate your rule for next trap.
 
 
-Adding rule from scratch
----------------
-TODO
-
 Updating a rule
 ---------------
-TODO
+
+On the Handler page, click on a rule to edit it.
+
 
 Testing a rule
 ---------------

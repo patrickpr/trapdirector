@@ -10,7 +10,8 @@ $this->provideConfigTab('config', array(
 ));
 
 $section = $this->menuSection(N_('Traps'),array (
-	'icon'	=> 'filter'
+	'icon'	=> 'filter',
+	'url'	=> 'trapdirector'
 ));
 
 $section->add(N_('Status & Mibs'),array(

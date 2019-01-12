@@ -96,6 +96,13 @@ class StatusController extends TrapsController
 		$this->view->fileList=$output;
 		
 	}
+	
+	public function servicesActions()
+	{
+		$template_create = 'icingacli director service create --json \'{ "check_command": "dummy", "check_interval": "3600", "check_timeout": "20", "disabled": false, "enable_active_checks": true, "enable_event_handler": true, "enable_notifications": true, "enable_passive_checks": true, "enable_perfdata": true, "max_check_attempts": "1", "object_name": "trapdirector_main_template", "object_type": "template", "retry_interval": "3600"}\'';
+		
+	}
+	
 	protected function prepareTabs()
 	{
 		return $this->getTabs()->add('status', array(
@@ -105,5 +112,9 @@ class StatusController extends TrapsController
 			'label' => $this->translate('MIB Management'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/status/mib')
 		);
+		/*->add('services', array(
+			'label' => $this->translate('Services management'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/status/services')
+		);*/
 	} 
 }
