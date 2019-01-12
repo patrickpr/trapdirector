@@ -12,7 +12,9 @@ Project status : ongoing developpement
 (Some code is taken directly from trapoola.)
 
 Have a look at : 
-* installation doc : ![installation](docs/01-install.md)
+* installation doc : ![Installation](docs/01-install.md)
 
 * Ongoing doc : ![Traps](docs/02-traps.md)
+
+* Receiver : ![Basic schema](docs/20-receiver-logic.md)
 
