@@ -60,7 +60,7 @@ class TrapModuleConfig
 	{
 		return array(
 			'timestamp'		=> 'UNIX_TIMESTAMP(t.date_received)',
-			'source_ip'		=> 't.source_ip',
+			'source_ip'		=> 'CASE WHEN t.source_name IS NULL THEN t.source_ip ELSE t.source_name END as source_ip',
 			'trap_oid'		=> "CASE WHEN t.trap_name IS NULL OR t.trap_name = '' THEN t.trap_oid ELSE t.trap_name END",
 			'status'		=> 't.status',
 			'id'           	=> 't.id',
@@ -72,10 +72,11 @@ class TrapModuleConfig
 		return array(
 			't.date_received',
 			't.source_ip',
+			't.source_name',
 			't.trap_name',
 			't.trap_oid',
-			'status',
-			'id',
+			't.status',
+			't.id',
 			//'destination_port'           	=> 't.destination_port',
 		);
 	}	
@@ -84,7 +85,7 @@ class TrapModuleConfig
 	{
 		return array(
 			'timestamp'		=> 'Time',
-			'source_ip'		=> 'Source IP',
+			'source_ip'		=> 'Source IP/name',
 			'trap_oid'		=> 'Trap OID',
 			'status'		=> 'Status',
 			//'destination_port' => 'Destination Port',

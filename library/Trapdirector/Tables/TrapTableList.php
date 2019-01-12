@@ -107,17 +107,13 @@ class TrapTableList extends TrapTable
 
     public function count()
     {
-        $db = $this->connection()->getConnection();
-        $query = clone($this->getBaseQuery());
-        $query->reset('order')->columns(array('COUNT(*)'));
-        $this->applyFiltersToQuery($query);
-
-		$db=$this->db();
+        $db=$this->db();
 		
 		$query = $db->select()->from(
             $this->moduleConfig->getTrapTableName(),
             array('COUNT(*)')
         );
+		$this->applyFiltersToQuery($query);
 		
         return $db->fetchOne($query);
     }
@@ -161,6 +157,8 @@ class TrapTableList extends TrapTable
 
 	protected $filter_Handler;
 	protected $filter_query='';
+	protected $filter_done='';
+	protected $filter_query_list=array('q','done');
 	public function renderFilterHTML()
 	{
 		$htm=' <form id="filter" name="mainFilter" 
@@ -169,14 +167,18 @@ class TrapTableList extends TrapTable
 				method="get">';
 		$htm.='<input type="text" name="q" title="Search is simple! Try to combine multiple words" 
 		placeholder="Search..." class="search" value="'.$this->filter_query.'">';
+		$htm.='<input type="checkbox" id="checkbox_done" name="done" value="1" class="autosubmit" ';
+		if	($this->filter_done == 1) { $htm.=' checked ';}
+		$htm.='> <label for="checkbox_done">Hide processed traps</label>';
 		$htm.='</form>';
 		return $htm;
 	}
 	
 	public function updateFilter($handler,$filter)
 	{
-		$this->filter_Handler=$handler;
+		$this->filter_Handler=$handler->remove($this->filter_query_list)->__toString();
 		$this->filter_query=(isset($filter['q']))?$this->filter_query=$filter['q']:'';
+		$this->filter_done=(isset($filter['done']))?$this->filter_done=$filter['done']:0;
 	}
 	
     protected function getSearchColumns()
@@ -213,9 +215,10 @@ class TrapTableList extends TrapTable
     protected function applyFiltersToQuery($query)
     {
 		
+		$sql='';
 		if ($this->filter_query != '')
 		{
-			$sql='(';
+			$sql.='(';
 			$first=1;
 			foreach($this->moduleConfig->getTrapListSearchColumns() as $column)
 			{
@@ -223,26 +226,14 @@ class TrapTableList extends TrapTable
 				$first=0;
 				$sql.=" ".$column." LIKE  '%".$this->filter_query."%' ";
 			}
-			$sql.=')';
-			$query->where($sql);
+			$sql.=')';			
 		}
-		// TODO : implement
-		
-        /*$filter = null;
-        $enforced = $this->enforcedFilters;
-        if ($this->filter && ! $this->filter->isEmpty()) {
-            $filter = $this->filter;
-        } elseif (! empty($enforced)) {
-            $filter = array_shift($enforced);
-        }
-        if ($filter) {
-            foreach ($enforced as $f) {
-                $filter->andFilter($f);
-            }
-            $query->where($this->renderFilter($filter));
-        }
-		*/
-		
+		if ($this->filter_done == 1)
+		{
+			if ($sql != '') $sql.=' AND ';
+			$sql.="(status != 'done')";
+		}
+		if ($sql != '') $query->where($sql);		
         return $query;
     }	
 

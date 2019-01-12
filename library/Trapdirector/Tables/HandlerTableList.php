@@ -202,7 +202,7 @@ class HandlerTableList extends TrapTable
 		$query = $db->select()->from(
             $this->moduleConfig->getTrapRuleName(),
             $this->moduleConfig->getHandlerListDisplayColumns()
-        )->order('host_name DESC');
+        )->order('host_name DESC,trap_oid DESC');
 
         return $query;
     }	 

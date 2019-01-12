@@ -30,9 +30,9 @@ class ReceivedController extends TrapsController
 		// Set Filter
 		$postData=$this->getRequest()->getPost();
 		$filter['q']=$this->params->get('q');//(isset($postData['q']))?$postData['q']:'';
-	
+		$filter['done']=$this->params->get('done');
 		$this->view->filter=$filter;
-		$this->view->table->updateFilter(Url::fromRequest()->__toString(),$filter);
+		$this->view->table->updateFilter(Url::fromRequest(),$filter);
 		//$this->view->filterEditor = $this->getTrapListTable()->getFilterEditor($this->getRequest());
 
 	}

@@ -29,8 +29,8 @@ class Trap
 	
 	// Trap received data
 	protected $receivingHost;
-	public $trap_data=array();
-	public $trap_data_ext=array();
+	public $trap_data=array(); //< Main trap data (oid, source...)
+	public $trap_data_ext=array(); //< Additional trap data objects (oid/value).
 	
 	function __construct($etc_dir='/etc/icingaweb2')
 	{
@@ -629,8 +629,8 @@ class Trap
 		}
 	}
 	
-	/** Evaluation
-	*	makes token and evaluate.
+	/** Evaluation : makes token and evaluate. 
+	*	Public function for expressions testing
 	*	accepts : < > = <= >= !=  (typec = 0)
 	*	operators : & | (typec=1)
 	*	with : integers [0-9]+ (type 0) or strings "" (type 1) or results (type 2)
@@ -642,7 +642,7 @@ class Trap
 		$item2=0;
 		list($type1,$val1) = $this->eval_getElement($rule,$item);
 		//echo "Elmt: ".$val1." : ".substr($rule,$item)."\n";
-		if ($item==strlen($rule)) {echo "1val\n";return $val1;}  // If only element, return value
+		if ($item==strlen($rule)) {/*echo "1val\n"*/;return $val1;}  // If only element, return value
 		list($typec,$comp) = $this->eval_getOper($rule,$item);
 		//echo "Comp : ".$comp." : ".substr($rule,$item)."\n";
 		list($type2,$val2) = $this->eval_getElement($rule,$item);
@@ -795,17 +795,33 @@ class Trap
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
 					}					
 				}
+				// Put name in source_name
+				if (!isset($this->trap_data['source_name']))
+				{
+					$this->trap_data['source_name']=$rule['host_name'];
+				}
+				else
+				{
+					if (!preg_match('/'.$rule['host_name'].'/',$this->trap_data['source_name']))
+					{ // only add if not present
+						$this->trap_data['source_name'].=','.$rule['host_name'];
+					}
+				}
 			}
 			catch (Exception $e) 
 			{ 
 				$this->trapLog('Error in rule eval',2,'');
-				echo $e->getMessage() . "\n";
+				//echo $e->getMessage() . "\n";
 			}
 			
 		}
 		$this->trap_data['status']='done';
 	}
 
+	/** Create database schema 
+	*	@param $schema_file	File to read schema from
+	*	@param $table_prefix to replace #PREFIX# in schema file by this
+	*/
 	public function create_schema($schema_file,$table_prefix)
 	{
 		//Read data from snmptrapd from stdin
@@ -827,6 +843,58 @@ class Trap
 		}
 		$this->trapLog('Schema created',3);		
 	}
+
+	/** reset service to OK after time defined in rule
+	*	TODO logic is : get all service in error + all all rules, see if getting all rules then select services is better 
+	*	@return : like a plugin : status code (0->3) <message> | <perfdata>
+	**/
+	public function reset_services()
+	{
+		// Get all services not in 'ok' state
+		$sql_query="SELECT s.service_object_id,
+	 UNIX_TIMESTAMP(s.last_check) AS last_check,
+	s.current_state as state,
+	v.name1 as host_name,
+    v.name2 as service_name
+	FROM icinga_servicestatus AS s 
+    LEFT JOIN icinga_objects as v ON s.service_object_id=v.object_id
+    WHERE s.current_state != 0;";
+		$db_conn=$this->db_connect_ido();
+		if (($services_db=$db_conn->query($sql_query)) == FALSE) { // set err to 1 to throw exception.
+			$this->trapLog('No result in query : ' . $sql_query,1,'');
+		}
+		$services=$services_db->fetchAll();
+		
+		// Get all rules
+		$sql_query="SELECT host_name, service_name, revert_ok FROM traps_rules where revert_ok != 0;";
+		$db_conn2=$this->db_connect_trap();
+		if (($rules_db=$db_conn2->query($sql_query)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql_query,1,''); 
+		}
+		$rules=$rules_db->fetchAll();
+		
+		$now=date('U');
+		
+		$numreset=0;
+		foreach ($rules as $key=>$rule)
+		{
+			foreach ($services as $skey => $service)
+			{
+				if ($service['service_name'] == $rule['service_name'] &&
+					$service['host_name'] == $rule['host_name'] &&
+					($service['last_check'] + $rule['revert_ok']) < $now)
+				{
+					$this->serviceCheckResult($service['host_name'],$service['service_name'],0,'Reset service to OK after '.$rule['revert_ok'].' seconds');
+					$numreset++;
+				}
+			}
+		}
+		echo "\n";
+		echo $numreset . " service(s) reset to OK\n";
+		return 0;
+		
+	}
+	
 }
 
 ?>

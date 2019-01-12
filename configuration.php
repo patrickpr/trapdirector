@@ -10,7 +10,7 @@ $this->provideConfigTab('config', array(
 ));
 
 $section = $this->menuSection(N_('Traps'),array (
-	'icon'	=> 'search_petrol.png'
+	'icon'	=> 'filter'
 ));
 
 $section->add(N_('Status & Mibs'),array(

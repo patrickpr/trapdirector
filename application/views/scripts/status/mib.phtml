@@ -26,7 +26,11 @@
   <ul>
 <?php 
 	//print_r($this->dirArray);
-	foreach($this->dirArray as $key=>$dir) { echo '<li>'.$dir."</li>\n"; } 
+	foreach($this->dirArray as $key=>$dir) 
+	{ 
+		echo '<li>'.$dir.' : (aprox. '.exec('cat '.$dir.'/*  | grep "NOTIFICATION-TYPE" | wc -l 2>/dev/null');
+		echo " traps defined)</li>\n";
+	} 
 ?>
   </ul>
   Add a mib FILE (NOT IMPLEMENTED) :
@@ -43,7 +47,7 @@
  <?php
 	foreach ($this->fileList as $file)
 	{
-		echo '<li>'.$file."</li>\n";
+		echo '<li>'.$file . "</li>\n";
 	}
  ?>
   </ul>
