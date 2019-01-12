@@ -23,7 +23,9 @@ Go to traps -> received to have a list of received traps
 
 ![trap-1](img/Trap-rule-1.jpg)
 
-With : 
+Click on a trap to have details
+
+Columns : 
 * Time the trap was received
 * Source IP of trap
 * Trap OID (or name if it could be resolved)
@@ -31,13 +33,13 @@ With :
 
 unknown : no rule was found for this trap
 
-done : rule was found and 
+done : rule was found and evaluated
 
 error : ...
 
 waiting : trap was received, but no rule was applied for now
 
-Click on a trap to have details
+
 
 
 Trap details
