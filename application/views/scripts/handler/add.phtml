@@ -331,7 +331,7 @@ function deleteMain()
 	});	
 }
 
-	function submitMain()
+function submitMain()
 {
 	// Check everything
 	// Hostname/hostgroup
@@ -354,10 +354,17 @@ function deleteMain()
 		servicename=$("#id_service  option:selected").text();
 		serviceid=$("#id_service").val();
 	}
-
+	// Get OID
 	var oidRegexp = /^[\.\d]+$/;
-	if ( ! oidRegexp.test($("#id_mainoid").val())  ) { displayWarning("Invalid oid");return; }
+	var getOID=$("#id_mainoid").val();
+	if ( ! oidRegexp.test(getOID)  ) { displayWarning("Invalid oid");return; }
+	// Check if first car is a '.' 
+	if (getOID.charAt(0) != '.')
+	{
+		getOID = '.'+getOID;
+	}
 	
+	// Get revert time
 	var timeRegexp = /^[\d]*$/;
 	var revertOK=$("#id_revertOK").val()
 	if (revertOK=='') revertOK=0;
@@ -387,7 +394,7 @@ function deleteMain()
 				"hostname"		:	hostname,
 				"serviceid"		:	serviceid,
 				"serviceName"	:	servicename,
-				"oid"			:	$("#id_mainoid").val(),
+				"oid"			:	getOID,
 				"revertOK"		:	revertOK,
 				"display"		:	newDisplay,
 				"rule"			:	newRule,

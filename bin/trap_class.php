@@ -13,14 +13,13 @@ class Trap
 	protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
 	protected $db_prefix='traps_';
 	
-	// Options from config database
-	// None for now
-	
-	// Logs
+	//**** Options from config database
+	// Logs 
 	protected $debug_level=2;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
 	protected $alert_output='syslog'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
 	protected $syslog_logfile=null; // TODO check if useful
+	//**** End options from database
 	
 	//protected $debug_file="php://stdout";	
 	// Databases
@@ -31,6 +30,8 @@ class Trap
 	protected $receivingHost;
 	public $trap_data=array(); //< Main trap data (oid, source...)
 	public $trap_data_ext=array(); //< Additional trap data objects (oid/value).
+	public $trap_id=null; //< trap_id after sql insert
+	public $trap_action=null; //< trap action for final write
 	
 	function __construct($etc_dir='/etc/icingaweb2')
 	{
@@ -450,6 +451,7 @@ class Trap
 
 		// TODO check value of $inserted_id
 		$inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
+		$this->trap_id=$inserted_id;
 		$this->trapLog('id found: '.$inserted_id,3,'');
 		
 		// Fill trap extended data table
@@ -488,12 +490,67 @@ class Trap
 	protected function getRules($ip,$oid)
 	{
 		$db_conn=$this->db_connect_trap();
-		$sql='SELECT * from '.$this->db_prefix.'rules WHERE ( ( ip4=\''.$ip.'\' OR ip6=\''.$ip.'\' ) AND trap_oid=\''.$oid.'\' )';
+		// fetch rules based on IP in rule and OID
+		$sql='SELECT * from '.$this->db_prefix.'rules WHERE trap_oid=\''.$oid.'\' ';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,2,'');
 		}
-		return $ret_code->fetchAll();
+		$rules_all=$ret_code->fetchAll();
+		//echo "rule all :\n";print_r($rules_all);echo "\n";
+		$rules_ret=array();
+		$rule_ret_key=0;
+		foreach ($rules_all as $key => $rule)
+		{
+			if ($rule['ip4']==$ip || $rule['ip6']==$ip)
+			{
+				$rules_ret[$rule_ret_key]=$rules_all[$key];
+				$rule_ret_key++;
+				continue;
+			}
+			if (isset($rule['host_group_name']) && $rule['host_group_name']!=null)
+			{ // get ips of group members by oid
+				$db_conn2=$this->db_connect_ido();
+				$sql="SELECT m.host_object_id, a.address as ip4, a.address6 as ip6, b.name1 as host_name
+						FROM icinga_objects as o
+						LEFT JOIN icinga_hostgroups as h ON o.object_id=h.hostgroup_object_id
+						LEFT JOIN icinga_hostgroup_members as m ON h.hostgroup_id=m.hostgroup_id
+						LEFT JOIN icinga_hosts as a ON a.host_object_id = m.host_object_id
+						LEFT JOIN icinga_objects as b ON b.object_id = a.host_object_id
+						WHERE o.name1='".$rule['host_group_name']."';";
+				if (($ret_code2=$db_conn2->query($sql)) == FALSE) {
+					$this->trapLog('No result in query : ' . $sql,2,'');
+					continue;
+				}
+				$grouphosts=$ret_code2->fetchAll();
+				//echo "rule grp :\n";print_r($grouphosts);echo "\n";
+				foreach ( $grouphosts as $gkey=>$host)
+				{
+					//echo $host['ip4']."\n";
+					if ($host['ip4']==$ip || $host['ip6']==$ip)
+					{
+						//echo "Rule added \n";
+						$rules_ret[$rule_ret_key]=$rules_all[$key];
+						$rules_ret[$rule_ret_key]['host_name']=$host['host_name'];
+						$rule_ret_key++;
+					}	
+				}
+			}
+		}
+		//echo "rule rest :\n";print_r($rules_ret);echo "\n";exit(0);
+		return $rules_ret;
+	}
+
+	/** Add rule match to rule
+	*	@param rule id
+	*/
+	protected function add_rule_match($id, $set)
+	{
+		$db_conn=$this->db_connect_trap();
+		$sql="UPDATE ".$this->db_prefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('Error in update query : ' . $sql,2,'');
+		}
 	}
 	
 	/** Send SERVICE_CHECK_RESULT 
@@ -754,6 +811,7 @@ class Trap
 	public function applyRules()
 	{
 		$rules = $this->getRules($this->trap_data['source_ip'],$this->trap_data['trap_oid']);
+		
 		if ($rules==FALSE || count($rules)==0)
 		{
 			$this->trapLog('No rules found for this trap',3,'');
@@ -782,6 +840,8 @@ class Trap
 					if ($action != -1)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
+						$this->add_rule_match($rule['id'],$rule['num_match']+1);
+						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
 					}
 				}
 				else
@@ -793,6 +853,8 @@ class Trap
 					if ($action != -1)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
+						$this->add_rule_match($rule['id'],$rule['num_match']+1);
+						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
 					}					
 				}
 				// Put name in source_name
@@ -818,6 +880,20 @@ class Trap
 		$this->trap_data['status']='done';
 	}
 
+	/** Add Time a action to rule
+	*	@param rule id
+	*/
+	public function add_rule_final($time)
+	{
+		$db_conn=$this->db_connect_trap();
+		$sql="UPDATE ".$this->db_prefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('Error in update query : ' . $sql,2,'');
+		}
+	}
+	
+	/*********** UTILITIES *********************/
+	
 	/** Create database schema 
 	*	@param $schema_file	File to read schema from
 	*	@param $table_prefix to replace #PREFIX# in schema file by this

@@ -63,6 +63,8 @@ class TrapModuleConfig
 			'source_ip'		=> 'CASE WHEN t.source_name IS NULL THEN t.source_ip ELSE t.source_name END as source_ip',
 			'trap_oid'		=> "CASE WHEN t.trap_name IS NULL OR t.trap_name = '' THEN t.trap_oid ELSE t.trap_name END",
 			'status'		=> 't.status',
+			'status_detail'	=> 't.status_detail',
+			'process_time'	=> 't.process_time',
 			'id'           	=> 't.id',
 			//'destination_port'           	=> 't.destination_port',
 		);
@@ -88,6 +90,8 @@ class TrapModuleConfig
 			'source_ip'		=> 'Source IP/name',
 			'trap_oid'		=> 'Trap OID',
 			'status'		=> 'Status',
+			'status_detail'	=> 'Status detail',
+			'process_time'	=> 'Processing time',
 			//'destination_port' => 'Destination Port',
 			//'id'			=> 'Id',
 		);
@@ -106,6 +110,7 @@ class TrapModuleConfig
 			'action_match'	=> 'r.action_match',
 			'action_nomatch'=> 'r.action_nomatch',
 			'service_name'	=> 'r.service_name',
+			'num_match'		=> 'r.num_match',
 			'id'           	=> 'r.id'
 		);
 	}
@@ -119,7 +124,8 @@ class TrapModuleConfig
 			'rule'			=> 'Rule',
 			'action_match'	=> 'On rule match',
 			'action_nomatch'=> 'On rule dont match',
-			'service_name'	=> 'Service Name',			
+			'service_name'	=> 'Service Name',
+			'num_match'		=> 'Has matched'			
 			//'id'			=> 'Id',
 		);
 	}
@@ -151,15 +157,18 @@ class TrapModuleConfig
 	public function trapDetailQuery()
 	{
 		return array(
-			'timestamp'		=> array('Date','UNIX_TIMESTAMP(t.date_received)'),
-			'source_ip'		=> array('Source IP','t.source_ip'),
+			'timestamp'			=> array('Date','UNIX_TIMESTAMP(t.date_received)'),
+			'source_ip'			=> array('Source IP','t.source_ip'),
+			'source_name'		=> array('Source name','t.source_name'),
 			'source_port'		=> array('Source port','t.source_port'),
-			'destination_ip'		=> array('Destination IP','t.destination_ip'),
-			'destination_port'		=> array('Destination port','t.destination_port'),			
-			'trap_oid'		=> array('Numeric OID','t.trap_oid'),
-			'trap_name'		=> array('Trap name','t.trap_name'),
+			'destination_ip'	=> array('Destination IP','t.destination_ip'),
+			'destination_port'	=> array('Destination port','t.destination_port'),			
+			'trap_oid'			=> array('Numeric OID','t.trap_oid'),
+			'trap_name'			=> array('Trap name','t.trap_name'),
 			'trap_name_mib'		=> array('Trap MIB','t.trap_name_mib'),
-			'status'		=> array('Processing status','t.status'),
+			'status'			=> array('Processing status','t.status'),
+			'status_detail'		=> array('Status details','t.status_detail'),
+			'process_time'		=> array('Trap processing time','t.process_time'),			
 		);
 	}
 	// Trap detail : additional data (<key> => <title> <sql select>)

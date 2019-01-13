@@ -19,6 +19,8 @@ CREATE TABLE `#PREFIX#received` (
   `trap_name` varchar(256) DEFAULT NULL,
   `source_name` varchar(256) DEFAULT NULL,
   `trap_name_mib` varchar(100) DEFAULT NULL,
+  `process_time` float DEFAULT '0',
+  `status_detail` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -50,5 +52,6 @@ CREATE TABLE `#PREFIX#rules` (
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   `modifier` varchar(100) DEFAULT NULL,
+  `num_match` int(16) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;

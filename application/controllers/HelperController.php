@@ -223,10 +223,6 @@ class HelperController extends TrapsController
 	
 	public function translateoidAction()
 	{
-		// TODO : get binary & dirs from config / database
-		$snmptranslate=$this->Config()->get('config', 'snmptranslate');
-		$snmptranslate_dirs=$this->Config()->get('config', 'snmptranslate_dirs');
-		
 		$postData=$this->getRequest()->getPost();
 		if (isset($postData['oid']))
 		{
@@ -238,16 +234,21 @@ class HelperController extends TrapsController
 		}
 		
 		// Try to get oid name from snmptranslate
-		$translate=exec($snmptranslate . ' -m ALL -M '.$snmptranslate_dirs.
-		' '.$oid,$translate_output);
-		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
-		if ($ret_code==0 || $ret_code==FALSE) {
-			$this->_helper->json(array('status'=>'Not found'));;
-		} else {
+		if (($object=$this->getMIB()->translateOID($oid)) == null)
+		{
+			$this->_helper->json(array('status'=>'Not found'));
+		}
+		else
+		{
 			$this->_helper->json(
-				array('status'=>'OK','mib' => $matches[1], 'name' => $matches[2])
+				array('status'=>'OK',
+					'mib' => $object['mib'], 
+					'name' => $object['name'],
+					'type' => $object['type']
+				)
 			);
-		}			
+		}
+
 	}
 	
 	/** Save or execute database purge of <n> days
