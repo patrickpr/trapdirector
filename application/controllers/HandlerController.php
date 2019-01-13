@@ -50,7 +50,7 @@ class HandlerController extends TrapsController
 		$this->view->hostlist=array(); // host list to input datalist
 		$this->view->hostname=''; // Host name in input text
 		$this->view->serviceGet=false; // Set to true to get list of service if only one host set
-		$this->view->serviceSet=null; // Set service among services (must have serviceGet=true).
+		$this->view->serviceSet=null; // Select service in services select (must have serviceGet=true).
 		$this->view->mainoid=''; // Trap OID
 		$this->view->mib=''; // Trap mib
 		$this->view->name=''; // Trap name
@@ -64,14 +64,15 @@ class HandlerController extends TrapsController
 		$this->view->setToUpdate=false; // set form as update form
 		$this->view->setRuleMatch=false; // set action on rule match (null does default)
 		$this->view->setRuleNoMatch=false; // set action on rule no match (null does default)
+		
+		$this->view->selectGroup=false; // Select by group if true
+		$this->view->hostgroupid=-1; // host group id
+		$this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
 		// Get Mib List from file
 		$this->view->mibList=$this->getMIB()->getMIBList();
 		
 		//$this->view->trapvalues=false; // Set to true to display 'value' colum in objects
 		
-		//print_r($this->getMIB()->getObjectList('.1.3.6.1.2.1.17.0.1'));
-		//print_r($test->traps);echo '<br>';
-		//print_r($test->mibList);echo '<br>';
 		if ($this->params->get('fromid') !== null) { 
 			/********** Setup from existing trap ***************/ 
 			$trapid=$this->params->get('fromid');
@@ -171,20 +172,30 @@ class HandlerController extends TrapsController
 			$this->view->ruleid=$ruleid;
 			$this->view->setToUpdate=true;
 
-			// Get rule info in DB
+			// Get rule info from DB
 			$ruleDetail=$this->getRuleDetail($ruleid);
 			$this->view->hostname=$ruleDetail->host_name;
 			$this->view->revertOK=$ruleDetail->revert_ok;
 			$this->view->setRuleMatch=$ruleDetail->action_match;
 			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch; 
-
+			$this->view->hostgroupname=$ruleDetail->host_group_name;
 			
-			// Tell JS to get services when page is loaded
-			$this->view->serviceGet=true;
-			// get service id for form to set :
-			$serviceID=$this->getServiceIDByName($ruleDetail->service_name);
-			$this->view->serviceSet=$serviceID[0]->id;
-
+			if ($this->view->hostname != null)
+			{
+				// Tell JS to get services when page is loaded
+				$this->view->serviceGet=true;
+				// get service id for form to set :
+				$serviceID=$this->getServiceIDByName($ruleDetail->service_name);
+				$this->view->serviceSet=$serviceID[0]->id;
+				$this->view->selectGroup=false;
+			}
+			else
+			{
+				// Tell JS to get services when page is loaded
+				$this->view->serviceGroupGet=true;
+				$this->view->serviceSet=$ruleDetail->service_name;
+				$this->view->selectGroup=true;
+			}
 			$this->view->mainoid=$ruleDetail->trap_oid;
 			$oidName=$this->getMIB()->translateOID($ruleDetail->trap_oid);
 			if ($oidName != null)  // oid is found in mibs
@@ -224,8 +235,8 @@ class HandlerController extends TrapsController
 						'not found'
 					));
 				}
-				$display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index,$display);
-				$rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index,$rule);
+				$display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$display);
+				$rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$rule);
 				$index++;
 			}
 			// set display
@@ -247,9 +258,11 @@ class HandlerController extends TrapsController
 	
 		$params=array(
 			// id (also db) => 	array('post' => post id, 'val' => default val, 'db' => send to table)
+			'hostgroup'		=>	array('post' => 'hostgroup','db'=>false),
 			'db_rule'		=>	array('post' => 'db_rule','db'=>false),
 			'hostid'		=>	array('post' => 'hostid','db'=>false),
-			'host_name'		=>	array('post' => 'hostname','db'=>true),
+			'host_name'		=>	array('post' => 'hostname','val' => null,'db'=>true),
+			'host_group_name'=>	array('post' => null,'val' => null,'db'=>true),
 			'serviceid'		=>	array('post' => 'serviceid','db'=>false),
 			'service_name'	=>	array('post' => 'serviceName','db'=>true),
 			'trap_oid'		=>	array('post' => 'oid','db'=>true),
@@ -300,20 +313,36 @@ class HandlerController extends TrapsController
 
 		try 
 		{
-			$hostAddr=$this->getHostInfoByID($params['hostid']['val']);
-			$params['ip4']['val']=$hostAddr->ip4;
-			$params['ip6']['val']=$hostAddr->ip6;
-			$checkHostName=$hostAddr->name;
-			if ($params['host_name']['val'] != $checkHostName) 
-			{
-				$this->_helper->json(array('status'=>"Invalid host id : Please re enter host name"));
-				return;
+			$isHostGroup=($params['hostgroup']['val'] == 1)?true:false;
+			if (! $isHostGroup ) 
+			{  // checks if selection by host 
+				$hostAddr=$this->getHostInfoByID($params['hostid']['val']);
+				$params['ip4']['val']=$hostAddr->ip4;
+				$params['ip6']['val']=$hostAddr->ip6;
+				$checkHostName=$hostAddr->name;
+				if ($params['host_name']['val'] != $checkHostName) 
+				{
+					$this->_helper->json(array('status'=>"Invalid host id : Please re enter host name"));
+					return;
+				}
+				$serviceName=$this->getObjectNameByid($params['serviceid']['val']);
+				if ($params['service_name']['val'] != $serviceName->name2)
+				{
+					$this->_helper->json(array('status'=>"Invalid service id : Please re enter service"));
+					return;
+				}
 			}
-			$serviceName=$this->getObjectNameByid($params['serviceid']['val']);
-			if ($params['service_name']['val'] != $serviceName->name2)
+			else
 			{
-				$this->_helper->json(array('status'=>"Invalid service id : Please re enter service"));
-				return;
+				$object=$this->getObjectNameByid($params['hostid']['val']);
+				if ($params['host_name']['val'] != $object->name1)
+				{
+					$this->_helper->json(array('status'=>"Invalid object group id : Please re enter service"));
+					return;					
+				}
+				// Put param in correct column (group_name)
+				$params['host_group_name']['val'] = $params['host_name']['val'];
+				$params['host_name']['val']=null;
 			}
 			$dbparams=array();
 			foreach ($params as $key=>$val)

@@ -1,0 +1,41 @@
+<div class="controls">
+  <?= $tabs ?>
+  <h1>Services & template management</h1>
+</div>
+
+<div class="content">
+  <h2>Template for traps</h2>
+  
+  <p>Create a template adapted to traps :</p>
+  <form id="Template" name="Template" enctype="application/x-www-form-urlencoded" 
+	action="<?= $this->templateForm_URL ?>" method="post">
+	
+		<div class="control-group">
+			<div class="control-label-group">
+				<span>
+					<label for="template_name" class="control-label optional">Template name</label>
+				</span>
+			</div>
+			<input type="text" name="template_name" id="template_name" placeholder="Enter template name" 
+				value="<?= $this->templateForm_name ?>" />
+		</div>
+		<div class="control-group">
+			<div class="control-label-group">
+				<span>
+					<label for="template_revert_time" class="control-label optional">Interval (s)</label>
+				</span>
+			</div>
+			<input type="text" name="template_revert_time" id="template_revert_time" placeholder="Enter interval in seconds" list="hosts_list"
+				oninput="hostFilterGet()"
+				value="<?= $this->templateForm_interval ?>" />
+		</div>
+		<input type="submit" name="submit" id="id_submit_template" value="Create">
+	</form>
+<?php
+	if ($this->templateForm_output != '')
+	{
+		echo '<p >'.$this->templateForm_output. '</p>';
+	}
+?>
+
+</div>

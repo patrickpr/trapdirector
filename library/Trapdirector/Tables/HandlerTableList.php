@@ -99,11 +99,11 @@ class HandlerTableList extends TrapTable
 				{
 					switch ($rowkey)
 					{
-						case 'action_match':
+						case 'action_match': // display text levels
 						case 'action_nomatch':
 							$val=$this->status_display[$row->$rowkey];
 						break;
-						case 'trap_oid':
+						case 'trap_oid': // try to traslate oids.
 						
 							if ($this->doTranslate==true)
 							{
@@ -116,6 +116,16 @@ class HandlerTableList extends TrapTable
 								{
 									$val = $row->$rowkey;
 								}								
+							}
+							else
+							{
+								$val = $row->$rowkey;
+							}
+						break;
+						case 'host_name': // switch to hostgroup if name is null
+							if ($row->$rowkey == null)
+							{
+								$val = $row->host_group_name;
 							}
 							else
 							{

@@ -39,7 +39,7 @@ CREATE TABLE `#PREFIX#rules` (
   `ip4` varchar(20) DEFAULT NULL,
   `ip6` varchar(42) DEFAULT NULL,
   `trap_oid` varchar(256) NOT NULL,
-  `host_name` varchar(256) NOT NULL,
+  `host_name` varchar(256) DEFAULT NULL,
   `host_group_name` varchar(256) DEFAULT NULL,
   `rule` text,
   `action_match` tinyint(5) NOT NULL DEFAULT '-1',

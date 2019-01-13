@@ -15,40 +15,81 @@
 		value="<?= $this->ruleid ?>" >
 	<input type="hidden" name="hostid" id="id_Hidden_hostid"
 		value="<?= $this->hostid ?>">
-	<fieldset id="fieldset-trap_definition" class=""><legend>Main properties</legend>
-		<!-- Host name selection -->
-		<div class="control-group">
-			<div class="control-label-group">
-				<span id="id_hostfilter_span_label">
-					<label for="id_hostfilter" class="control-label optional">Host name</label>
-				</span>
+	<input type="hidden" name="hostid" id="id_Hidden_hostgroup"
+		value="<?= $this->hostgroupid ?>">		
+	<fieldset id="fieldset-source_definition" class=""><legend>Trap source</legend>
+		<input type="checkbox" id="id_host_or_hostgroup"
+			onChange="toggle_host_hostgroup()"
+			<?php if ($this->selectGroup) { echo 'checked'; } ?>> 
+		<label for="id_host_or_hostgroup" > Select by hostgroup</label>
+		<div id="source_by_hostgroup" style="display:none">
+			<!-- Host group selection -->
+			<!-- to get : id_hostgroupfilter / id_service_hostgroup -->
+			<!-- $this->hostgroupname / hostGroupFilterGet()->hostgroups_list / -->
+			<div class="control-group">
+				<div class="control-label-group">
+					<span>
+						<label for="id_hostgroupfilter" class="control-label optional">Host group</label>
+					</span>
+				</div>
+				<input type="text" name="hostgroup" id="id_hostgroupfilter" placeholder="Enter partial name" list="hostgroups_list"
+					oninput="hostGroupFilterGet()"
+					value="<?= $this->hostgroupname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+				<datalist id="hostgroups_list">
+				</datalist>
 			</div>
-			<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list"
-				oninput="hostFilterGet()"
-				value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
-			<datalist id="hosts_list">
-				<!-- <optgroup label=""> -->
-<?php
-	foreach($this->hostlist as $hostopt)
-	{ // Seems useless : TODO
-		echo '<option>' . $hostopt . '<option>';
-	}
-?>
-			</datalist>
+			
+			<!-- Service name selection -->
+			<div class="control-group">
+				<div class="control-label-group">
+					<span>
+						<label for="id_service_hostgroup" class="control-label optional">Service</label>
+					</span>
+				</div>
+				<select name="service_hostgroup" id="id_service_hostgroup" empty_option="Select service" 
+				autosubmit="" onfocus="hostGroupServiceGet()">
+					<option value="-1" selected>Enter host group first</option>
+				</select>		
+			</div>
 		</div>
 		
-		<!-- Service name selection -->
-		<div class="control-group">
-			<div class="control-label-group">
-				<span>
-					<label for="id_service" class="control-label optional">Service</label>
-				</span>
+		<div id="source_by_hostname">
+			<!-- Host name selection -->
+			<div class="control-group">
+				<div class="control-label-group">
+					<span id="id_hostfilter_span_label">
+						<label for="id_hostfilter" class="control-label optional">Host name</label>
+					</span>
+				</div>
+				<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list"
+					oninput="hostFilterGet()"
+					value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+				<datalist id="hosts_list">
+					<!-- <optgroup label=""> -->
+		<?php
+			foreach($this->hostlist as $hostopt)
+			{ // Seems useless : TODO
+				echo '<option>' . $hostopt . '<option>';
+			}
+		?>
+				</datalist>
 			</div>
-			<select name="service" id="id_service" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
-				<option value="-1" selected>Enter host first</option>
-			</select>		
-		</div>	
-		
+			
+			<!-- Service name selection -->
+			<div class="control-group">
+				<div class="control-label-group">
+					<span>
+						<label for="id_service" class="control-label optional">Service</label>
+					</span>
+				</div>
+				<select name="service" id="id_service" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+					<option value="-1" selected>Enter host first</option>
+				</select>		
+			</div>
+		</div>
+	</fieldset>
+	
+	<fieldset id="fieldset-objects_definition" class=""><legend>Trap definition</legend>		
 		<!-- trap OID selection -->
 		<div class="control-group">
 			<select name="mibs" id="id_mainMibs" empty_option="Select MIB" autosubmit="" 
@@ -221,7 +262,9 @@
 <script type='text/javascript'>
 
 hostHelper='/icingaweb2/trapdirector/helper/gethosts';
+hostgroupHelper='/icingaweb2/trapdirector/helper/gethostgroups';
 serviceHelper='/icingaweb2/trapdirector/helper/getservices';
+hostgroupserviceHelper='/icingaweb2/trapdirector/helper/gethostgroupservices';
 trapfrommmibHelper='/icingaweb2/trapdirector/helper/gettraps';
 translateoidHelper='/icingaweb2/trapdirector/helper/translateoid';
 getobjectsHelper='/icingaweb2/trapdirector/helper/gettrapobjects';
@@ -288,13 +331,30 @@ function deleteMain()
 	});	
 }
 
-function submitMain()
+	function submitMain()
 {
 	// Check everything
-	// Hostname
-	if ($("#id_Hidden_hostid").val() == -1 ) { displayWarning("Invalid hostname");return; }
-	if ($("#id_service").val() == -1 ) { displayWarning("Invalid service");return; }
-	
+	// Hostname/hostgroup
+	hostgroupSel=$("#id_host_or_hostgroup").is(":checked");
+	if ( hostgroupSel == true )
+	{ // hostgroup selection
+		if ($("#id_Hidden_hostgroup").val() == -1 ) { displayWarning("Invalid hosgroup (hostid)");return; }
+		hostid=$("#id_Hidden_hostgroup").val();
+		hostname=$("#id_hostgroupfilter").val();
+		if ($("#id_service_hostgroup").val() == -1 ) { displayWarning("Invalid service");return; }
+		servicename=$("#id_service_hostgroup").val();
+		serviceid=0;
+	}
+	else
+	{ // Hostname
+		if ($("#id_Hidden_hostid").val() == -1 ) { displayWarning("Invalid hostname (hostid)");return; }
+		hostid=$("#id_Hidden_hostid").val();
+		hostname=$("#id_hostfilter").val();
+		if ($("#id_service").val() == -1 ) { displayWarning("Invalid service");return; }
+		servicename=$("#id_service  option:selected").text();
+		serviceid=$("#id_service").val();
+	}
+
 	var oidRegexp = /^[\.\d]+$/;
 	if ( ! oidRegexp.test($("#id_mainoid").val())  ) { displayWarning("Invalid oid");return; }
 	
@@ -307,8 +367,8 @@ function submitMain()
 	newDisplay=$("#id_display").val();
 	for (i=1;i<objectsList_id;i++)
 	{	// TODO : only works if count_id<10....		
-		if (objectsList[i][0]==null) continue;
-		var objRegexp = new RegExp("\\$"+objectsList[i][0],"g");
+		if (objectsList[i]==null) continue;
+		var objRegexp = new RegExp("\\$"+objectsList[i][0]+"\\$","g");
 		newRule=newRule.replace(objRegexp,'_OID('+ objectsList[i][1] +')');
 		newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');	
 		
@@ -321,11 +381,12 @@ function submitMain()
 			type: "POST",
 			data: 
 			{
+				"hostgroup"		:	(hostgroupSel)?1:0,
 				"db_rule"		: 	$("#id_Hidden_db_rule").val(),
-				"hostid"		:	$("#id_Hidden_hostid").val(),
-				"hostname"		:	$("#id_hostfilter").val(),
-				"serviceid"		:	$("#id_service").val(),
-				"serviceName"	:	$("#id_service  option:selected").text(),
+				"hostid"		:	hostid,
+				"hostname"		:	hostname,
+				"serviceid"		:	serviceid,
+				"serviceName"	:	servicename,
 				"oid"			:	$("#id_mainoid").val(),
 				"revertOK"		:	revertOK,
 				"display"		:	newDisplay,
@@ -355,6 +416,22 @@ function submitMain()
 			}
 	});	
 	
+}
+
+function toggle_host_hostgroup()
+{
+	state=$("#id_host_or_hostgroup").is(":checked");
+	if (state)
+	{
+		$("#source_by_hostgroup").show();
+		$("#source_by_hostname").hide();
+	}
+	else
+	{
+		$("#source_by_hostgroup").hide();
+		$("#source_by_hostname").show();		
+	}	
+	//.hide()
 }
 
 function onclickAddObjects()
@@ -416,7 +493,7 @@ function click_button_oid_add_cb(oid,mib,name,value,type)
 	count_id++;
 	
 	htm=	"<tr id='obj_table_oid_"+ido+"'>\n";
-	htm += 	"	<td id='obj_table_oid_"+ido+"_SC'>$"+(count_id-1)+"</td>\n";
+	htm += 	"	<td id='obj_table_oid_"+ido+"_SC'>$"+(count_id-1)+"$</td>\n";
 	htm +=	"	<td>"+oid+"</td>\n";
 	htm +=	"	<td>"+mib+"</td>\n";
 	htm +=	"	<td>"+name+"</td>\n";
@@ -441,14 +518,12 @@ function click_button_table_del(rowid)
 	//alert(displayVal+" : "+rowNumRef+"#"+"#obj_table_oid_"+rowid+"_SC");
 	if (displayVal!= '' && displayVal.indexOf(rowNumRef) !== -1)
 	{
-		//TODO : display alert in a better way
 		displayWarning("Remove reference to object ("+rowNumRef+") in display before deleting");
 		$("#id_display").focus();
 		return;
 	}
 	if (ruleVal != '' && ruleVal.indexOf(rowNumRef) !== -1)
 	{
-		//TODO : display alert in a better way
 		displayWarning("Remove reference to object ("+rowNumRef+") in rules before deleting");
 		$("#id_rules").focus();
 		return;
@@ -589,6 +664,54 @@ function serviceGet(serviceSet=null)
 	
 }
 
+function hostGroupServiceGet(serviceSet=null)
+{
+	// Get Host name
+	host=$("#id_hostgroupfilter").val();
+	// Get service list
+	
+	$.ajax({
+			url: hostgroupserviceHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"host": host,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					serviceList=data.services;
+					// Set host object id
+					hostid=data.hostid;
+					$("#id_Hidden_hostgroup").val(hostid);
+					html='';
+					serviceList.forEach(function (service){
+						html+='<option value='+service[0]+'>'+service[1]+'</option>';
+					});
+					$("#id_service_hostgroup").html(html);
+					if (serviceSet != null)
+					{
+						$('#id_service_hostgroup').val(serviceSet);	
+					}
+				} 
+				else 
+				{
+					html='<option value=-1 selected>'+data.status+'<option>'
+					$("#id_service_hostgroup").html(html);
+					//alert ("Error");
+				}
+			}
+	});
+	// Put host list in <option> for user to choose.
+
+	
+}
+
+
 function hostFilterGet()
 {
 	// Get host list
@@ -606,11 +729,12 @@ function hostFilterGet()
 			{
 				//alert(data.status);
 				if (data.status == "OK") 
-				{
+				{ // Put host list in <option> for user to choose.
 					hostList=data.hosts;
 					//alert(hostList);
 					html='';
-					hostList.forEach(function (host){
+					hostList.forEach(function (host)
+					{
 						html+='<option >'+host+'</option>';
 					});
 					$("#hosts_list").html(html);					
@@ -621,9 +745,44 @@ function hostFilterGet()
 				}
 			}
 	});
-	// Put host list in <option> for user to choose.
+}
+
+function hostGroupFilterGet()
+{
+	// Get host list
+	hostInput=$("#id_hostgroupfilter").val();
+	$.ajax({
+			url: hostgroupHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"hostFilter": hostInput,
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					hostList=data.hosts;
+					//alert(hostList);
+					html='';
+					hostList.forEach(function (host)
+					{
+						html+='<option >'+host+'</option>';
+					});
+					$("#hostgroups_list").html(html);					
+				} 
+				else 
+				{
+					displayWarning(data.status);
+				}
+			}
+	});
 
 }
+
 
 $(function() {
 
@@ -642,6 +801,19 @@ $(function() {
 		if ($this->serviceSet != null) // add param to service get to set service after ajax call
 			{ echo $this->serviceSet;}		
 		echo ");\n" ;  
+	}
+?>
+
+<?php 
+	if ($this->serviceGroupGet == true) { 
+		echo "hostGroupServiceGet(";
+		if ($this->serviceSet != null) // add param to service get to set service after ajax call
+			{ echo '"'.$this->serviceSet.'"';}		
+		echo ");\n" ;  
+	}
+	if ($this->selectGroup)
+	{
+		echo "toggle_host_hostgroup();\n";
 	}
 ?>
 

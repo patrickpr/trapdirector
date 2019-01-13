@@ -6,23 +6,24 @@ use Icinga\Cli\Command;
 
 /**
  * Status of the SNMP trap receiver system
+ * TODO (all of it).
 */
 class StatusCommand extends Command
 {
-  /**
-   * Get Status
-   * Status of bla bla
-  */
-   public function worldAction()
-   {
-       echo "Hello World!\n";
-   }  
+	/**
+	* Get Status
+	* Status of bla bla
+	*/
+	public function worldAction()
+	{
+	   echo "Hello World!\n";
+	}  
 	/**
 	 * This action will always fail
 	 */
 	public function failAction()
 	{
-	    throw new ProgrammingError('No way');
+		throw new ProgrammingError('No way');
 	}
 }
 /*

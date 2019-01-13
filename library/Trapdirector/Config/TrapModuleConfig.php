@@ -99,6 +99,7 @@ class TrapModuleConfig
 	{
 		return array(
 			'host_name'		=> 'r.host_name',//'UNIX_TIMESTAMP(t.date_received)',
+			'host_group_name'=> 'r.host_group_name',
 			'source_ip'		=> "CASE WHEN r.ip4 IS NULL THEN r.ip6 ELSE r.ip4 END",
 			'trap_oid'		=> 'r.trap_oid',
 			'rule'			=> 'r.rule',
@@ -112,7 +113,7 @@ class TrapModuleConfig
 	public function getHandlerListTitles()
 	{
 		return array(
-			'host_name'		=> 'Host Name',
+			'host_name'		=> 'Host/Group Name',
 			'source_ip'		=> 'Source IP',
 			'trap_oid'		=> 'Trap OID',
 			'rule'			=> 'Rule',
@@ -132,6 +133,7 @@ class TrapModuleConfig
 			'ip6'			=> "r.ip6",
 			'trap_oid'		=> 'r.trap_oid',
 			'host_name'		=> 'r.host_name',
+			'host_group_name'		=> 'r.host_group_name',
 			'rule'			=> 'r.rule',
 			'action_match'	=> 'r.action_match',
 			'action_nomatch'=> 'r.action_nomatch',

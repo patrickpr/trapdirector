@@ -37,6 +37,34 @@ class HelperController extends TrapsController
 		$this->_helper->json($retHosts);
 	}
 
+	
+	/** Get hostgroup list with filter (name) : hostgroup=<hostFilter>
+	*	returns in JSON : status=>OK/NOK  hosts=>array of hosts
+	*/
+	public function gethostgroupsAction()
+	{
+		$postData=$this->getRequest()->getPost();
+		if (isset($postData['hostFilter']))
+		{
+			$hostFilter=$postData['hostFilter'];
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'Error : no filter'));
+		}
+
+		$retHosts=array('status'=>'OK','hosts' => array());
+
+		$hosts=$this->getHostGroupByName($hostFilter);
+		foreach ($hosts as $key=>$val)
+		{
+			array_push($retHosts['hosts'],$val->name);
+		}
+		
+		$this->_helper->json($retHosts);
+	}
+
+	
 	/** Get service list by host name ( host=<host> )
 	*	returns in JSON : 
 	*		status=>OK/No services found/More than one host matches
@@ -74,6 +102,43 @@ class HelperController extends TrapsController
 		{
 			array_push($retServices['services'],array($val->id , $val->name));
 		}
+		$this->_helper->json($retServices);
+	}
+	
+	/** Get service list by host group ( name=<host> )
+	*	returns in JSON : 
+	*		status=>OK/No services found/More than one host matches
+	*		services=>array of services (name)
+	*		groupid = group object id or -1 if not found.
+	*/
+	public function gethostgroupservicesAction()
+	{
+		$postData=$this->getRequest()->getPost();
+		if (isset($postData['host']))
+		{
+			$host=$postData['host'];
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'No Hosts','hostid' => -1));
+		}
+		
+		$hostArray=$this->getHostGroupByName($host);
+		if (count($hostArray) > 1)
+		{	
+			$this->_helper->json(array('status'=>'More than one hostgroup matches','hostid' => -1));
+		}
+		else if (count($hostArray) == 0)
+		{
+			$this->_helper->json(array('status'=>'No hostgroup matches','hostid' => -1));
+		}
+		$services=$this->getServicesByHostGroupid($hostArray[0]->id);
+		if (count($services) < 1)
+		{
+			$this->_helper->json(array('status'=>'No services found for hostgroup','hostid' => $hostArray[0]->id));
+		}
+		$retServices=array('status'=>'OK','services' => $services,'hostid' => $hostArray[0]->id);
+		
 		$this->_helper->json($retServices);
 	}
 
