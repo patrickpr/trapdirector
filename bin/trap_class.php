@@ -970,6 +970,339 @@ class Trap
 		return 0;
 		
 	}
+
+	public function update_mibs_options()
+	{
+		$db_conn=$this->db_connect_trap();
+
+		/**********  Create all trap objetcs  *****/
+		// Get max number
+		$sql='SELECT id,oid FROM '.$this->db_prefix.'mib_cache WHERE type=21;';
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$traps=$ret_code->fetchAll();
+		
+		foreach ($traps as $key=>$trap)
+		{
+			$trapOID=$trap['oid'];
+			$trapID=$trap['id'];
+			// get OBJECTS for this trap OID
+			$snmptrans=null;
+			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+					' -Td '.$trapOID,$snmptrans,$retVal);
+			if ($retVal!=0)
+			{
+				$this->trapLog('error executing snmptranslate',1,'');
+			}
+			$synt=null;
+			foreach ($snmptrans as $line)
+			{	
+			if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
+				{
+					$synt=$match[1];
+				}
+			}
+			if ($synt == null) 
+			{
+				//echo "No objects for $trapOID\n";
+				continue;
+			}
+			//echo "$synt \n";
+			$trapObjects=array();
+			while (preg_match('/ *([^ ,]+) *,* */',$synt,$match))
+			{
+				array_push($trapObjects,$match[1]);
+				$synt=preg_replace('/'.$match[0].'/','',$synt);
+			}
+			//print_r($trapObjects);
+			// Delete all trap objects for this trap_id
+			$sql='DELETE FROM '.$this->db_prefix.'mib_cache_trap_object where trap_id='.$trapID.';';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('No result in query : ' . $sql,1,'');
+			}
+			// create them again
+			foreach ($trapObjects as $trapObject)
+			{
+				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_trap_object '.
+				'(trap_id,object_name) VALUE ('.$trapID.' , \''.$trapObject.'\');';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('No result in query : ' . $sql,1,'');
+				}
+			}
+		}		
+
+		/**********  Create all syntax from the mibs  *****/
+		// Get max number
+		$sql='SELECT MAX(type) FROM '.$this->db_prefix.'mib_cache;';
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$num=$ret_code->fetch()['MAX(type)'];
+		//echo $sql."\n";print_r($num);echo"\n";
+		for ($i=0;$i<$num;$i++)
+		{
+			// get an oid for type=$i
+			$sql='SELECT oid FROM '.$this->db_prefix.'mib_cache WHERE type=\''.$i.'\' LIMIT 1;';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('No result in query : ' . $sql,1,'');
+			}
+			$oid=$ret_code->fetch()['oid'];
+			if ($oid == null) 
+			{
+				continue;
+			}
+			// get SYNTAX for this OID
+			$snmptrans=null;
+			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+					' -Td '.$oid,$snmptrans,$retVal);
+			if ($retVal!=0)
+			{
+				$this->trapLog('error executing snmptranslate',1,'');
+			}
+			$synt=null;
+			foreach ($snmptrans as $line)
+			{	
+				if (preg_match('/^[\t ]+SYNTAX[\t ]+(.*)/',$line,$match))
+				{
+					$synt=$match[1];
+				}
+			}
+			if ($synt == null) 
+			{
+				continue;
+			}
+			// check if type exists -> update or insert
+			$sql='SELECT num FROM '.$this->db_prefix.'mib_cache_syntax WHERE num=\''.$i.'\';';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('No result in query : ' . $sql,1,'');
+			}
+			$numDB=$ret_code->fetch()['num'];
+			if ($numDB==null)
+			{
+				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_syntax '.
+				'(num,value) VALUES ('.$i.',\''.$synt.'\');';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}					
+			}
+			else
+			{
+				$sql='UPDATE '.$this->db_prefix.'mib_cache_syntax '.
+				'SET value=\''.$synt.'\' WHERE num='.$i.';';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}					
+			}
+		}
+
+		/**********  Create all textual conventions  *****/
+		// Get max number
+		$sql='SELECT MAX(textual_convention) FROM '.$this->db_prefix.'mib_cache;';
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$num=$ret_code->fetch()['MAX(textual_convention)'];
+		//echo $sql."\n";print_r($num);echo"\n";
+		for ($i=0;$i<$num;$i++)
+		{
+			// get an oid for textual_convention=$i
+			$sql='SELECT oid FROM '.$this->db_prefix.'mib_cache WHERE textual_convention=\''.$i.'\' LIMIT 1;';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('No result in query : ' . $sql,1,'');
+			}
+			$oid=$ret_code->fetch()['oid'];
+			if ($oid == null) 
+			{
+				continue;
+			}
+			// get SYNTAX for this OID
+			$snmptrans=null;
+			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+					' -Td '.$oid,$snmptrans,$retVal);
+			if ($retVal!=0)
+			{
+				$this->trapLog('error executing snmptranslate',1,'');
+			}
+			$synt=null;
+			foreach ($snmptrans as $line)
+			{	
+				if (preg_match('/TEXTUAL CONVENTION[\t ]+(.*)/',$line,$match))
+				{
+					$synt=$match[1];
+				}
+			}
+			if ($synt == null) 
+			{
+				continue;
+			}
+			// check if tc exists -> update or insert
+			$sql='SELECT num FROM '.$this->db_prefix.'mib_cache_tc WHERE num=\''.$i.'\';';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('No result in query : ' . $sql,1,'');
+			}
+			$numDB=$ret_code->fetch()['num'];
+			if ($numDB==null)
+			{
+				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_tc '.
+				'(num,value) VALUES ('.$i.',\''.$synt.'\');';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}					
+			}
+			else
+			{
+				$sql='UPDATE '.$this->db_prefix.'mib_cache_tc '.
+				'SET value=\''.$synt.'\' WHERE num='.$i.';';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}					
+			}
+		}	
+		
+	}
+	/** Cache mib in database
+	*/
+	public function update_mib_database($display_progress=false)
+	{
+		// Timing 
+		$timeTaken = microtime(true);
+		// Get all mib objects from all mibs
+		$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+				' -On -Tto ',$objects_s,$retVal);
+		if ($retVal!=0)
+		{
+			$this->trapLog('error executing snmptranslate',1,'');
+		}
+		
+		// Get all mibs from databse
+		
+		$db_conn=$this->db_connect_trap();
+		// fetch rules based on IP in rule and OID
+		$sql='SELECT * from '.$this->db_prefix.'mib_cache;';
+		$this->trapLog('SQL query : '.$sql,4,'');
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$dbRulesAll=$ret_code->fetchAll();
+		$dbRulesIndex=array();
+		// Create index for db;
+		foreach($dbRulesAll as $key=>$val)
+		{
+			$dbRulesIndex[$val['oid']]=$key;
+		}
+		// Count elements to show progress
+		$numElements=count($objects_s);
+		$step=$basestep=$numElements/10;
+		$num_step=0;
+		for ($curElement=0;$curElement < $numElements;$curElement++)
+		{
+			if ($curElement>$step) 
+			{ // display progress
+				$num_step++;
+				$step+=$basestep;
+				if ($display_progress)
+				{				
+					echo '..'.($num_step*10).'%';
+				}
+			}
+			// Get oid or pass if not found
+			if (!preg_match('/^\.[0-9\.]+$/',$objects_s[$curElement]))
+			{
+				continue;
+			}
+			$oid=$objects_s[$curElement];
+			// get next line 
+			$curElement++;
+			if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
+						$objects_s[$curElement],$match))
+			{
+				continue;
+			}
+
+			if ($match[2]==0)
+			{ 	// object type=0 : not oid -> continue
+				continue;
+			}
+			$name=$match[1];
+			$type=$match[2];
+			$textConv=(isset($match[4]))?$match[4]:null;
+			$dispHint=(isset($match[6]))?$match[6]:null;
+			//echo $objects_s[$curElement]."\n";
+			//print_r($match);
+			if (isset($dbRulesIndex[$oid]))
+			{
+				if ( $name!=$dbRulesAll[$dbRulesIndex[$oid]]['name'] ||
+					$type!=$dbRulesAll[$dbRulesIndex[$oid]]['type'] ||
+					$textConv!=$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention'] ||
+					$dispHint!=$dbRulesAll[$dbRulesIndex[$oid]]['display_hint'] )
+				{ // Do update (TODO : check MIB does not change )
+					echo 'Update : '.$oid."\n";
+					echo "$name# ".$dbRulesAll[$dbRulesIndex[$oid]]['name']."#\n";
+					echo "$type# ".$dbRulesAll[$dbRulesIndex[$oid]]['type']."#\n";
+					echo "$textConv# ".$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention']."#\n";
+					echo "$dispHint# ".$dbRulesAll[$dbRulesIndex[$oid]]['display_hint']."#\n";
+					$sql='UPDATE '.$this->db_prefix.'mib_cache SET '.
+					"name = '".$name."' , type = '".$type."' , textual_convention = ".
+					(($textConv==null)?'null':"'".$textConv."'")
+					." , display_hint = ".
+					(($dispHint==null)?'null':"'".$dispHint."'")." WHERE id='".
+					$dbRulesAll[$dbRulesIndex[$oid]]['id'] ."' ;";
+					//$this->trapLog('SQL query : '.$sql,4,'');
+					if (($ret_code=$db_conn->query($sql)) == FALSE) {
+						$this->trapLog('Error in query : ' . $sql,1,'');
+					}			
+				}
+				else
+				{
+					//echo "found oid : ".$oid."\n";
+				}
+			}
+			else
+			{	// create
+				// First get mib :
+				$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+				' '.$oid,$return_all,$retVal);
+				if ($retVal!=0)
+				{
+					$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.' '.$oid,1,'');
+				}
+				if (!preg_match('/^(.*)::/',$return,$match2))
+				{
+					$this->trapLog('error finding mib '.$return,2,'');
+					continue;
+				}
+				$mib=$match2[1];
+				
+				// Insert data
+				$sqlT='oid,mib,name,type';
+				$sqlV="'".$oid."' , '".$mib."' , '".$name."' , '".$type."'";
+				if ($textConv != null) 
+				{
+					$sqlT.=',textual_convention';
+					$sqlV.=",'".$textConv."'";
+				}
+				if ($dispHint != null) 
+				{
+					$sqlT.=',display_hint';
+					$sqlV.=",'".$dispHint."'";
+				}				
+				$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
+				'('.$sqlT.') VALUES ('.$sqlV.');';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}					
+			}
+		}
+		
+		
+		// Timing ends
+		$timeTaken=microtime(true) - $timeTaken;
+		if ($display_progress)
+		{
+			echo "  : TIME : ".$timeTaken."\n";
+		}
+	}
 	
 }
 

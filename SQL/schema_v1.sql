@@ -7,6 +7,38 @@ CREATE TABLE `#PREFIX#db_config` (
 
 INSERT INTO #PREFIX#db_config (`name`,`value`) VALUES ('db_version',1);
 
+CREATE TABLE `#PREFIX#mib_cache` (
+  `id` int(11) NOT NULL,
+  `oid` varchar(256) NOT NULL,
+  `mib` varchar(256) NOT NULL,
+  `name` varchar(512) NOT NULL,
+  `type` int(8) DEFAULT NULL,
+  `textual_convention` int(8) DEFAULT NULL,
+  `display_hint` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `#PREFIX#mib_cache_syntax` (
+  `num` int(11) NOT NULL,
+  `value` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`num`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `#PREFIX#mib_cache_tc` (
+  `num` int(11) NOT NULL,
+  `value` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`num`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `#PREFIX#mib_cache_trap_object` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `trap_id` int(11) NOT NULL,
+  `object_name` varchar(512) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_trap_id_obj_idx` (`trap_id`),
+  CONSTRAINT `FK_trap_id_obj` FOREIGN KEY (`trap_id`) REFERENCES `#PREFIX#mib_cache` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
 CREATE TABLE `#PREFIX#received` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `source_ip` varchar(45) DEFAULT NULL,
