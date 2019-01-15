@@ -66,7 +66,7 @@ Now, you must tell snmptrapd to send all traps to the module.
 
 Edit the /etc/snmp/snmptrapd file and add : 
 
-* traphandle default /opt/rh/rh-php71/root/usr/sbin/php-fpm /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
+* traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 
 Note : on bottom of configuration page, you will have the php and module directories adapted to your system
 
@@ -78,6 +78,26 @@ With a v3 user :
 
 * createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
 * authUser log,execute,net trapuser 
+
+Edit the launch options of snmptrapd : 
+
+* For RH7/CenOS7 and other systems using systemd : 
+
+In : /usr/lib/systemd/system/snmptrapd.service
+
+Change : Environment=OPTIONS="-Lsd"
+
+To : Environment=OPTIONS='-Lsd -n -t -On'
+
+NOTE : be sure to change " to ' or you may have an error message (204/memory) on some systems.
+
+* For RH6/CenOS6 and othe /etc/init.d system services 
+
+In : /etc/sysconfig/snmptrapd
+
+Change : # OPTIONS="-Lsd -p /var/run/snmptrapd.pid"
+
+To : OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"
 
 Enable & start snmptrad service : 
 
