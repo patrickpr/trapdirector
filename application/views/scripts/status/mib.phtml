@@ -4,14 +4,15 @@
 </div>
 
 <div class="content">
-  <h2>To add files directly</h2>
-  <ul>
-    <li>Put mib file in /usr/share/icingaweb2/module/trapdirector/mibs</li>
-	<li>then run : 
-	/usr/share/icingaweb2/modules/trapdirector/bin/get_traps.sh > /usr/share/icingaweb2/modules/trapdirector/mibs/traplist.txt
-	</li>
-
-  </ul>
+	<h2>MIB Database</h2>
+	<ul>
+	<li>Traps in database : <?= $this->mibDbCountTrap ?></li>
+	<li>Objects in database : <?= $this->mibDbCount ?></li> 
+	
+	</ul>
+	<br>
+	<button type="button" onclick="updateMIB()">Update MIB Database</button>
+	Note : can take very long time
    <h2>snmptranslate</h2>
   
   Binary (<?= $this->snmptranslate_bin ?>) : 
@@ -32,14 +33,14 @@
 		echo " traps defined)</li>\n";
 	} 
 ?>
-  </ul>
-  Add a mib FILE (NOT IMPLEMENTED) :
-  <form id="file-form" action="#" method="POST">
-		<input type="file" id="mib-select" name="mibs[]" multiple/>
-		<button type="submit" id="upload-button">Upload</button>
-  </form>
-   
-
+  </ul>  
+		<p>
+		Add a mib FILE (NOT IMPLEMENTED) :
+		<form id="file-form" action="#" method="POST">
+			<input type="file" id="mib-select" name="mibs[]" multiple/>
+			<button type="submit" id="upload-button">Upload</button>
+		</form>
+	</p>
   <br><br>
   
   Files added in MIB directory : 
@@ -68,6 +69,11 @@ function displayOK(message)
 {
 	// for now
 	alert(message);
+}
+
+function updateMIB()
+{
+	alert("Not Implemented");
 }
 
 function add_mib_files()

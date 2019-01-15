@@ -8,7 +8,7 @@ CREATE TABLE `#PREFIX#db_config` (
 INSERT INTO #PREFIX#db_config (`name`,`value`) VALUES ('db_version',1);
 
 CREATE TABLE `#PREFIX#mib_cache` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `oid` varchar(256) NOT NULL,
   `mib` varchar(256) NOT NULL,
   `name` varchar(512) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE `#PREFIX#mib_cache` (
   `textual_convention` int(8) DEFAULT NULL,
   `display_hint` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `#PREFIX#mib_cache_syntax` (
   `num` int(11) NOT NULL,

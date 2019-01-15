@@ -84,6 +84,11 @@ class StatusController extends TrapsController
 			$this->view->snmptranslate='cannot execute';
 		}
 	
+		// mib database
+		
+		$this->view->mibDbCount=$this->getMIB()->countObjects();
+		$this->view->mibDbCountTrap=$this->getMIB()->countObjects(null,21);
+		
 		// mib dirs
 		$DirConf=$this->Config()->get('config', 'snmptranslate_dirs');
 		$dirArray=array();

@@ -115,6 +115,7 @@ class Trap
 		$sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,2,'');
+			return null;
 		}
 		$value=$ret_code->fetch();
 		if ($value != null && isset($value['value']))
@@ -375,6 +376,34 @@ class Trap
 	*/
 	public function translateOID($oid)
 	{
+		// try from database
+		$db_conn=$this->db_connect_trap();
+		
+		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid.'\';';
+		$this->trapLog('SQL query : '.$sql,4,'');
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$name=$ret_code->fetch();
+		if ($name['name'] != null)
+		{
+			return array('trap_name_mib'=>$name['mib'],'trap_name'=>$name['name']);
+		}
+		
+		// Also check if it is not an instance of OID
+		$oid_instance=preg_replace('/\.[0-9]+$/','',$oid);
+		
+		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid_instance.'\';';
+		$this->trapLog('SQL query : '.$sql,4,'');
+		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			$this->trapLog('No result in query : ' . $sql,1,'');
+		}
+		$name=$ret_code->fetch();
+		if ($name['name'] != null)
+		{
+			return array('trap_name_mib'=>$name['mib'],'trap_name'=>$name['name']);
+		}
+		
 		// Try to get oid name from snmptranslate
 		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
 				' '.$oid,$translate_output);
@@ -382,8 +411,9 @@ class Trap
 		if ($ret_code==0 || $ret_code==FALSE) {
 			return NULL;
 		} else {
+			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,2,'');
 			return array('trap_name_mib'=>$matches[1],'trap_name'=>$matches[2]);
-		}		
+		}	
 	}
 
 	

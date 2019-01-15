@@ -201,7 +201,9 @@ class TrapsController extends Controller
 			$this->MIBData=new MIBLoader(
 				$this->Module()->getBaseDir().'/mibs/traplist.txt',
 				$this->Config()->get('config', 'snmptranslate'),
-				$this->Config()->get('config', 'snmptranslate_dirs')
+				$this->Config()->get('config', 'snmptranslate_dirs'),
+				$this->getDb(),
+				$this->getModuleConfig()
 			);
 		}
 		return $this->MIBData;

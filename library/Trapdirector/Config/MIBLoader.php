@@ -24,13 +24,20 @@ class MIBLoader
 	*/
 	protected $traps; //< array of traps
 	
-	protected $cache=array(); //< cache of translateoid
+	protected $cache=array(); //< cache of translateoid // TODO DESTROY
+	protected $db; //< traps database
+	protected $config; //<TrapModuleConfig
 	protected $enable_cache=true;
 	
-	public function __construct($file,$snmptranslate,$snmptranslate_dirs)
+	public function __construct($file,$snmptranslate,$snmptranslate_dirs,$db,$config)
 	{
 		$this->snmptranslate=$snmptranslate;
 		$this->snmptranslate_dirs=$snmptranslate_dirs;
+		
+		$this->db=$db;
+		$this->config=$config;
+		
+		// TODO ERASE WHEN only DB is used
 		$input_stream=fopen($file, 'r');
 
 		if ($input_stream==FALSE)
@@ -86,16 +93,25 @@ class MIBLoader
 		return $this->mibList;
 	}
 	
+	
+	/** Get trap list from a mib 
+	*	@param $mib string mib name
+	*	@return array(traps)
+	*/
 	public function getTrapList($mib)
 	{
 		$traps=array();
-		foreach ($this->traps as $key => $val)
+		$dbconn = $this->db->getConnection();
+		$query=$dbconn->select()
+				->from(
+					$this->config->getMIBCacheTableName(),
+					array('name' => 'name', 'oid' => 'oid'))
+				->where("mib = '".$mib."' AND type=21") ;
+		$names=$dbconn->fetchAll($query);
+		foreach ($names as $key=>$val)
 		{
-			if ($this->traps[$key]['mib'] == $mib)
-			{
-				$traps[$key]=$this->traps[$key]['name'];
-			}
-		}
+			$traps[$val->oid]=$val->name;
+		}			
 		return $traps;
 	}
 	
@@ -106,14 +122,41 @@ class MIBLoader
 	public function getObjectList($trap)
 	{
 		// TODO : add leading '.' if missing
-		if (isset($this->traps[$trap]['objects']))
+		$objects=array();
+		
+		// Get trap id in DB
+		$dbconn = $this->db->getConnection();
+		$query=$dbconn->select()
+				->from(
+					$this->config->getMIBCacheTableName(),
+					array('id' => 'id'))
+				->where("oid = '".$trap."'") ;
+		$id=$dbconn->fetchRow($query);
+		if ( ($id == null) || ! property_exists($id,'id') ) return null;
+		
+		$query=$dbconn->select()
+				->from(
+					array('o' => $this->config->getMIBCacheTableTrapObjName()),
+					array('name' => 'o.object_name'))
+				->join(
+					array('c' => $this->config->getMIBCacheTableName()),
+					'o.object_name=c.name',
+					array('mib' => 'c.mib','oid' => 'c.oid'))
+				->join(
+					array('s' => $this->config->getMIBCacheTableSyntax()),
+					's.num=c.type',
+					array('type' => 's.value')	)			
+				->where("o.trap_id = ".$id->id);
+		$listObjects=$dbconn->fetchAll($query);
+		if ( count($listObjects)==0 ) return null;
+		
+		foreach ($listObjects as $key => $val)
 		{
-			return $this->traps[$trap]['objects'];
+			$objects[$val->oid]['name']=$val->name;
+			$objects[$val->oid]['mib']=$val->mib;
+			$objects[$val->oid]['type']=$val->type;
 		}
-		else
-		{
-			return null;
-		}
+		return $objects;
 	}
 
 	/** translate oid in MIB::Name 
@@ -122,12 +165,50 @@ class MIBLoader
 	*/
 	public function translateOID($oid)
 	{
+		// TODO : put a first . if missing
+		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
+		$dbconn = $this->db->getConnection();
+
+		$query=$dbconn->select()
+				->from(
+					array('o' => $this->config->getMIBCacheTableName()),
+					array('mib'=>'o.mib','name' => 'o.name','type'=>'o.type'))
+				->where('o.oid=\''.$oid.'\'');
+		$object=$dbconn->fetchRow($query);
+		if ($object != null) 
+		{
+			$retArray['name']=$object->name;
+			$retArray['mib']=$object->mib;
+			$query=$dbconn->select()
+					->from(
+						array('o' => $this->config->getMIBCacheTableSyntax()),
+						array('type'=>'o.value'))
+					->where('o.num=\''.$object->type.'\'');
+			$object=$dbconn->fetchRow($query);
+			if ($object != null) 
+			{
+				$retArray['type']=$object->type;
+			}
+			return $retArray;
+		}
+		
+		/********** OLD WAY TO DELETE *****************/
+		//return $retArray;
+		foreach ($listObjects as $key => $val)
+		{
+			$objects[$val->oid]['name']=$val->name;
+			$objects[$val->oid]['mib']=$val->mib;
+			$objects[$val->oid]['type']=$val->type;
+		}
+		return $objects;		
+		
 		if ($this->enable_cache && isset($this->cache[$oid]['name']))
 		{
 			return $this->cache[$oid];
 		}
 		
 		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
+		/********** END OLD WAY TO DELETE *****************/
 		// Try to get oid name from snmptranslate
 		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
 		' '.$oid,$translate_output);
@@ -151,6 +232,30 @@ class MIBLoader
 		
 		return $retArray;
 						
+	}
+
+	public function countObjects($mib=null,$type=null)
+	{
+		$dbconn = $this->db->getConnection();
+		$query=$dbconn->select()
+				->from(
+					$this->config->getMIBCacheTableName(),
+					array('COUNT(*)'));
+		$where=null;
+		if ($mib != null)
+		{
+			$where ="mib = '$mib' ";
+		}
+		if ($type != null)
+		{
+			$where=($where != null)?' AND ':'';
+			$where.="type='$type'";
+		}
+		if ($where != null)
+		{
+			$query->where($where);
+		}		
+		return $dbconn->fetchOne($query);			
 	}
 	
 }

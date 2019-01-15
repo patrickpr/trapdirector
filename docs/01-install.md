@@ -68,7 +68,7 @@ Edit the /etc/snmp/snmptrapd file and add :
 
 * traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 
-Note : on bottom of configuration page, you will have the php and module directories adapted to your system
+Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace with something like /bin/php.
 
 Set up the community (still in snmptrapd.conf) : here with "public" 
 
@@ -79,7 +79,21 @@ With a v3 user :
 * createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
 * authUser log,execute,net trapuser 
 
-Edit the launch options of snmptrapd : 
+So here is what your snmptrapd.conf should look like : 
+
+traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php
+
+authCommunity log,execute,net public
+
+createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
+
+authUser log,execute,net trapuser 
+
+
+Edit the launch options of snmptrapd
+------------------------
+
+TODO : see why the bug with OPTION is here
 
 * For RH7/CenOS7 and other systems using systemd : 
 
@@ -87,9 +101,13 @@ In : /usr/lib/systemd/system/snmptrapd.service
 
 Change : Environment=OPTIONS="-Lsd"
 
-To : Environment=OPTIONS='-Lsd -n -t -On'
+To : Environment=OPTIONS='-Lsd -n -t'
 
-NOTE : be sure to change " to ' or you may have an error message (204/memory) on some systems.
+and change : ExecStart=/usr/sbin/snmptrapd $OPTIONS -f
+
+To : ExecStart=/usr/sbin/snmptrapd -On $OPTIONS -f
+
+NOTE : be sure to change " to ' or you may have an error message (204/memory) on some systems. Then "-On" is in the ExecStart because of a strange bug too....
 
 * For RH6/CenOS6 and othe /etc/init.d system services 
 
@@ -100,6 +118,7 @@ Change : # OPTIONS="-Lsd -p /var/run/snmptrapd.pid"
 To : OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"
 
 Enable & start snmptrad service : 
+------------------------
 
 * systemctl enable snmptrapd
 * systemctl start snmptrapd

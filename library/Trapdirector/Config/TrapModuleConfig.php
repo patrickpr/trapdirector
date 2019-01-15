@@ -45,6 +45,12 @@ class TrapModuleConfig
 	{ 
 		return array('c' => $this->table_prefix . 'db_config');
 	}
+
+	// Mib cache tables
+	public function getMIBCacheTableName() { return $this->table_prefix . 'mib_cache'; }
+	public function getMIBCacheTableTrapObjName() { return $this->table_prefix . 'mib_cache_trap_object'; }
+	public function getMIBCacheTableSyntax() { return $this->table_prefix . 'mib_cache_syntax'; }
+	public function getMIBCacheTableTC() { return array('t' => $this->table_prefix . 'mib_cache_tc'); }
 	
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
