@@ -68,7 +68,7 @@ Edit the /etc/snmp/snmptrapd file and add :
 
 * traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 
-Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace with something like /bin/php.
+Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace with something like bin/php .
 
 Set up the community (still in snmptrapd.conf) : here with "public" 
 
