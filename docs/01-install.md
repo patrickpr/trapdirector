@@ -101,13 +101,11 @@ In : /usr/lib/systemd/system/snmptrapd.service
 
 Change : Environment=OPTIONS="-Lsd"
 
-To : Environment=OPTIONS='-Lsd -n -t'
+To : Environment=OPTIONS="-Lsd -n -t -On"
 
-and change : ExecStart=/usr/sbin/snmptrapd $OPTIONS -f
+Note : if you have a weird 204 error on startup (happened on one centOS7 system), change ExecStart instead : 
 
-To : ExecStart=/usr/sbin/snmptrapd -On $OPTIONS -f
-
-NOTE : be sure to change " to ' or you may have an error message (204/memory) on some systems. Then "-On" is in the ExecStart because of a strange bug too....
+ExecStart=/usr/sbin/snmptrapd -n -t -On $OPTIONS -f
 
 * For RH6/CenOS6 and othe /etc/init.d system services 
 
