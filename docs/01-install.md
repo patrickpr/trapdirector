@@ -66,29 +66,34 @@ Now, you must tell snmptrapd to send all traps to the module.
 
 Edit the /etc/snmp/snmptrapd file and add : 
 
-* traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
+```
+traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
+```
 
 Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace with something like bin/php .
 
 Set up the community (still in snmptrapd.conf) : here with "public" 
 
-* authCommunity log,execute,net public
+```
+authCommunity log,execute,net public
+```
 
 With a v3 user :
 
-* createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
-* authUser log,execute,net trapuser 
+```
+createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
+authUser log,execute,net trapuser 
+```
 
 So here is what your snmptrapd.conf should look like : 
 
+```
+authCommunity log,execute,net public
 traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php
 
-authCommunity log,execute,net public
-
 createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
-
 authUser log,execute,net trapuser 
-
+```
 
 Edit the launch options of snmptrapd
 ------------------------
@@ -97,29 +102,31 @@ TODO : see why the bug with OPTION is here
 
 * For RH7/CenOS7 and other systems using systemd : 
 
-In : /usr/lib/systemd/system/snmptrapd.service
+In : `/usr/lib/systemd/system/snmptrapd.service`
 
-Change : Environment=OPTIONS="-Lsd"
+Change : `Environment=OPTIONS="-Lsd"`
 
-To : Environment=OPTIONS="-Lsd -n -t -On"
+To : `Environment=OPTIONS="-Lsd -n -t -On"`
 
 Note : if you have a weird 204 error on startup (happened on one centOS7 system), change ExecStart instead : 
 
-ExecStart=/usr/sbin/snmptrapd -n -t -On $OPTIONS -f
+`ExecStart=/usr/sbin/snmptrapd -n -t -On $OPTIONS -f`
 
-* For RH6/CenOS6 and othe /etc/init.d system services 
+* For RH6/CenOS6 and other /etc/init.d system services 
 
-In : /etc/sysconfig/snmptrapd
+In : `/etc/sysconfig/snmptrapd`
 
-Change : # OPTIONS="-Lsd -p /var/run/snmptrapd.pid"
+Change : `# OPTIONS="-Lsd -p /var/run/snmptrapd.pid"`
 
-To : OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"
+To : `OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"`
 
 Enable & start snmptrad service : 
 ------------------------
+```
+systemctl enable snmptrapd
 
-* systemctl enable snmptrapd
-* systemctl start snmptrapd
+systemctl start snmptrapd
+```
 
 Now all traps received by the system will be redirected to the trapdirector module.
 

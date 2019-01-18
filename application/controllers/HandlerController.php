@@ -20,11 +20,8 @@ class HandlerController extends TrapsController
 	public function indexAction()
 	{	
 		$this->checkReadPermission();
-		$this->getTabs()->add('get',array(
-			'active'	=> true,
-			'label'		=> $this->translate('Traps'),
-			'url'		=> Url::fromRequest()
-		));
+		$this->prepareTabs()->activate('status');
+
 		$db = $this->getDb();
 		$this->getHandlerListTable()->setConnection($db);
 		$this->getHandlerListTable()->setMibloader($this->getMIB());
@@ -247,6 +244,8 @@ class HandlerController extends TrapsController
 		}
 	}
 
+	
+	
 	/** Validate form and output message to user  
 	*	@param in postdata 
 	* 	@return status : OK / <Message>
@@ -465,5 +464,17 @@ class HandlerController extends TrapsController
 		return $ruleDetail;
 
 	}
+
+	protected function prepareTabs()
+	{
+		return $this->getTabs()->add('status', array(
+			'label' => $this->translate('Traps'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/handler')
+		);/* TODO : see if useful and think about rules display
+			->add('ignore', array(
+			'label' => $this->translate('Traps to ignore'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/handler/ignore')
+		);*/
+	} 
 	
 }

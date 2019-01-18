@@ -62,6 +62,31 @@ class StatusController extends TrapsController
 	{
 		$this->prepareTabs()->activate('mib');
 		
+		// check if it is an ajax query
+		if ($this->getRequest()->isPost())
+		{
+			$postData=$this->getRequest()->getPost();
+			if (isset($postData['action']))
+			{
+				$action=$postData['action'];
+				if ($action == 'update_mib_db')
+				{
+					try
+					{
+						$trap=$this->getTrapClass();
+						$trap->update_mib_database(false);
+						$trap->update_mibs_options();
+					}
+					catch (Exception $e)
+					{
+						$this->_helper->json(array('status'=>$e->getMessage()));
+					}
+					$this->_helper->json(array('status'=>'OK'));
+				}
+				$this->_helper->json(array('status'=>'ERR : no '.$action.' action possible' ));
+			}
+		}
+		
 		// snmptranslate tests
 		$snmptranslate = $this->Config()->get('config', 'snmptranslate');
 		$this->view->snmptranslate_bin=$snmptranslate;

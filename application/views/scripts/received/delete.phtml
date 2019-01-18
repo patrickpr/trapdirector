@@ -1,0 +1,97 @@
+<div class="controls">
+  <?= $this->tabs ?>
+<h2> Delete selected traps from database </h2>
+</div>
+
+<div class="content">
+<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="/icingaweb2/trapdirector/received/delete_form" method="post">
+	<div> If left empty, IP or OID will not be part of filter </div>
+	<div class="control-group">
+		<div class="control-label-group">
+			<span>
+				<label for="id_sourceIP" class="control-label optional">Source IP</label>
+			</span>
+		</div>
+		<input type="text" name="IP" id="id_sourceIP" placeholder="Enter source IP" > 
+	</div>	
+
+	<div class="control-group">
+		<div class="control-label-group">
+			<span>
+				<label for="id_OID" class="control-label optional">Host group</label>
+			</span>
+		</div>
+		<input type="text" name="OID" id="id_OID" placeholder="Enter OID" > 
+	</div>		
+	<div class="control-group">
+		<button type="button" id="id_update_lines" onclick="onclickDeleteAction('count')">
+			Update number of affected lines
+		</button>
+		Affected lines : <span id="id_num_lines">0</span>
+	</div>
+	<div class="control-group">
+		<div class="control-label-group">
+			<span >
+				<label id="id_submit_main_label" for="id_submit_main" class="control-label optional">Delete traps</label>
+			</span>
+		</div>
+		<input type="submit" name="submit" id="id_submit_main" value="Delete">
+
+	</div>	
+</form>
+</div>
+
+<script type='text/javascript'>
+
+getLinesHelper='/icingaweb2/trapdirector/received/deletelines';
+
+function onclickDeleteAction(action)
+{
+	// Do ajax call
+	$.ajax({
+			url: getLinesHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	action,
+				"OID"		:	$("#id_OID").val(),
+				"IP"		:	$("#id_sourceIP").val()
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					if (action=='count')
+					{
+						$("#id_num_lines").html(data.count);
+					}
+					else
+					{
+						alert('Traps deleted');
+					}
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});		
+}
+
+$(function() {
+
+	$( "#id_submit_main" ).click(function( event ) {
+		event.preventDefault();
+		onclickDeleteAction('delete');
+	});
+	
+});
+
+</script>

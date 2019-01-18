@@ -32,6 +32,7 @@ class Trap
 	public $trap_data_ext=array(); //< Additional trap data objects (oid/value).
 	public $trap_id=null; //< trap_id after sql insert
 	public $trap_action=null; //< trap action for final write
+	protected $trap_to_db=true; //< log trap to DB
 	
 	function __construct($etc_dir='/etc/icingaweb2')
 	{
@@ -444,6 +445,11 @@ class Trap
 	*/
 	public function writeTrapToDB()
 	{
+		
+		// Of action is ignore -> don't send t DB
+		if ($this->trap_to_db == false) return;
+		
+		
 		$db_conn=$this->db_connect_trap();
 		
 		$insert_col='';
@@ -470,7 +476,7 @@ class Trap
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('Error SQL insert : '.$sql,1,'');
 		}
-
+		
 		$this->trapLog('SQL insertion OK',3,'');
 
 		// Get last id to insert oid/values in secondary table
@@ -867,12 +873,17 @@ class Trap
 					//$this->trapLog('rules OOK: '.print_r($rule),3,'');
 					$action=$rule['action_match'];
 					$this->trapLog('action OK : '.$action,3,'');
-					if ($action != -1)
+					if ($action >= 0)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
 					}
+					else
+					{
+						$this->trap_action='No action';
+					}
+					$this->trap_to_db=($action==-2)?false:true;
 				}
 				else
 				{
@@ -880,12 +891,17 @@ class Trap
 					
 					$action=$rule['action_nomatch'];
 					$this->trapLog('action NOK : '.$action,3,'');
-					if ($action != -1)
+					if ($action >= 0)
 					{
 						$this->serviceCheckResult($host_name,$service_name,$action,$display);
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
-					}					
+					}
+					else
+					{
+						$this->trap_action='No action';
+					}
+					$this->trap_to_db=($action==-2)?false:true;					
 				}
 				// Put name in source_name
 				if (!isset($this->trap_data['source_name']))

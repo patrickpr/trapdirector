@@ -16,11 +16,8 @@ class ReceivedController extends TrapsController
 	public function indexAction()
 	{	
 		$this->checkReadPermission();
-		$this->getTabs()->add('get',array(
-			'active'	=> true,
-			'label'		=> $this->translate('Traps'),
-			'url'		=> Url::fromRequest()
-		));
+		$this->prepareTabs()->activate('traps');
+
 		$db = $this->getDb();
 		$this->getTrapListTable()->setConnection($db);
 		
@@ -33,6 +30,7 @@ class ReceivedController extends TrapsController
 		$filter['done']=$this->params->get('done');
 		$this->view->filter=$filter;
 		$this->view->table->updateFilter(Url::fromRequest(),$filter);
+		
 		//$this->view->filterEditor = $this->getTrapListTable()->getFilterEditor($this->getRequest());
 
 	}
@@ -133,6 +131,51 @@ class ReceivedController extends TrapsController
 			$this->view->data_val=$trapval;
 			$this->view->data_title=$queryArrayData;
 		}
+	}
+
+	public function deleteAction()
+	{
+		$this->checkConfigPermission();
+		$this->prepareTabs()->activate('delete');
+		
+		
+		
+		return;
+	}
+	
+	protected function prepareTabs()
+	{
+		return $this->getTabs()->add('traps', array(
+			'label'	=> $this->translate('Traps'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/received')
+		)->add('delete', array(
+			'label' => $this->translate('delete'),
+			'url'   => $this->getModuleConfig()->urlPath() . '/received/delete')
+		);
+	} 
+
+	public function deletelinesAction()
+	{
+		$postData=$this->getRequest()->getPost();
+		if (isset($postData['IP']) && isset($postData['OID']) && isset($postData['action']))
+		{
+			$ip=$postData['IP'];
+			$oid=$postData['OID'];
+			$action=$postData['action'];
+		}
+		else
+		{
+			$this->_helper->json(array('status'=>'Missing variables'));
+		}
+		if ($action =="count")
+		{
+			$this->_helper->json(array('status'=>'OK','count'=>$this->countTrap($ip,$oid)));
+		}
+		if ($action =="delete")
+		{
+			$this->_helper->json(array('status'=>'OK','count'=>$this->deleteTrap($ip,$oid)));
+		}		
+		$this->_helper->json(array('status'=>'unknown action'));
 	}
 	
 }

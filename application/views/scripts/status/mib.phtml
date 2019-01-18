@@ -11,8 +11,14 @@
 	
 	</ul>
 	<br>
-	<button type="button" onclick="updateMIB()">Update MIB Database</button>
-	Note : can take very long time
+	<div id="id_animate_apply_mib2" ><i ></i></div>
+	<button id="id_apply_mib" type="button" onclick="updateMIB()">
+		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" ></a>
+		Update MIB Database
+	</button>  
+	Note : can take several minutes
+   <br>
+   
    <h2>snmptranslate</h2>
   
   Binary (<?= $this->snmptranslate_bin ?>) : 
@@ -32,17 +38,8 @@
 		echo '<li>'.$dir.' : (aprox. '.exec('cat '.$dir.'/*  | grep "NOTIFICATION-TYPE" | wc -l 2>/dev/null');
 		echo " traps defined)</li>\n";
 	} 
-?>
-  </ul>  
-		<p>
-		Add a mib FILE (NOT IMPLEMENTED) :
-		<form id="file-form" action="#" method="POST">
-			<input type="file" id="mib-select" name="mibs[]" multiple/>
-			<button type="submit" id="upload-button">Upload</button>
-		</form>
-	</p>
-  <br><br>
-  
+?>  
+  </ul>
   Files added in MIB directory : 
   <ul>
  <?php
@@ -52,12 +49,19 @@
 	}
  ?>
   </ul>
-
+   <p>
+	Add a mib FILE (NOT IMPLEMENTED) :
+	<form id="file-form" action="#" method="POST">
+		<input type="file" id="mib-select" name="mibs[]" multiple/>
+		<button type="submit" id="upload-button">Upload</button>
+	</form>
+	</p>
+  <br><br>
   
 </div>
 
 <script type='text/javascript'>
-mibfileHelper='/icingaweb2/trapdirector/helper/addmibfiles';
+mibfileHelper='/icingaweb2/trapdirector/status/mib';
 
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
@@ -73,7 +77,49 @@ function displayOK(message)
 
 function updateMIB()
 {
-	alert("Not Implemented");
+	$("#id_apply_mib").prop("disabled",true);
+	
+	//$("#id_animate_apply_mib").addClass("spinner");
+	$("#id_animate_apply_mib").css("animation","spin 2s linear infinite");	
+	$("#id_animate_apply_mib").show();
+
+	$.ajax({
+			url: mibfileHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	"update_mib_db"
+			},
+	        success: function (data) 
+			{
+				$("#id_apply_mib").prop("disabled",false);
+				$("#id_animate_apply_mib").css("animation","none");	
+				$("#id_animate_apply_mib").hide();	
+				if (data.status == "OK") 
+				{
+					displayOK("Done");
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			
+			},
+			error: function (data)
+			{
+				$("#id_apply_mib").prop("disabled",false);
+				$("#id_animate_apply_mib").css("animation","none");	
+				$("#id_animate_apply_mib").hide();				
+				
+				displayWarning ("Error" + data);
+			}
+	});		
+	
+	setTimeout(function(){
+
+	}, 5000);
 }
 
 function add_mib_files()
@@ -81,8 +127,6 @@ function add_mib_files()
 	alert("Not Implemented");
 }
 
-$(function() {
-	return;
-});
+
 
 </script>

@@ -21,6 +21,8 @@ use Icinga\Module\Trapdirector\Tables\TrapTableList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
 
+use Trap;
+
 use Zend_Db_Expr;
 use Zend_Db_Select;
 
@@ -32,6 +34,7 @@ class TrapsController extends Controller
 	protected $trapDB;			//< Trap database
 	protected $icingaDB;		//< Icinga IDO database;
 	protected $MIBData; 		//< MIBLoader class
+	protected $trapClass;		//< Trap class for bin/trap_class.php
 		
 	/** Get instance of TrapModuleConfig class
 	*	@return TrapModuleConfig
@@ -188,6 +191,20 @@ class TrapsController extends Controller
         }		
 	}
 
+	/*************************  Trap class get **********************/
+	public function getTrapClass()
+	{ // TODO : try/catch here ? or within caller
+		if ($this->trapClass == null)
+		{
+			require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+			$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+			//$debug_level=4;
+			$this->trapClass = new Trap($icingaweb2_etc);
+			//$Trap->setLogging($debug_level,'syslog');
+		}
+		return $this->trapClass;
+	}
+	
 	/************************** MIB related **************************/
 	
 	/** Get MIBLoader class
@@ -455,6 +472,7 @@ class TrapsController extends Controller
 		);
 		return $numRows;
 	}	
+	
 	/** Delete rule by id
 	*	@param int rule id
 	*/
@@ -470,6 +488,62 @@ class TrapsController extends Controller
 		return $query;		
 	}
 
+	/** Delete trap by ip & oid
+	*	@param $ip source IP (v4 or v6)
+	*	@param $oid oid
+	*/
+	protected function deleteTrap($ip,$oid)
+	{
+		
+		$db = $this->getDb()->getConnection();
+		$condition=null;
+		if ($ip != null)
+		{
+			$condition="source_ip='$ip'";
+		}
+		if ($oid != null)
+		{
+			$condition=($condition==null)?'':$condition.' AND ';
+			$condition.="trap_oid='$oid'";
+		}
+		if($condition ==null) return null;
+		$query=$db->delete(
+			$this->getModuleConfig()->getTrapTableName(),
+			$condition
+		);
+		// TODO test ret code etc...
+		return $query;		
+	}
+
+
+	/** count trap by ip & oid
+	*	@param $ip source IP (v4 or v6)
+	*	@param $oid oid
+	*/
+	protected function countTrap($ip,$oid)
+	{
+		
+		$db = $this->getDb()->getConnection();
+		$condition=null;
+		if ($ip != null)
+		{
+			$condition="source_ip='$ip'";
+		}
+		if ($oid != null)
+		{
+			$condition=($condition==null)?'':$condition.' AND ';
+			$condition.="trap_oid='$oid'";
+		}
+		if($condition ==null) return 0;
+		$query=$db->select()
+			->from(
+				$this->getModuleConfig()->getTrapTableName(),
+				array('num'=>'count(*)'))
+			->where($condition);
+		$return_row=$db->fetchRow($query);
+		return $return_row->num;
+	}		
+	
 	/** get configuration value
 	*	@param configuration name in db
 	*/

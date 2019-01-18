@@ -34,6 +34,7 @@ class HandlerTableList extends TrapTable
 	
 	// status
 	protected $status_display=array(
+		-2	=>'ignore',
 		-1 => '-',
 		0	=> 'OK',
 		1	=> 'warning',
