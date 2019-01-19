@@ -136,7 +136,7 @@ Now all traps received by the system will be redirected to the trapdirector modu
 Set up mibs : 
 ------------------------
 
-The system mibs should be in `/usr/share/net-snmp/mibs` directory : chenge the path in configuration if needed.
+The system mibs should be in `/usr/share/net-snmp/mibs` directory : change the path in configuration if needed.
 
 Mib you can upload will be in (default) `/usr/share/icingaweb2/module/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
 For example (as root) : 
