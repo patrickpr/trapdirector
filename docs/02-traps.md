@@ -91,6 +91,12 @@ As you selected a trap, the objects sent with the trap are automaticaly added in
 * 3 : Value sent by the trap selected earlier
 * 4 : Type of trap as described in MIB
 
+If you hover on the type values, it will show you specific types meanings, for example : 
+
+![add-from-trap-2_1](img/add-from-trap-2_1.jpg)
+
+So here, the value "2" means interface is "down"
+
 3) Display and rules
 
 There you will configure : 

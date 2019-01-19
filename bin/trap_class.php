@@ -1274,6 +1274,24 @@ class Trap
 			$type=$match[2];
 			$textConv=(isset($match[4]))?$match[4]:null;
 			$dispHint=(isset($match[6]))?$match[6]:null;
+			$type_enum=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+				' -Td '.$oid. ' | grep -E "SYNTAX.*\{.*\}"',$returnALL,$retVal);
+			if ($retVal != 0)
+			{
+				$type_enum=null;
+			}
+			else
+			{
+				if ( ! preg_match('/SYNTAX.*\{(.*)\}/',$type_enum,$matchesType))
+				{
+					$type_enum=null;
+				}
+				else
+				{
+					$type_enum=$matchesType[1];
+				}
+						
+			}
 			//echo $objects_s[$curElement]."\n";
 			//print_r($match);
 			if (isset($dbRulesIndex[$oid]))
@@ -1281,18 +1299,20 @@ class Trap
 				if ( $name!=$dbRulesAll[$dbRulesIndex[$oid]]['name'] ||
 					$type!=$dbRulesAll[$dbRulesIndex[$oid]]['type'] ||
 					$textConv!=$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention'] ||
-					$dispHint!=$dbRulesAll[$dbRulesIndex[$oid]]['display_hint'] )
+					$dispHint!=$dbRulesAll[$dbRulesIndex[$oid]]['display_hint'] ||
+					$type_enum !=$dbRulesAll[$dbRulesIndex[$oid]]['type_enum'])
 				{ // Do update (TODO : check MIB does not change )
-					echo 'Update : '.$oid."\n";
-					echo "$name# ".$dbRulesAll[$dbRulesIndex[$oid]]['name']."#\n";
-					echo "$type# ".$dbRulesAll[$dbRulesIndex[$oid]]['type']."#\n";
-					echo "$textConv# ".$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention']."#\n";
-					echo "$dispHint# ".$dbRulesAll[$dbRulesIndex[$oid]]['display_hint']."#\n";
+					//echo 'Update : '.$oid."\n";
+					//echo "$name# ".$dbRulesAll[$dbRulesIndex[$oid]]['name']."#\n";
+					//echo "$type# ".$dbRulesAll[$dbRulesIndex[$oid]]['type']."#\n";
+					//echo "$textConv# ".$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention']."#\n";
+					//echo "$dispHint# ".$dbRulesAll[$dbRulesIndex[$oid]]['display_hint']."#\n";
 					$sql='UPDATE '.$this->db_prefix.'mib_cache SET '.
-					"name = '".$name."' , type = '".$type."' , textual_convention = ".
-					(($textConv==null)?'null':"'".$textConv."'")
-					." , display_hint = ".
-					(($dispHint==null)?'null':"'".$dispHint."'")." WHERE id='".
+					"name = '".$name."' , type = '".$type."' , " .
+					"textual_convention = ". (($textConv==null)?'null':"'".$textConv."'") .
+					" , display_hint = ". (($dispHint==null)?'null':"'".$dispHint."'").
+					" , type_enum = ". (($type_enum==null)?'null':"'".$type_enum."'").
+					" WHERE id='".
 					$dbRulesAll[$dbRulesIndex[$oid]]['id'] ."' ;";
 					//$this->trapLog('SQL query : '.$sql,4,'');
 					if (($ret_code=$db_conn->query($sql)) == FALSE) {
@@ -1332,7 +1352,12 @@ class Trap
 				{
 					$sqlT.=',display_hint';
 					$sqlV.=",'".$dispHint."'";
-				}				
+				}
+				if ($type_enum != null) 
+				{
+					$sqlT.=',type_enum';
+					$sqlV.=",'".$type_enum."'";
+				}					
 				$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
 				'('.$sqlT.') VALUES ('.$sqlV.');';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {

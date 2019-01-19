@@ -123,16 +123,19 @@ class HandlerController extends TrapsController
 			foreach ($currentTrapObjects as $key => $val)
 			{
 				$currentObjectType='Unknown';
+				$currentObjectTypeEnum='Unknown';
 				if (isset($allObjects[$val->oid]['type']))
 				{
 					$currentObjectType=$allObjects[$val->oid]['type'];
+					$currentObjectTypeEnum=$allObjects[$val->oid]['type_enum'];
 				}
 				$currentObject=array(
 					$val->oid,
 					$val->oid_name_mib,
 					$val->oid_name,
 					$val->value,
-					$currentObjectType
+					$currentObjectType,
+					$currentObjectTypeEnum
 				);
 				array_push($this->view->objectList,$currentObject);
 				// set currrent object to null in allObjects
@@ -151,7 +154,8 @@ class HandlerController extends TrapsController
 						$allObjects[$key]['mib'],
 						$allObjects[$key]['name'],
 						'No val. in trap',
-						$allObjects[$key]['type']
+						$allObjects[$key]['type'],
+						$allObjects[$key]['type_enum']
 					));
 				}
 			}
@@ -219,7 +223,8 @@ class HandlerController extends TrapsController
 						$object['mib'],
 						$object['name'],
 						'',
-						$object['type']
+						$object['type'],
+						$object['type_enum']
 					));
 				}
 				else

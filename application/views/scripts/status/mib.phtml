@@ -49,19 +49,21 @@
 	}
  ?>
   </ul>
-   <p>
-	Add a mib FILE (NOT IMPLEMENTED) :
-	<form id="file-form" action="#" method="POST">
-		<input type="file" id="mib-select" name="mibs[]" multiple/>
-		<button type="submit" id="upload-button">Upload</button>
-	</form>
-	</p>
-  <br><br>
+  <h2>Upload a mib file</h2>
+<?php
+  if ($this->uploadStatus != null)
+  {
+	  echo "<p>Status : $this->uploadStatus </p>";
+  }
+?>
   
+<?php echo $this->form->render() ?>
+ 
 </div>
 
 <script type='text/javascript'>
 mibfileHelper='/icingaweb2/trapdirector/status/mib';
+mibfileUploadHelper='/icingaweb2/trapdirector/status/mibfile';
 
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
@@ -122,11 +124,64 @@ function updateMIB()
 	}, 5000);
 }
 
-function add_mib_files()
+function add_mib_files(event)
 {
-	alert("Not Implemented");
+	event.preventDefault();
+	
+	var form = $("#file_form");
+	var fileSelect = $("#mib_select");
+	var uploadButton = $("id_upload_button");
+	
+	var fd = new FormData();
+	
+	uploadButton.innerHTML = 'Uploading...';
+	
+	return;
+	// Get the selected files from the input.
+	var files = fileSelect.files;
+	alert(files[0]);
+	// Create a new FormData object.
+	var formData = new FormData();
+
+	// Loop through each of the selected files.
+	for (var i = 0; i < files.length; i++) {
+	  var file = files[i];
+
+	  // Check the file type.
+	  //if (!file.type.match('image.*')) {
+	//	continue;
+	  //}
+
+	  // Add the file to the request.
+	  alert(file.name);
+	  formData.append('mibs[]', file, file.name);
+	}
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST', 'handler.php', true);
+
+	// Set up a handler for when the request finishes.
+	xhr.onload = function () {
+	  if (xhr.status === 200) {
+		// File(s) uploaded.
+		uploadButton.innerHTML = 'Upload';
+	  } else {
+		alert('An error occurred!');
+	  }
+	};
+	xhr.send(formData);
+	
+	//alert("Not Implemented");
 }
 
+$(function() {
 
+	//$("#file_form").onsubmit = add_mib_files(event);
+/*	$("#id_upload_button").click(function( event ) {
+		alert('test');
+		event.preventDefault();
+		add_mib_files(event);
+	});	
+*/
+});
 
 </script>

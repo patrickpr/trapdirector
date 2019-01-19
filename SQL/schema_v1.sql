@@ -15,6 +15,7 @@ CREATE TABLE `#PREFIX#mib_cache` (
   `type` int(8) DEFAULT NULL,
   `textual_convention` int(8) DEFAULT NULL,
   `display_hint` varchar(256) DEFAULT NULL,
+  `type_enum` text COMMENT 'Extended syntax ',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -36,7 +37,7 @@ CREATE TABLE `#PREFIX#mib_cache_trap_object` (
   `object_name` varchar(512) COLLATE utf8_bin NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_trap_id_obj_idx` (`trap_id`),
-  CONSTRAINT `FK_trap_id_obj` FOREIGN KEY (`trap_id`) REFERENCES `#PREFIX#mib_cache` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK_trap_id_obj` FOREIGN KEY (`trap_id`) REFERENCES `#PREFIX#mib_cache` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 CREATE TABLE `#PREFIX#received` (

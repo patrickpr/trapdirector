@@ -466,13 +466,14 @@ function onclickAddObjects()
 					// Put host list in <option> for user to choose.
 					for(var key in trapObjectsList)
 					{
-						//alert(key);
+						//alert(trapObjectsList[key]['type_enum']);
 						click_button_oid_add_cb(
 							key,
 							trapObjectsList[key]['mib'],
 							trapObjectsList[key]['name'],
 							'',  // Value
-							trapObjectsList[key]['type']
+							trapObjectsList[key]['type'],
+							trapObjectsList[key]['type_enum']
 						);
 						  
 					}				
@@ -493,7 +494,7 @@ function click_button_oid_add()
 	translateOID(add_oid,click_button_oid_add_cb);
 }
 
-function click_button_oid_add_cb(oid,mib,name,value,type)
+function click_button_oid_add_cb(oid,mib,name,value,type,type_enum)
 {
 	ido=objectsList_id;
 	addarray=[count_id,oid,mib,name,''];
@@ -507,7 +508,7 @@ function click_button_oid_add_cb(oid,mib,name,value,type)
 	htm +=	"	<td>"+mib+"</td>\n";
 	htm +=	"	<td>"+name+"</td>\n";
 	htm +=	"	<td>"+value+"</td>\n";	
-	htm +=	"	<td>"+type+"</td>\n";
+	htm +=	"	<td class='traphover'>"+type+" <span class='tohover'>"+type_enum+"</span></td>\n";
 	htm +=	"	<td><button type='button' onclick='click_button_table_del("+ido+")'>";
 	htm +=	"		Del.</button></td>\n";
 	htm +=	"</tr>\n";
@@ -560,7 +561,8 @@ function translateOID(oid,callback)
 				//alert(data.status);
 				if (data.status == "OK") 
 				{
-					callback(oid,data.mib,data.name,'',data.type);				
+					//alert(data.type_enum);
+					callback(oid,data.mib,data.name,'',data.type,data.type_enum);				
 				} 
 				else 
 				{
@@ -845,7 +847,8 @@ $(function() {
 				$trapObj[1] . '","' . // mib
 				$trapObj[2] . '","' . //name 
 				preg_replace("/\"/",'\"', $trapObj[3]) . '","' . // value
-				$trapObj[4] .'"'; //type
+				$trapObj[4] .'","' . //type
+				$trapObj[5] .'"'; //type_enum
 		echo ");\n";
 	}
 ?>

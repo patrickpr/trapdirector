@@ -7,6 +7,10 @@ use Icinga\Web\Url;
 
 use Icinga\Module\Trapdirector\TrapsController;
 
+use Icinga\Web\Form;
+use Zend_Form_Element_File as File;
+use Zend_Form_Element_Submit as Submit;
+
 class StatusController extends TrapsController
 {
 	public function indexAction()
@@ -62,10 +66,12 @@ class StatusController extends TrapsController
 	{
 		$this->prepareTabs()->activate('mib');
 		
+		$this->view->uploadStatus=null;
 		// check if it is an ajax query
 		if ($this->getRequest()->isPost())
 		{
 			$postData=$this->getRequest()->getPost();
+			/** Check for action update */
 			if (isset($postData['action']))
 			{
 				$action=$postData['action'];
@@ -85,6 +91,21 @@ class StatusController extends TrapsController
 				}
 				$this->_helper->json(array('status'=>'ERR : no '.$action.' action possible' ));
 			}
+			/** Check for mib file UPLOAD */
+			if (isset($_FILES['mibfile']))
+			{
+				$name=$_FILES['mibfile']['name'];
+				$destination = "/usr/share/icingaweb2/modules/trapdirector/mibs/$name";
+				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],'/usr/share/icingaweb2/modules/trapdirector/mibs/'.$name)==false)
+				{
+					$this->view->uploadStatus='ERROR, file not loaded. Check mibs directory permission';
+				}
+				else
+				{
+					$this->view->uploadStatus="File $name uploaded";
+				}
+			}
+			
 		}
 		
 		// snmptranslate tests
@@ -125,6 +146,10 @@ class StatusController extends TrapsController
 		//$this->view->fileList=explode(' ',$listFiles);
 		$this->view->fileList=$output;
 		
+		// Zend form 
+		$this->view->form=$form = new UploadForm('upload-form');
+		
+		
 	}
 	
 	public function servicesAction()
@@ -157,11 +182,6 @@ class StatusController extends TrapsController
 		$this->view->templateForm_URL=Url::fromRequest()->__toString();
 		$this->view->templateForm_name="trapdirector_main_template";
 		$this->view->templateForm_interval="3600";
-		
-		
-		
-		
-		
 	}
 	
 	protected function prepareTabs()
@@ -177,4 +197,24 @@ class StatusController extends TrapsController
 			'url'   => $this->getModuleConfig()->urlPath() . '/status/services')
 		);
 	} 
+}
+
+class UploadForm extends Form
+{
+    public function __construct($name = null, $options = array())
+    {
+        parent::__construct($name, $options);
+        $this->addElements2();
+    }
+
+    public function addElements2()
+    {
+        // File Input
+        $file = new File('mib-file');
+        $file->setLabel('Mib upload');
+             //->setAttrib('multiple', null);
+        $this->addElement($file);
+		$button = new Submit("upload",array('ignore'=>false));
+		$this->addElement($button);//->setIgnore(false);
+    }
 }

@@ -170,7 +170,6 @@ class HelperController extends TrapsController
 		$this->_helper->json($retTraps);
 	}	
 
-
 	/** Get trap objects from mib  : entry : trap=<oid>
 	*	returns in JSON : 
 	*		status=>OK/no trap/not found
@@ -244,7 +243,8 @@ class HelperController extends TrapsController
 				array('status'=>'OK',
 					'mib' => $object['mib'], 
 					'name' => $object['name'],
-					'type' => $object['type']
+					'type' => $object['type'],
+					'type_enum' => $object['type_enum']
 				)
 			);
 		}

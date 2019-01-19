@@ -141,7 +141,7 @@ class MIBLoader
 				->join(
 					array('c' => $this->config->getMIBCacheTableName()),
 					'o.object_name=c.name',
-					array('mib' => 'c.mib','oid' => 'c.oid'))
+					array('mib' => 'c.mib','oid' => 'c.oid','type_enum'=>'c.type_enum'))
 				->join(
 					array('s' => $this->config->getMIBCacheTableSyntax()),
 					's.num=c.type',
@@ -155,6 +155,7 @@ class MIBLoader
 			$objects[$val->oid]['name']=$val->name;
 			$objects[$val->oid]['mib']=$val->mib;
 			$objects[$val->oid]['type']=$val->type;
+			$objects[$val->oid]['type_enum']=$val->type_enum;
 		}
 		return $objects;
 	}
@@ -172,13 +173,14 @@ class MIBLoader
 		$query=$dbconn->select()
 				->from(
 					array('o' => $this->config->getMIBCacheTableName()),
-					array('mib'=>'o.mib','name' => 'o.name','type'=>'o.type'))
+					array('mib'=>'o.mib','name' => 'o.name','type'=>'o.type','type_enum'=>'o.type_enum'))
 				->where('o.oid=\''.$oid.'\'');
 		$object=$dbconn->fetchRow($query);
 		if ($object != null) 
 		{
 			$retArray['name']=$object->name;
 			$retArray['mib']=$object->mib;
+			$retArray['type_enum']=$object->type_enum;
 			$query=$dbconn->select()
 					->from(
 						array('o' => $this->config->getMIBCacheTableSyntax()),
@@ -189,26 +191,10 @@ class MIBLoader
 			{
 				$retArray['type']=$object->type;
 			}
+			
 			return $retArray;
 		}
 		
-		/********** OLD WAY TO DELETE *****************/
-		//return $retArray;
-		foreach ($listObjects as $key => $val)
-		{
-			$objects[$val->oid]['name']=$val->name;
-			$objects[$val->oid]['mib']=$val->mib;
-			$objects[$val->oid]['type']=$val->type;
-		}
-		return $objects;		
-		
-		if ($this->enable_cache && isset($this->cache[$oid]['name']))
-		{
-			return $this->cache[$oid];
-		}
-		
-		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
-		/********** END OLD WAY TO DELETE *****************/
 		// Try to get oid name from snmptranslate
 		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
 		' '.$oid,$translate_output);
@@ -223,7 +209,8 @@ class MIBLoader
 			" | grep SYNTAX | sed 's/SYNTAX\t//'"
 		   ,$translate_output);
 		$retArray['type']=$translate;
-		
+		// TODO : differentiate type & type enum in this case
+		$retArray['type_enum']='';
 		if ($this->enable_cache) {			
 			$this->cache[$oid]['mib']=$retArray['mib'];
 			$this->cache[$oid]['name']=$retArray['name'];
