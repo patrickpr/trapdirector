@@ -6,10 +6,13 @@ NOTE NOTE NOTE NOTE : PROJECT UNDER DEV : SOME SCREEN CAPTURES CAN CHANGE A LOT 
 A little about traps
 ---------------
 
-TODO.
+Have a look here for ful info : http://www.net-snmp.org/wiki/
 
-Have a look here : http://www.net-snmp.org/wiki/
+Shortly : a trap is send by an equipement to a trap server (here the icinga host), it contains : 
 
+* Authentication : by a community - a word - in v1 & v2, or user/password in v3
+* The trap OID : an OID (ex : .1.3.6.1.2.1.1) which defines the trap
+* Trap objects : a list of OID with their values, so the system will provide additionnal information (ex : interface name).
 
 Sending traps for testing
 ---------------
@@ -19,9 +22,12 @@ In the bin directory you have 3 bash files test_trap_v(1|2|3).sh which will send
 Looking at traps received
 ---------------
 
-Go to traps -> received to have a list of received traps
+Go to Traps -> received (or just Traps) to have a list of received traps
 
 ![trap-1](img/Trap-rule-1.jpg)
+
+1) filter the display : it will show only traps which includes what you typed (will search in IP/OID/status etc..)
+2) Click here to hide processed traps : those who has matched a rule (see Handlers). 
 
 Click on a trap to have details
 
@@ -30,16 +36,11 @@ Columns :
 * Source IP of trap
 * Trap OID (or name if it could be resolved)
 * Status : 
-
-unknown : no rule was found for this trap
-
-done : rule was found and evaluated
-
-error : ...
-
-waiting : trap was received, but no rule was applied for now
-
-
+	* unknown : no rule was found for this trap
+	* done : rule was found and evaluated
+	* error : ...
+	* waiting : trap was received, but no rule was applied for now
+*Processing time : time taken by the script to process trap in seconds.
 
 
 Trap details
@@ -60,26 +61,33 @@ Adding a rule based on a received trap
 	
 The form is divided in three parts
 
-1) host/service and Trap : 
+1) Trap source  
 
 ![add-from-trap-1](img/add-from-trap-1.jpg)
 
 * 1 : Icinga host whose service will be updated
-* 2 : Service of host wich sttus will be updated. It must accept passive checks and active checks disabled (TODO : show template)
-* 3 : MIB / trap name to select trap from (auto filled as trap has been recognised)
-* 4 : trap OID
-* 5 : if active, this button will add ALL objects that can be set with this trap (as descripbed in it's MIB) in the objects definition below.
+* 2 : Service of host wich status will be updated. It must accept passive checks and active checks disabled. Template is available in Status&Mibs.
+* 3 : If you wan't your handler to be applied on a hostgroup intead of a host, click here and select hostgroup and service.
 
-2) Trap objects
+2) Trap definition
 
-This part lists all objects that will be used in the display and rules as $N.
+![add-from-trap-1_1](img/add-from-trap-1_1.jpg)
+
+* 1 : MIB / trap name to select trap from (auto filled as trap has been recognised)
+* 2 : trap OID
+* 3 : if active, this button will add ALL objects that can be set with this trap (as descripbed in it's MIB) in the objects definition below.
+* 4 : Time after which the service will be reverted to OK (you can do this here or in the service template).
+
+3) Trap objects
+
+This part lists all objects that will be used in the display and rules as $N$.
 
 As you selected a trap, the objects sent with the trap are automaticaly added in here
 
 ![add-from-trap-2](img/add-from-trap-2.jpg)
 
 * 1 : enter OID here to manually add bojects
-* 2 : Shortcuts $N that will be used in rules
+* 2 : Shortcuts $N$ that will be used in rules
 * 3 : Value sent by the trap selected earlier
 * 4 : Type of trap as described in MIB
 
@@ -93,7 +101,7 @@ There you will configure :
 
 * 1 : Display
 
-The display string will be sent with status to service. You can use all the $N defined above.
+The display string will be sent with status to service. You can use all the $N$ defined above.
 
 Here, the display will be for example : "Trap linkUP received for 3"
 (if interface index in object is 3).
@@ -102,7 +110,7 @@ Here, the display will be for example : "Trap linkUP received for 3"
 
 Here you define a rule. Actions if rule matches is defined below.
 
-Here the rule "( $5 = 3 ) & ( $3 = 2) " means : 
+Here the rule "( $5$ = 3 ) & ( $3$ = 2) " means : 
 
 If 'ifIndex' is 3 AND ifAdminStatus is 2 THEN rule matches
 
@@ -110,21 +118,21 @@ Rule accepts numbers and strings with these operators : < <= > >= = !=
 
 You can group with parenthesis and logical operators are : | &
 
-To test existence of object, do : ($3)
+To test existence of object, do : ($3$)
 
 space are ignored and comparison operators are evaluated before logical ones.
 
 Examples : 
 
-$5 = 3  &  $3 = 2 : works, same as the example
+$5$ = 3  &  $3$ = 2 : works, same as the example
 
-$5 = 3  &  $3 = 2 | $4 = 1 : works like : ($5 = 3  &  $3 = 2) | $4 = 1 . Better with parenthesis !
+$5$ = 3  &  $3$ = 2 | $4$ = 1 : works like : ($5$ = 3  &  $3$ = 2) | $4$ = 1 . Better with parenthesis !
 
-($5 = "eth0") & ( $3 = 2) : works as expected
+($5$ = "eth0") & ( $3$ = 2) : works as expected
 
-($5 = "eth0") < $3 : ERROR
+($5$ = "eth0") < $3$ : ERROR
 
-* 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing'
+* 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore trap (e.g. no database record)
 
 Then click on save to save and activate your rule for next trap.
 

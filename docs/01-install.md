@@ -70,7 +70,10 @@ Edit the /etc/snmp/snmptrapd file and add :
 traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace with something like bin/php .
+Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace /sbin/php-fpm with something like bin/php .
+
+In any case, it must be the php binary of php version > 7. You can check version on command line doing `php -v` 
+
 
 Set up the community (still in snmptrapd.conf) : here with "public" 
 
@@ -129,6 +132,18 @@ systemctl start snmptrapd
 ```
 
 Now all traps received by the system will be redirected to the trapdirector module.
+
+Set up mibs : 
+------------------------
+
+The system mibs should be in `/usr/share/net-snmp/mibs` directory : chenge the path in configuration if needed.
+
+Mib you can upload will be in (default) `/usr/share/icingaweb2/module/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
+For example (as root) : 
+```
+chown apache:apache /usr/share/icingaweb2/module/trapdirector/mibs
+chmod 755 /usr/share/icingaweb2/module/trapdirector/mibs
+```
 
 
 Now have a look at the doc : ![traps](02-traps.md)
