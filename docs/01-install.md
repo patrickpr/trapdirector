@@ -145,10 +145,10 @@ chown apache:apache /usr/share/icingaweb2/module/trapdirector/mibs
 chmod 755 /usr/share/icingaweb2/module/trapdirector/mibs
 ```
 
-After this, you can create the first mib database (from system traps) with the following command line : 
+After this, you can create the first mib database (from system mibs) with the following command line : 
 
 ```
-<your php binary> /usr/share/icingaweb2/modules/trapdirector/bin/create_mib_db.php
+icingacli trapdirector mib update
 ```
 
 Ready to go !

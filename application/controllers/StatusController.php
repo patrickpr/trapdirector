@@ -79,15 +79,19 @@ class StatusController extends TrapsController
 				{
 					try
 					{
-						$trap=$this->getTrapClass();
-						$trap->update_mib_database(false);
-						$trap->update_mibs_options();
+						$ret_c=exec('nohup icingacli trapdirector mib update & >/dev/null  2>&1',$output,$ret_code);
+						//TODO : check ret_code  
+						//$trap=$this->getTrapClass();
+						//$trap->update_mib_database(false);
+						//$trap->update_mibs_options();
 					}
 					catch (Exception $e)
 					{
 						$this->_helper->json(array('status'=>$e->getMessage()));
 					}
+					
 					$this->_helper->json(array('status'=>'OK'));
+					//$this->_helper->json(array('status'=>$ret_c));
 				}
 				$this->_helper->json(array('status'=>'ERR : no '.$action.' action possible' ));
 			}
@@ -95,8 +99,8 @@ class StatusController extends TrapsController
 			if (isset($_FILES['mibfile']))
 			{
 				$name=$_FILES['mibfile']['name'];
-				$destination = "/usr/share/icingaweb2/modules/trapdirector/mibs/$name";
-				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],'/usr/share/icingaweb2/modules/trapdirector/mibs/'.$name)==false)
+				$destination = $this->Module()->getBaseDir() . "/mibs/$name";
+				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)==false)
 				{
 					$this->view->uploadStatus='ERROR, file not loaded. Check mibs directory permission';
 				}
@@ -199,8 +203,9 @@ class StatusController extends TrapsController
 	} 
 }
 
+// TODO : see if useless 
 class UploadForm extends Form
-{
+{ 
     public function __construct($name = null, $options = array())
     {
         parent::__construct($name, $options);

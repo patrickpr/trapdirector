@@ -4,6 +4,7 @@ namespace Icinga\Module\Trapdirector\Controllers;
 
 use Icinga\Data\ResourceFactory;
 use Icinga\Web\Url;
+use Icinga\Application\Icinga;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
@@ -70,7 +71,7 @@ class SettingsController extends TrapsController
     $this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
 
 	$this->view->form = $form = new TrapsConfigForm();
-	$this->view->form->setPaths($this->Module()->getBaseDir());
+	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
 	//$form->setRedirectUrl('trapdirector/status');
 	//echo $form->getRedirectUrl();
 	

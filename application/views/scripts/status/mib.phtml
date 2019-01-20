@@ -16,7 +16,8 @@
 		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" ></a>
 		Update MIB Database
 	</button>  
-	Note : can take several minutes
+	Note : Command takes time to execute and can be continued in background. Wait several minutes before retry.<br>
+	If you don't see any updates ater several minutes, run in command line : 'icingacli trapdirector mib update'
    <br>
    
    <h2>snmptranslate</h2>
@@ -96,26 +97,27 @@ function updateMIB()
 			},
 	        success: function (data) 
 			{
-				$("#id_apply_mib").prop("disabled",false);
+				
 				$("#id_animate_apply_mib").css("animation","none");	
 				$("#id_animate_apply_mib").hide();	
 				if (data.status == "OK") 
 				{
-					displayOK("Done");
+					$("#id_apply_mib").prop("disabled",false);
+					displayOK("Command sent");
 				} 
 				else 
 				{
-					displayWarning("Error : "+data.status);		
+					displayWarning("Command taking too long : continuing in background "+data.status);		
 				}
 			
 			},
 			error: function (data)
 			{
-				$("#id_apply_mib").prop("disabled",false);
+				//$("#id_apply_mib").prop("disabled",false);
 				$("#id_animate_apply_mib").css("animation","none");	
 				$("#id_animate_apply_mib").hide();				
 				
-				displayWarning ("Error" + data);
+				displayWarning ("Command taking too long : continuing in background");
 			}
 	});		
 	

@@ -9,14 +9,16 @@ class TrapsConfigForm extends ConfigForm
 {
 	private $DBList;
 	private $module_base_path;
+	private $icinga_base_path;
 	public function init()
 	{
 		$this->setName('form_config_traps');
 		$this->setSubmitLabel($this->translate('Save Changes'));
 	}
-	public function setPaths($module_base_path)
+	public function setPaths($module_base_path,$icinga_base_path)
 	{
 		$this->module_base_path=$module_base_path;
+		$this->icinga_base_path=$icinga_base_path;
 	}
 	public function setDBList($resources)
 	{
@@ -66,7 +68,7 @@ class TrapsConfigForm extends ConfigForm
             array(
                     'required'      => true,
                     'label'             => $this->translate('icingaweb2 config dir'),
-					'value'			=> '/etc/icingaweb2',
+					'value'			=> $this->icinga_base_path,
              )
         );
 		$this->addElement(
@@ -75,7 +77,7 @@ class TrapsConfigForm extends ConfigForm
             array(
                     'required'      => true,
                     'label'             => $this->translate('snmptranslate binary with path'),
-					'value'			=> '/usr/bin/snmptranslate',
+					'value'			=> exec('which snmptranslate'),
              )
         );
 		$this->addElement(

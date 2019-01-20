@@ -139,7 +139,7 @@ class Trap
 			$message = '['.  date("Y/m/d H:i:s") . '] ' .
 				'['. basename(__FILE__) . '] : ' .$message . "\n";
 			
-			if ($destination != '' )$output=$destination;
+			if ( $destination != '' ) $output=$destination;
 			else $output=$this->alert_output;
 			switch ($output)
 			{
@@ -1211,6 +1211,7 @@ class Trap
 	*/
 	public function update_mib_database($display_progress=false)
 	{
+		$this->trapLog('Test ',2,'');
 		// Timing 
 		$timeTaken = microtime(true);
 		// Get all mib objects from all mibs
@@ -1241,15 +1242,21 @@ class Trap
 		$numElements=count($objects_s);
 		$step=$basestep=$numElements/10;
 		$num_step=0;
+		$timeFiveSec = microtime(true);
 		for ($curElement=0;$curElement < $numElements;$curElement++)
 		{
+			if ((microtime(true)-$timeFiveSec) > 2 && $display_progress)
+			{ // echo a . every 2 sec
+				echo '.';
+				$timeFiveSec = microtime(true);
+			}
 			if ($curElement>$step) 
 			{ // display progress
 				$num_step++;
 				$step+=$basestep;
 				if ($display_progress)
 				{				
-					echo '..'.($num_step*10).'%';
+					echo ($num_step*10).'%';
 				}
 			}
 			// Get oid or pass if not found
@@ -1371,7 +1378,7 @@ class Trap
 		$timeTaken=microtime(true) - $timeTaken;
 		if ($display_progress)
 		{
-			echo "  : TIME : ".$timeTaken."\n";
+			echo "  : TIME : ".round($timeTaken)." seconds\n";
 		}
 	}
 	
