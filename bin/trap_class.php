@@ -9,7 +9,7 @@ class Trap
 	protected $icingaweb2_ressources; //< resources.ini of icingaweb2
 	// Options from config.ini 
 	protected $snmptranslate='/usr/bin/snmptranslate';
-	protected $snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs:/usr/share/snmp/mibs';	
+	protected $snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs';
 	protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
 	protected $db_prefix='traps_';
 	
@@ -33,6 +33,12 @@ class Trap
 	public $trap_id=null; //< trap_id after sql insert
 	public $trap_action=null; //< trap action for final write
 	protected $trap_to_db=true; //< log trap to DB
+	
+	// Mib update data
+	private $dbOidAll; //< All oid in database;
+	private $dbOidIndex; //< Index of oid in dbOidAll 	
+	private $objectsAll; //< output lines of snmptranslate list
+	private $trapObjectsIndex; //< array of traps objects (as OID)
 	
 	function __construct($etc_dir='/etc/icingaweb2')
 	{
@@ -406,7 +412,7 @@ class Trap
 		}
 		
 		// Try to get oid name from snmptranslate
-		$translate=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 				' '.$oid,$translate_output);
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) {
@@ -816,7 +822,8 @@ class Trap
 				if ($oid == $val->oid)
 				{
 					if (!preg_match('/^[0-9]+\.?[0-9]*$/',$val->value))
-					{ // If not a number, put "" 
+					{ // If not a number, get rid of all " and put " around it
+						$val->value=preg_replace('/"/','',$val->value);
 						$val->value='"'.$val->value.'"';
 					}
 					$rule=preg_replace('/_OID\('.$oid.'\)/',$val->value,$rule,-1,$rep);
@@ -882,6 +889,7 @@ class Trap
 					else
 					{
 						$this->trap_action='No action';
+						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 					}
 					$this->trap_to_db=($action==-2)?false:true;
 				}
@@ -900,6 +908,7 @@ class Trap
 					else
 					{
 						$this->trap_action='No action';
+						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 					}
 					$this->trap_to_db=($action==-2)?false:true;					
 				}
@@ -1017,12 +1026,109 @@ class Trap
 		
 	}
 
+	private function get_type_enum($oid)
+	{
+		$type_enum=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			' -Td '.$oid. ' 2>/dev/null | grep -E "SYNTAX.*\{.*\}"',$returnALL,$retVal);
+		if ($retVal != 0)
+		{
+			return null;
+		}
+		else
+		{
+			if ( ! preg_match('/SYNTAX.*\{(.*)\}/',$type_enum,$matchesType))
+			{
+				return null;
+			}
+			else
+			{
+				return $matchesType[1];
+			}
+					
+		}		
+	}
+	
+	public function update_oid($oid,$name,$type,$textConv,$dispHint,$type_enum)
+	{
+		$db_conn=$this->db_connect_trap();
+		if (isset($this->dbOidIndex[$oid]))
+		{
+			if ( $name!=$this->dbOidAll[$this->dbOidIndex[$oid]]['name'] ||
+				$type!=$this->dbOidAll[$this->dbOidIndex[$oid]]['type'] ||
+				$textConv!=$this->dbOidAll[$this->dbOidIndex[$oid]]['textual_convention'] ||
+				$dispHint!=$this->dbOidAll[$this->dbOidIndex[$oid]]['display_hint'] ||
+				$type_enum !=$this->dbOidAll[$this->dbOidIndex[$oid]]['type_enum'])
+			{ // Do update (TODO : check MIB does not change ? Not likely .... )
+				//echo 'Update : '.$oid."\n";
+				//echo "$name# ".$this->dbOidAll[$this->dbOidIndex[$oid]]['name']."#\n";
+				//echo "$type# ".$this->dbOidAll[$this->dbOidIndex[$oid]]['type']."#\n";
+				//echo "$textConv# ".$this->dbOidAll[$this->dbOidIndex[$oid]]['textual_convention']."#\n";
+				//echo "$dispHint# ".$this->dbOidAll[$this->dbOidIndex[$oid]]['display_hint']."#\n";
+				$sql='UPDATE '.$this->db_prefix.'mib_cache SET '.
+				"name = '".$name."' , type = '".$type."' , " .
+				"textual_convention = ". (($textConv==null)?'null':"'".$textConv."'") .
+				" , display_hint = ". (($dispHint==null)?'null':"'".$dispHint."'").
+				" , type_enum = ". (($type_enum==null)?'null':"'".$type_enum."'").
+				" WHERE id='".
+				$this->dbOidAll[$this->dbOidIndex[$oid]]['id'] ."' ;";
+				//$this->trapLog('SQL query : '.$sql,4,'');
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error in query : ' . $sql,1,'');
+				}			
+			}
+			else
+			{
+				//echo "found oid : ".$oid."\n";
+			}
+		}
+		else
+		{	// create
+			// First get mib :
+			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			' '.$oid,$return_all,$retVal);
+			if ($retVal!=0)
+			{
+				$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid,1,'');
+			}
+			if (!preg_match('/^(.*)::/',$return,$match2))
+			{
+				$this->trapLog('error finding mib '.$return,2,'');
+				return;
+			}
+			$mib=$match2[1];
+			
+			// Insert data
+			$sqlT='oid,mib,name,type';
+			$sqlV="'".$oid."' , '".$mib."' , '".$name."' , '".$type."'";
+			if ($textConv != null) 
+			{
+				$sqlT.=',textual_convention';
+				$sqlV.=",'".$textConv."'";
+			}
+			if ($dispHint != null) 
+			{
+				$sqlT.=',display_hint';
+				$sqlV.=",'".$dispHint."'";
+			}
+			if ($type_enum != null) 
+			{
+				$sqlT.=',type_enum';
+				$sqlV.=",'".$type_enum."'";
+			}					
+			$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
+			'('.$sqlT.') VALUES ('.$sqlV.');';
+			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('Error in query : ' . $sql,1,'');
+			}					
+		}		
+	}
+	
 	public function update_mibs_options()
 	{
 		$db_conn=$this->db_connect_trap();
 
-		/**********  Create all trap objetcs  *****/
-		// Get max number
+		/**********  Create all (or just trap) objetcs  *****/
+		// Get all traps
 		$sql='SELECT id,oid FROM '.$this->db_prefix.'mib_cache WHERE type=21;';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,1,'');
@@ -1035,7 +1141,7 @@ class Trap
 			$trapID=$trap['id'];
 			// get OBJECTS for this trap OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$trapOID,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1100,7 +1206,7 @@ class Trap
 			}
 			// get SYNTAX for this OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1164,7 +1270,7 @@ class Trap
 			}
 			// get SYNTAX for this OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
+			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1207,44 +1313,47 @@ class Trap
 		}	
 		
 	}
-	/** Cache mib in database
+	
+	/** Cache mib in database TODO : this stuff needs some optimization
 	*/
-	public function update_mib_database($display_progress=false)
+	public function update_mib_database($display_progress=false,$onlyTraps=true)
 	{
-		$this->trapLog('Test ',2,'');
 		// Timing 
 		$timeTaken = microtime(true);
 		// Get all mib objects from all mibs
-		$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
-				' -On -Tto ',$objects_s,$retVal);
+		$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+				' -On -Tto 2>/dev/null',$this->objectsAll,$retVal);
 		if ($retVal!=0)
 		{
 			$this->trapLog('error executing snmptranslate',1,'');
 		}
 		
-		// Get all mibs from databse
+		// Get all mibs from databse to have a memory index
 		
 		$db_conn=$this->db_connect_trap();
-		// fetch rules based on IP in rule and OID
+		
 		$sql='SELECT * from '.$this->db_prefix.'mib_cache;';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,1,'');
 		}
-		$dbRulesAll=$ret_code->fetchAll();
-		$dbRulesIndex=array();
-		// Create index for db;
-		foreach($dbRulesAll as $key=>$val)
+		$this->dbOidAll=$ret_code->fetchAll();
+		$this->dbOidIndex=array();
+		// Create the index for db;
+		foreach($this->dbOidAll as $key=>$val)
 		{
-			$dbRulesIndex[$val['oid']]=$key;
+			$this->dbOidIndex[$val['oid']]=$key;
 		}
+		
 		// Count elements to show progress
-		$numElements=count($objects_s);
+		$numElements=count($this->objectsAll);
 		$step=$basestep=$numElements/10;
 		$num_step=0;
 		$timeFiveSec = microtime(true);
+		// Create index for trap objects
+		$this->trapObjectsIndex=array();
 		for ($curElement=0;$curElement < $numElements;$curElement++)
-		{
+		{ 
 			if ((microtime(true)-$timeFiveSec) > 2 && $display_progress)
 			{ // echo a . every 2 sec
 				echo '.';
@@ -1260,120 +1369,104 @@ class Trap
 				}
 			}
 			// Get oid or pass if not found
-			if (!preg_match('/^\.[0-9\.]+$/',$objects_s[$curElement]))
+			if (!preg_match('/^\.[0-9\.]+$/',$this->objectsAll[$curElement]))
 			{
 				continue;
 			}
-			$oid=$objects_s[$curElement];
+			$oid=$this->objectsAll[$curElement];
+			
 			// get next line 
 			$curElement++;
+
 			if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
-						$objects_s[$curElement],$match))
+						$this->objectsAll[$curElement],$match))
 			{
 				continue;
 			}
-
-			if ($match[2]==0)
-			{ 	// object type=0 : not oid -> continue
+			if ($match[2]==0) // object type=0 : check if v1 trap
+			{
+				$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+					' -Td '.$oid . ' | grep OBJECTS ',$snmptrans,$retVal);
+				if ($retVal!=0)
+				{
+					continue;
+				}
+				// Force as trap.
+				$match[2]=21;
+			}
+			if ($onlyTraps==true && $match[2]!=21) // if only traps and not a trap, continue
+			{	
 				continue;
 			}
+			
 			$name=$match[1];
 			$type=$match[2];
 			$textConv=(isset($match[4]))?$match[4]:null;
 			$dispHint=(isset($match[6]))?$match[6]:null;
-			$type_enum=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
-				' -Td '.$oid. ' | grep -E "SYNTAX.*\{.*\}"',$returnALL,$retVal);
-			if ($retVal != 0)
-			{
-				$type_enum=null;
-			}
-			else
-			{
-				if ( ! preg_match('/SYNTAX.*\{(.*)\}/',$type_enum,$matchesType))
-				{
-					$type_enum=null;
-				}
-				else
-				{
-					$type_enum=$matchesType[1];
-				}
-						
-			}
-			//echo $objects_s[$curElement]."\n";
-			//print_r($match);
-			if (isset($dbRulesIndex[$oid]))
-			{
-				if ( $name!=$dbRulesAll[$dbRulesIndex[$oid]]['name'] ||
-					$type!=$dbRulesAll[$dbRulesIndex[$oid]]['type'] ||
-					$textConv!=$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention'] ||
-					$dispHint!=$dbRulesAll[$dbRulesIndex[$oid]]['display_hint'] ||
-					$type_enum !=$dbRulesAll[$dbRulesIndex[$oid]]['type_enum'])
-				{ // Do update (TODO : check MIB does not change )
-					//echo 'Update : '.$oid."\n";
-					//echo "$name# ".$dbRulesAll[$dbRulesIndex[$oid]]['name']."#\n";
-					//echo "$type# ".$dbRulesAll[$dbRulesIndex[$oid]]['type']."#\n";
-					//echo "$textConv# ".$dbRulesAll[$dbRulesIndex[$oid]]['textual_convention']."#\n";
-					//echo "$dispHint# ".$dbRulesAll[$dbRulesIndex[$oid]]['display_hint']."#\n";
-					$sql='UPDATE '.$this->db_prefix.'mib_cache SET '.
-					"name = '".$name."' , type = '".$type."' , " .
-					"textual_convention = ". (($textConv==null)?'null':"'".$textConv."'") .
-					" , display_hint = ". (($dispHint==null)?'null':"'".$dispHint."'").
-					" , type_enum = ". (($type_enum==null)?'null':"'".$type_enum."'").
-					" WHERE id='".
-					$dbRulesAll[$dbRulesIndex[$oid]]['id'] ."' ;";
-					//$this->trapLog('SQL query : '.$sql,4,'');
-					if (($ret_code=$db_conn->query($sql)) == FALSE) {
-						$this->trapLog('Error in query : ' . $sql,1,'');
-					}			
-				}
-				else
-				{
-					//echo "found oid : ".$oid."\n";
-				}
-			}
-			else
-			{	// create
-				// First get mib :
-				$return=exec($this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.
-				' '.$oid,$return_all,$retVal);
-				if ($retVal!=0)
-				{
-					$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M '.$this->snmptranslate_dirs.' '.$oid,1,'');
-				}
-				if (!preg_match('/^(.*)::/',$return,$match2))
-				{
-					$this->trapLog('error finding mib '.$return,2,'');
-					continue;
-				}
-				$mib=$match2[1];
+			$type_enum=$this->get_type_enum($oid);
 				
-				// Insert data
-				$sqlT='oid,mib,name,type';
-				$sqlV="'".$oid."' , '".$mib."' , '".$name."' , '".$type."'";
-				if ($textConv != null) 
-				{
-					$sqlT.=',textual_convention';
-					$sqlV.=",'".$textConv."'";
-				}
-				if ($dispHint != null) 
-				{
-					$sqlT.=',display_hint';
-					$sqlV.=",'".$dispHint."'";
-				}
-				if ($type_enum != null) 
-				{
-					$sqlT.=',type_enum';
-					$sqlV.=",'".$type_enum."'";
-				}					
-				$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
-				'('.$sqlT.') VALUES ('.$sqlV.');';
-				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
-				}					
+			$this->update_oid($oid,$name,$type,$textConv,$dispHint,$type_enum);
+			
+			// get trap objects
+			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+					' -Td '.$oid,$snmptrans,$retVal);
+			if ($retVal!=0)
+			{
+				$this->trapLog('error executing snmptranslate',1,'');
 			}
+			$synt=null;
+			foreach ($snmptrans as $line)
+			{	
+			if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
+				{
+					$synt=$match[1];
+				}
+			}
+			if ($synt == null) 
+			{
+				//echo "No objects for $trapOID\n";
+				continue;
+			}
+			//echo "$synt \n";
+			$trapObjects=array();
+			while (preg_match('/ *([^ ,]+) *,* */',$synt,$match))
+			{
+				array_push($trapObjects,$match[1]);
+				$synt=preg_replace('/'.$match[0].'/','',$synt);
+			}
+			foreach ($trapObjects as $trapObject)
+			{
+				$OIDObj=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+					' -On -IR '.$trapObject);
+				array_push($this->trapObjectsIndex,$OIDObj);
+			}						
 		}
-		
-		
+		for ($curElement=0;$curElement < $numElements;$curElement++)
+		{
+			if (!in_array($this->objectsAll[$curElement],$this->trapObjectsIndex))
+			{
+				$curElement++;continue;
+			}
+			$oid=$this->objectsAll[$curElement];
+			
+			// get next line 
+			$curElement++;
+			//echo "curent Elements : " . $this->objectsAll[$curElement] ."\n";
+			
+			if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
+						$this->objectsAll[$curElement],$match))
+			{
+				continue;
+			} 			
+			$name=$match[1];
+			$type=$match[2];
+			$textConv=(isset($match[4]))?$match[4]:null;
+			$dispHint=(isset($match[6]))?$match[6]:null;
+			$type_enum=$this->get_type_enum($oid);
+				
+			$this->update_oid($oid,$name,$type,$textConv,$dispHint,$type_enum);						
+			
+		}
 		// Timing ends
 		$timeTaken=microtime(true) - $timeTaken;
 		if ($display_progress)

@@ -399,11 +399,11 @@ class HandlerController extends TrapsController
 				->from($this->getModuleConfig()->getTrapTableName(),$elmts)
 				->where('id=?',$trapid);
 			$trapDetail=$db->fetchRow($query);
-			if ( $trapDetail == null || count($trapDetail)==0) throw new Exception('No traps was found with id = '.$trapid);
+			if ( $trapDetail == null ) throw new Exception('No traps was found with id = '.$trapid);
 		}
 		catch (Exception $e)
 		{
-			$this->displayExitError('Add handler : get trap detail',$e->getMessage());
+			$this->displayExitError('Add handler : get trap detail returning : '.print_r($trapDetail,true),$e->getMessage());
 		}
 
 		return $trapDetail;
@@ -459,7 +459,7 @@ class HandlerController extends TrapsController
 				->from($this->getModuleConfig()->getTrapRuleName(),$queryArray)
 				->where('id=?',$ruleid);
 			$ruleDetail=$db->fetchRow($query);
-			if ( $ruleDetail == null || count($ruleDetail)==0) throw new Exception('No rule was found with id = '.$trapid);
+			if ( $ruleDetail == null ) throw new Exception('No rule was found with id = '.$trapid);
 		}
 		catch (Exception $e)
 		{

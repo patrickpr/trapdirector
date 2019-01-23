@@ -71,19 +71,16 @@ class StatusController extends TrapsController
 		if ($this->getRequest()->isPost())
 		{
 			$postData=$this->getRequest()->getPost();
-			/** Check for action update */
+			/** Check for action update or check update */
 			if (isset($postData['action']))
 			{
 				$action=$postData['action'];
 				if ($action == 'update_mib_db')
-				{
+				{ // Do the update in background
 					try
 					{
-						$ret_c=exec('nohup icingacli trapdirector mib update & >/dev/null  2>&1',$output,$ret_code);
-						//TODO : check ret_code  
-						//$trap=$this->getTrapClass();
-						//$trap->update_mib_database(false);
-						//$trap->update_mibs_options();
+						exec('icingacli trapdirector mib update >/dev/null  2>&1 &  echo $! > /tmp/trapdirector_update_pid.pid');
+						//TODO : check ret_code  and follow pid status
 					}
 					catch (Exception $e)
 					{
@@ -93,13 +90,26 @@ class StatusController extends TrapsController
 					$this->_helper->json(array('status'=>'OK'));
 					//$this->_helper->json(array('status'=>$ret_c));
 				}
+				if ($action == 'check_update')
+				{
+					exec('ps $(cat /tmp/trapdirector_update_pid.pid)',$output,$retVal);
+					if ($retVal == 0)
+					{ // process is alive
+						$this->_helper->json(array('status'=>'Alive and kicking'));
+					}
+					else
+					{ // process is dead
+						$this->_helper->json(array('status'=>'tu quoque fili'));
+					}
+				}
 				$this->_helper->json(array('status'=>'ERR : no '.$action.' action possible' ));
 			}
 			/** Check for mib file UPLOAD */
 			if (isset($_FILES['mibfile']))
 			{
 				$name=$_FILES['mibfile']['name'];
-				$destination = $this->Module()->getBaseDir() . "/mibs/$name";
+				$DirConf=explode(':',$this->Config()->get('config', 'snmptranslate_dirs'));
+				$destination = array_shift($DirConf) .'/'.$name; //$this->Module()->getBaseDir() . "/mibs/$name";
 				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)==false)
 				{
 					$this->view->uploadStatus='ERROR, file not loaded. Check mibs directory permission';
@@ -143,9 +153,33 @@ class StatusController extends TrapsController
 		$DirConf=$this->Config()->get('config', 'snmptranslate_dirs');
 		$dirArray=array();
 		$dirArray=explode(':',$DirConf);
-		$this->view->dirArray=$dirArray;
 
-		exec('ls '.$this->Module()->getBaseDir().'/mibs/ | grep -v traplist.txt',$output);
+		// Get base directories from net-snmp-config
+		$sysDirs=exec('net-snmp-config --default-mibdirs',$output,$retVal);
+		if ($retVal==0)
+		{
+			$dirArray=array_merge($dirArray,explode(':',$sysDirs));
+		}
+		else
+		{
+			$translateOut=exec($this->Config()->get('config', 'snmptranslate') . ' -Dinit_mib .1.3 2>&1 | grep MIBDIRS');
+			if (preg_match('/MIBDIRS.*\'([^\']+)\'/',$translateOut,$matches))
+			{
+				$dirArray=array_merge($dirArray,explode(':',$matches[1]));
+			}
+			else
+			{
+				array_push($dirArray,'Install net-snmp-config to see system directories');
+			}
+		}
+		
+		$this->view->dirArray=$dirArray;
+		
+		$output=null;
+		foreach (explode(':',$DirConf) as $mibdir)
+		{
+			exec('ls '.$mibdir.' | grep -v traplist.txt',$output);
+		}
 		//$i=0;$listFiles='';while (isset($output[$i])) $listFiles.=$output[$i++];
 		//$this->view->fileList=explode(' ',$listFiles);
 		$this->view->fileList=$output;

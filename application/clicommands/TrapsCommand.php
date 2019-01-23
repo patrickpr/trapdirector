@@ -16,7 +16,7 @@ use Trap;
  * 
  * Remove old traps, ...
 */
-class MibCommand extends Command
+class TrapsCommand extends Command
 {
 	/** delete old traps
 	*

@@ -86,7 +86,7 @@ class TrapsConfigForm extends ConfigForm
             array(
                     'required'      => true,
                     'label'         => $this->translate('Path for mibs'),
-					'value'			=> '/usr/share/snmp/mibs:'.$this->module_base_path.'/mibs',
+					'value'			=> $this->module_base_path.'/mibs',
              )
         );		
 		$this->addElement(

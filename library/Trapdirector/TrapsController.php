@@ -214,9 +214,7 @@ class TrapsController extends Controller
 	{
 		if ($this->MIBData == null)
 		{
-			//TODO : path in config module 
 			$this->MIBData=new MIBLoader(
-				$this->Module()->getBaseDir().'/mibs/traplist.txt',
 				$this->Config()->get('config', 'snmptranslate'),
 				$this->Config()->get('config', 'snmptranslate_dirs'),
 				$this->getDb(),
@@ -249,6 +247,27 @@ class TrapsController extends Controller
 		return $db->fetchAll($query);
 	}
 
+	/** Get host(s) by name in IDO database
+	*	does not catch exceptions
+	*	@return array of objects ( name, id (object_id), display_name)
+	*/
+	protected function getHostByName($name) 
+	{
+		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
+		$db = $this->getIdoDb()->getConnection();
+		// TODO : check for SQL injections
+		$query=$db->select()
+				->from(
+					array('a' => 'icinga_objects'),
+					array('name' => 'a.name1','id' => 'object_id'))
+				->join(
+					array('b' => 'icinga_hosts'),
+					'b.host_object_id=a.object_id',
+					array('display_name' => 'b.display_name'))
+				->where("a.name1 = '$name'");
+		return $db->fetchAll($query);
+	}	
+	
 	/** Get host groups by  name in IDO database
 	*	does not catch exceptions
 	*	@return array of objects ( name, id (object_id), display_name)

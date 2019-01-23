@@ -16,8 +16,9 @@
 		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" ></a>
 		Update MIB Database
 	</button>  
-	Note : Command takes time to execute and can be continued in background. Wait several minutes before retry.<br>
-	If you don't see any updates ater several minutes, run in command line : 'icingacli trapdirector mib update'
+	Note : Command takes time to execute and is launched in background. Refresh the page to see objects count rising.<br>
+	If you don't see any updates ater several minutes, run in command line : 'icingacli trapdirector mib update' to have output<br>
+	Note : you can leave this page safely an come back later.
    <br>
    
    <h2>snmptranslate</h2>
@@ -30,7 +31,7 @@
 		<?= $this->snmptranslate ?> </span>
 		
   <h2>Mib directories</h2>
-  Directories where mibs are found (configured in module configuration) : 
+  Directories where mibs are searched (configured in module configuration) : 
   <ul>
 <?php 
 	//print_r($this->dirArray);
@@ -97,9 +98,6 @@ function updateMIB()
 			},
 	        success: function (data) 
 			{
-				
-				$("#id_animate_apply_mib").css("animation","none");	
-				$("#id_animate_apply_mib").hide();	
 				if (data.status == "OK") 
 				{
 					$("#id_apply_mib").prop("disabled",false);
@@ -107,7 +105,9 @@ function updateMIB()
 				} 
 				else 
 				{
-					displayWarning("Command taking too long : continuing in background "+data.status);		
+					displayWarning("Error sending command "+data.status);
+					$("#id_animate_apply_mib").css("animation","none");	
+					$("#id_animate_apply_mib").hide();						
 				}
 			
 			},
@@ -117,13 +117,50 @@ function updateMIB()
 				$("#id_animate_apply_mib").css("animation","none");	
 				$("#id_animate_apply_mib").hide();				
 				
-				displayWarning ("Command taking too long : continuing in background");
+				displayWarning ("Error in server answer");
 			}
 	});		
 	
-	setTimeout(function(){
+	setTimeout(check_mib_update_action(),100000);
+}
 
-	}, 5000);
+function check_mib_update_action()
+{
+
+	$.ajax({
+			url: mibfileHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	"check_update"
+			},
+	        success: function (data) 
+			{
+				if (data.status == "Alive and kicking") 
+				{
+					$("#id_animate_apply_mib").css("animation","spin 2s linear infinite");	
+					$("#id_animate_apply_mib").show();
+					$("#id_apply_mib").prop("disabled",true);
+					setTimeout("check_mib_update_action()",100000); 
+					return;
+				}
+				if (data.status == "tu quoque fili") 
+				{
+					$("#id_animate_apply_mib").css("animation","none");
+					$("#id_animate_apply_mib").hide();
+					$("#id_apply_mib").prop("disabled",false);
+				}
+			},
+			error: function (data)
+			{
+				//$("#id_apply_mib").prop("disabled",false);
+				//$("#id_animate_apply_mib").css("animation","none");	
+				//$("#id_animate_apply_mib").hide();								
+				displayWarning ("Error in server answer");
+			}
+	});
 }
 
 function add_mib_files(event)
@@ -184,6 +221,7 @@ $(function() {
 		add_mib_files(event);
 	});	
 */
+	check_mib_update_action();
 });
 
 </script>

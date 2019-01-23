@@ -40,7 +40,7 @@ Columns :
 	* done : rule was found and evaluated
 	* error : ...
 	* waiting : trap was received, but no rule was applied for now
-*Processing time : time taken by the script to process trap in seconds.
+* Processing time : time taken by the script to process trap in seconds.
 
 
 Trap details
@@ -66,7 +66,7 @@ The form is divided in three parts
 ![add-from-trap-1](img/add-from-trap-1.jpg)
 
 * 1 : Icinga host whose service will be updated
-* 2 : Service of host wich status will be updated. It must accept passive checks and active checks disabled. Template is available in Status&Mibs.
+* 2 : Service of host wich status will be updated. It must accept passive checks. Template is available in Status&Mibs.
 * 3 : If you wan't your handler to be applied on a hostgroup intead of a host, click here and select hostgroup and service.
 
 2) Trap definition
@@ -86,7 +86,7 @@ As you selected a trap, the objects sent with the trap are automaticaly added in
 
 ![add-from-trap-2](img/add-from-trap-2.jpg)
 
-* 1 : enter OID here to manually add bojects
+* 1 : enter OID here to manually add objects
 * 2 : Shortcuts $N$ that will be used in rules
 * 3 : Value sent by the trap selected earlier
 * 4 : Type of trap as described in MIB

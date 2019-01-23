@@ -83,7 +83,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No Hosts','hostid' => -1));
 		}
 		
-		$hostArray=$this->getHostByIP($host);
+		$hostArray=$this->getHostByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one host matches','hostid' => -1));
