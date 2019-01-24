@@ -623,6 +623,7 @@ class Trap
 			{
 				if ($oid == $val->oid)
 				{
+					$val->value=preg_replace('/"/','',$val->value);
 					$display=preg_replace('/_OID\('.$oid.'\)/',$val->value,$display,-1,$rep);
 					if ($rep==0)
 					{
@@ -718,7 +719,9 @@ class Trap
 				$item++; return array(0,"=");	
 			case '!':
 				if ($rule[$item+1]=='=') { $item+=2; return array(0,"!=");}
-				throw new Exception("Erreur in expr - incorrect operator '!'  found in ".$rule ." at " .$item);;
+				throw new Exception("Erreur in expr - incorrect operator '!'  found in ".$rule ." at " .$item);
+			case '~':
+				$item++; return array(0,"~");	
 			case '|':
 				$item++; return array(1,"|");	
 			case '&':
@@ -757,6 +760,7 @@ class Trap
 			case '>=':	$retVal= ($val1 >= $val2); break;
 			case '=':	$retVal= ($val1 == $val2); break;
 			case '!=':	$retVal= ($val1 != $val2); break;
+			case '~':	$retVal= (preg_match('/'.preg_replace('/"/','',$val2).'/',$val1)); break;
 			case '|':	$retVal= ($val1 || $val2); break;
 			case '&':	$retVal= ($val1 && $val2); break;
 			default:  throw new Exception("Error in expression - unknown comp : ".$comp);
@@ -1316,7 +1320,7 @@ class Trap
 	
 	/** Cache mib in database TODO : this stuff needs some optimization
 	*/
-	public function update_mib_database($display_progress=false,$onlyTraps=true)
+	public function update_mib_database($display_progress=false,$onlyTraps=true,$startOID='.1')
 	{
 		// Timing 
 		$timeTaken = microtime(true);
@@ -1398,6 +1402,8 @@ class Trap
 			{	
 				continue;
 			}
+			
+			if ($display_progress) echo '#'; // echo a # when trap found
 			
 			$name=$match[1];
 			$type=$match[2];

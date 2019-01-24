@@ -185,10 +185,10 @@ class HandlerController extends TrapsController
 			{
 				// Tell JS to get services when page is loaded
 				$this->view->serviceGet=true;
-				// get service id for form to set :
-				$serviceID=$this->getServiceIDByName($ruleDetail->service_name);
+				// get service id for form to set :			
+				$serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
 				$this->view->serviceSet=$serviceID[0]->id;
-				$this->view->selectGroup=false;
+				$this->view->selectGroup=false;				
 			}
 			else
 			{

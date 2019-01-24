@@ -1,8 +1,6 @@
 Traps
 ===============
 
-NOTE NOTE NOTE NOTE : PROJECT UNDER DEV : SOME SCREEN CAPTURES CAN CHANGE A LOT AND FINAL DOC WILL BE MORE DETAILED !
-
 A little about traps
 ---------------
 
@@ -120,7 +118,9 @@ Here the rule "( $5$ = 3 ) & ( $3$ = 2) " means :
 
 If 'ifIndex' is 3 AND ifAdminStatus is 2 THEN rule matches
 
-Rule accepts numbers and strings with these operators : < <= > >= = !=
+Rule accepts numbers and strings with these operators : < <= > >= = != ~
+
+The "~" operator is for regexp : $1$ ~ "test" will be evaluated to true if $1$ contains test.
 
 You can group with parenthesis and logical operators are : | &
 
@@ -138,6 +138,8 @@ $5$ = 3  &  $3$ = 2 | $4$ = 1 : works like : ($5$ = 3  &  $3$ = 2) | $4$ = 1 . B
 
 ($5$ = "eth0") < $3$ : ERROR
 
+($5$ ~ "eth[0-2]" : will match eth0, eth1 & eth2  (!! it will also match eth11 eth21 !! )
+
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore trap (e.g. no database record)
 
 Then click on save to save and activate your rule for next trap.
@@ -151,8 +153,9 @@ On the Handler page, click on a rule to edit it.
 
 Testing a rule
 ---------------
-TODO
 
-CURRENT DOC END..... come back in some days
+Not currently implemented
 
+
+Go back to user guide : ![Traps](docs/02-userguide.md)
 

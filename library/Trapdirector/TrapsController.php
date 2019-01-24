@@ -410,12 +410,13 @@ class TrapsController extends Controller
 		return $result;
 	}	
 
-	/** Get services object id by name in IDO database
+	/** Get services object id by host name / service name in IDO database
 	*	does not catch exceptions
+	*	@param $hostname host name
 	*	@param $name service name
 	*	@return int  service id
 	*/
-	protected function getServiceIDByName($name) 
+	protected function getServiceIDByName($hostname,$name) 
 	{
 		$db = $this->getIdoDb()->getConnection();
 		if ($name != null)
@@ -428,7 +429,7 @@ class TrapsController extends Controller
 						array('a' => 'icinga_objects'),
 						's.service_object_id=a.object_id',
 						'is_active')
-					->where('a.name2=\''.$name.'\' AND a.is_active = 1');
+					->where('a.name2=\''.$name.'\' AND a.name1=\''.$hostname.'\' AND a.is_active = 1');
 		}
 		return $db->fetchAll($query);
 	}

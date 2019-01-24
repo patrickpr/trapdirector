@@ -71,13 +71,18 @@ class TrapsConfigForm extends ConfigForm
 					'value'			=> $this->icinga_base_path,
              )
         );
+		$snmptranslate=exec('which snmptranslate',$output,$retval);
+		if ($retval != 0) 
+		{
+			$snmptranslate='/usr/bin/snmptranslate';
+		}
 		$this->addElement(
             'text',
             'config_snmptranslate',
             array(
                     'required'      => true,
                     'label'             => $this->translate('snmptranslate binary with path'),
-					'value'			=> exec('which snmptranslate'),
+					'value'			=> $snmptranslate,
              )
         );
 		$this->addElement(

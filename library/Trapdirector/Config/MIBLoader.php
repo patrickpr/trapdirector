@@ -33,7 +33,8 @@ class MIBLoader
 				->from(
 					$this->config->getMIBCacheTableName(),
 					array('mib' => 'mib'))
-				->where("type = 21") ;
+				->where("type = 21")
+				->order('mib ASC');				;
 		$names=$dbconn->fetchAll($query);
 		$mib=array();
 		foreach($names as $key=>$val)
@@ -157,13 +158,32 @@ class MIBLoader
 		$retArray['name']=$matches[2];
 		
 		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -Td -On ' . $matches[0] .
-			" | grep SYNTAX | sed 's/SYNTAX\t//'"
+			" | grep SYNTAX | sed 's/SYNTAX[[:blank:]]*//'"
 		   ,$translate_output);
-		$retArray['type']=$translate;
-		// TODO : differentiate type & type enum in this case
-		$retArray['type_enum']='';
-
-		// TODO : put in database ?
+		if (preg_match('/(.*)\{(.*)\}/',$translate,$typesMatch))
+		{
+			$retArray['type']=$typesMatch[1];
+			$retArray['type_enum']=$typesMatch[2];
+		}
+		else
+		{
+			$retArray['type']=$translate;
+			$retArray['type_enum']='';			
+		}
+		/* TODO : put in DB but only if 
+		$query=$db->getConnection()->insert(
+			$this->getModuleConfig()->getTrapRuleName(),
+			$array(
+				'oid'	=>
+				'mib'	=>
+				'name'	=>
+				'type' 	=>
+				'textual_convention' =>
+				'display_hint'	=>
+				'type_enum'	=>
+			)
+		);
+		*/
 		return $retArray;
 						
 	}

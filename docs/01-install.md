@@ -22,6 +22,26 @@ Install files
 2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory
 3. trapdirector/mibs/ must be writable by icinga web user to upload mibs from web GUI
 
+Create Database
+-----------------
+
+Set up a new (or use existing) database in icingaweb 2 :
+Note : following commands must be run as root or database admin.
+
+Create database :
+
+`mysql -u root -e "create database <database name>;"`
+
+Create user and assign rights :
+
+```
+mysql -u root -e "grant usage on *.* to <user>@localhost identified by '<password>';"
+mysql -u root -e "grant all privileges on <database name>.* to <user>@localhost ;"
+```
+
+Create database on Icingaweb2 in /icingaweb2/config/resource (direct link on trapdirector configuration page).
+
+
 Activate module
 ---------------
 
@@ -30,8 +50,6 @@ Log in to icingaweb2 go to Configuration -> modules  and activate the trapdirect
 Go to the configuration tab, it should look like this : 
 
 ![install-1](img/install-1.jpg)
-
-Set up a new (or use existing) database in icingaweb 2 (see installation instructions at the bottom of the Configuration page)
 
 The options are
 
@@ -67,10 +85,10 @@ Now, you must tell snmptrapd to send all traps to the module.
 Edit the /etc/snmp/snmptrapd file and add : 
 
 ```
-traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
+traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-Note : on bottom of configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace /sbin/php-fpm with something like bin/php .
+Note : on bottom of trapdirector configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace /sbin/php-fpm with something like bin/php .
 
 In any case, it must be the php binary of php version > 7. You can check version on command line doing `php -v` 
 
@@ -92,7 +110,7 @@ So here is what your snmptrapd.conf should look like :
 
 ```
 authCommunity log,execute,net public
-traphandle default /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php
+traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php
 
 createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
 authUser log,execute,net trapuser 
@@ -100,8 +118,6 @@ authUser log,execute,net trapuser
 
 Edit the launch options of snmptrapd
 ------------------------
-
-TODO : see why the bug with OPTION is here
 
 * For RH7/CenOS7 and other systems using systemd : 
 
@@ -125,10 +141,24 @@ To : `OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"`
 
 Enable & start snmptrad service : 
 ------------------------
+
+* On systemd 
+
 ```
+systemctl daemon-reload
+
 systemctl enable snmptrapd
 
 systemctl start snmptrapd
+```
+
+* on init.d systems
+
+```
+chkconfig --level 345 snmptrapd on
+
+service snmptrapd start
+
 ```
 
 Now all traps received by the system will be redirected to the trapdirector module.
@@ -153,5 +183,5 @@ icingacli trapdirector mib update
 
 Ready to go !
 
-Now have a look at the doc : ![traps](02-traps.md)
+Now have a look at the doc : ![Traps](docs/02-userguide.md)
  

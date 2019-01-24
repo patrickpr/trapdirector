@@ -81,13 +81,15 @@ CREATE TABLE `#PREFIX#rules` (
   `action_nomatch` tinyint(5) NOT NULL DEFAULT '-1',
   `service_name` varchar(256) NOT NULL,
   `revert_ok` int(11) NOT NULL DEFAULT '3600',
+  `display_nok` text,
   `display` text,
   `created` datetime DEFAULT NULL,
   `modified` datetime DEFAULT NULL,
   `modifier` varchar(100) DEFAULT NULL,
   `num_match` int(16) DEFAULT '0',
-  `num_match_nok` int(16) DEFAULT '0',
-  `comment` text DEFAULT NULL,
-  `rule_type` int(8) DEFAULT '0',
+  `num_match_nok` int(16) DEFAULT NULL,
+  `comment` text,
+  `rule_type` int(8) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
