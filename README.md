@@ -11,7 +11,7 @@ Projet features :
 Project status : Beta release
 
 - Module has been installed and tested on CentOS 7 and Ubuntu 18.04 (Bionic)
-- All base project feature are working on thoses systems.	 
+- All base project feature are working on those systems.	 
 
 Help wanted : 
 

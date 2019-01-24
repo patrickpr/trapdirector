@@ -12,7 +12,7 @@ Requirements
 Better with
 ---------------
 
-* Director : to set up services, templates (not implement right now).
+* Director : to set up services, templates (only one template for now).
 
 
 Install files
@@ -57,9 +57,8 @@ The options are
 * Prefix : the prefix for all database tables
 * IDO Database : the IDO database set up with IcingaWeb2
 * Icingaweb2 config dir : configuration directory in case of uncommon installation of icingaweb2
-* snmptranslate binary : default should be OK
-* Path for mibs : must include net-snmp standard mibs (in /usr/share/snmp/mibs by default) and local mibs (in /usr/share/icingaweb2/modules/trapdirector/mibs)
-The value by default should be OK)
+* snmptranslate binary : default should be OK, test in in mib&status page.
+* Path for mibs : local mibs (default /usr/share/icingaweb2/modules/trapdirector/mibs). You can add directories with ':' separators : the mib upload will then be in the first one 
 * icingacmd path : default should be OK
 
 Create schema
@@ -166,7 +165,7 @@ Now all traps received by the system will be redirected to the trapdirector modu
 Set up mibs : 
 ------------------------
 
-The system mibs should be in `/usr/share/net-snmp/mibs` directory : change the path in configuration if needed.
+The system mibs should be set by net-snmp package. Check the defaults mibs are set by testing `snmptranslate 1.3.6.1.2.1.1.1` -> `SNMPv2-MIB::sysDescr` 
 
 Mib you can upload will be in (default) `/usr/share/icingaweb2/module/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
 For example (as root) : 
@@ -183,5 +182,5 @@ icingacli trapdirector mib update
 
 Ready to go !
 
-Now have a look at the doc : ![Traps](docs/02-userguide.md)
+Now have a look at the doc : ![Traps](02-userguide.md)
  

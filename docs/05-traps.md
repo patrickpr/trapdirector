@@ -157,5 +157,5 @@ Testing a rule
 Not currently implemented
 
 
-Go back to user guide : ![Traps](docs/02-userguide.md)
+Go back to user guide : ![Traps](02-userguide.md)
 

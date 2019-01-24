@@ -12,9 +12,9 @@ Goto Handlers menu and click 'Add a trap handler'
 
 You can choose between hosts or hostgroups :
 - When selecting a host, the trap receiver will take it's source IP 
-- When selection a hostgroup, the trap receiver will take all IP of all host in this hostgroup (! performance issues maybe )
+- When selecting a hostgroup, the trap receiver will take all IP of all host in this hostgroup (! performance issues (maybe) ! )
 
-On both case, you must have a service attached to the host or hostgroup that accepts passive check (see ![Here](docs/15-mib.md) about it)
+On both case, you must have a service attached to the host or hostgroup that accepts passive check (see ![Here](15-mib.md) about it)
 
 Now first, (1) select host/group name (autocompletion provided)
 
@@ -31,7 +31,7 @@ In the second case, the "Add objects" will be enabled : this will add all object
 
 The "Revert OK" is the time after which the service will be reseted to OK. To do this, you have to set up a specific service on the icinga host (DOC TODO).
 
-Automatic reset can also be done with icinga freshness check / active checks see ![Here](docs/15-mib.md) about it).
+Automatic reset can also be done with icinga freshness check / active checks see ![Here](15-mib.md) about it).
 
 ![trap-3](img/create-rule-3.jpg)
 
@@ -39,11 +39,11 @@ Automatic reset can also be done with icinga freshness check / active checks see
 Objects, rule & display
 ---------------
 
-All of it is described ![Here](docs/05-traps.md)
+All of it is described ![Here](05-traps.md)
 
 
 Then click create : rule is created and applied directly.
 
 
 
-back to user guide : ![user guide](docs/02-userguide.md)
+back to user guide : ![user guide](02-userguide.md)

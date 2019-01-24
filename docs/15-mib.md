@@ -21,9 +21,12 @@ To drop some traps immediatly, you can change the number of days and click "Drop
 Log destination
 ---------------
 
-Here is where the trap receiver 
+Here is where the trap receiver will log info about what he's doing - or not doing -.
 
-The easy way to create rule is with an existing trap, but you also can create a rule before receiving any traps.
+Note : 'display' is for debug only and can ruin your web page.
+
+Be careful, in trace mode the db passwords & communities can be shown.
+
 
 Mib Management
 ===============
@@ -70,4 +73,4 @@ Here is some details about it :
 ![trap-1](img/mib-status-10.jpg)
 
 
-back to user guide : ![user guide](docs/02-userguide.md)
+back to user guide : ![user guide](02-userguide.md)
