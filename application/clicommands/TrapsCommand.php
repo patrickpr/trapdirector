@@ -3,12 +3,10 @@
 namespace Icinga\Module\Trapdirector\Clicommands;
 
 use Icinga\Application\Icinga;
-use Icinga\Data\Db\DbConnection as IcingaDbConnection;
 
 use Icinga\Cli\Command;
-use Icinga\Module\Trapdirector\TrapsController;
-use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
-use Icinga\Module\Trapdirector\Config\MIBLoader;
+use Exception;
+
 use Trap;
 
 /**
@@ -18,11 +16,12 @@ use Trap;
 */
 class TrapsCommand extends Command
 {
-	/** delete old traps
+	/**
+	*	Delete old traps
 	*
 	*	USAGE 
 	*
-	*	icingli trapdirector traps rotate [options]
+	*	icingali trapdirector traps rotate [options]
 	*	
 	*	OPTIONS
 	*	
@@ -55,5 +54,31 @@ class TrapsCommand extends Command
 			echo 'Error in updating : ' . $e->getMessage();
 		}	   
 	}  	
-
+	
+	/**
+	*	Reset services to OK state if timeout is passed
+	*
+	*	USAGE
+	*
+	*	icingali trapdirector traps reset_services
+	*
+	*/
+	public function resetOKAction()
+	{
+		$module=Icinga::app()->getModuleManager()->getModule($this->getModuleName());
+		require_once($module->getBaseDir() .'/bin/trap_class.php');
+		$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+		$debug_level=2;
+		$trap = new Trap($icingaweb2_etc);
+		$trap->setLogging($debug_level,'display');
+		try 
+		{
+			$trap->reset_services();
+		} 
+		catch (Exception $e) 
+		{
+			echo 'ERROR : '. $e->getMessage();
+		}
+	} 	
+	
 }

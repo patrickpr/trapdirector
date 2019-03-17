@@ -5,9 +5,12 @@ namespace Icinga\Module\Trapdirector\Controllers;
 use Icinga\Data\ResourceFactory;
 use Icinga\Web\Url;
 use Icinga\Application\Icinga;
+use Icinga\Exception\ProgrammingError;
+use RunTimeException;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
+use Icinga\Module\Trapdirector\Icinga2Api;
 
 use Trap;
 
@@ -59,6 +62,21 @@ class SettingsController extends TrapsController
 	}
 	$this->view->message=$db_message;
 	
+	//********* Test API
+	if ($this->Config()->get('config', 'icingaAPI_host') != '')
+	{
+	    $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
+    	$apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
+    	try {
+    	    $this->view->apimessage=$apitest->test();
+    	} catch (RuntimeException $e) {
+    	    $this->view->apimessage=$e->getMessage();
+    	} 
+	}
+	else
+	{
+	    $this->view->apimessage='API parameters not configured';
+	}
 	// List DB in $ressources
 	$resources = array();
 	$allowed = array('mysql', 'pgsql'); // TODO : check pgsql OK and maybe other DB
@@ -79,7 +97,7 @@ class SettingsController extends TrapsController
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
 	// Make form handle request.
 	$form->setIniConfig($this->Config())
-		->setDBList($resources)		
+		->setDBList($resources)
 		->handleRequest();
         
   }
@@ -124,11 +142,39 @@ class SettingsController extends TrapsController
   public function updateschemaAction()
   {
 	  $this->checkModuleConfigPermission();
-	$this->getTabs()->add('get',array(
-		'active'	=> true,
-		'label'		=> $this->translate('Update Schema'),
-		'url'		=> Url::fromRequest()
-	));	  
-	  echo "<div> Not Implemented </div>";
+    	$this->getTabs()->add('get',array(
+    		'active'	=> true,
+    		'label'		=> $this->translate('Update Schema'),
+    		'url'		=> Url::fromRequest()
+    	));
+	  // check if needed
+	  
+	  $dberror=$this->getDb(true); // Get DB in test mode
+	  
+	  if ($dberror[0] == 0)
+	  {
+	      echo 'Schema already exists and is up to date<br>';
+	      return;
+	  }
+	  if ($dberror[0] != 5)
+	  {
+	      echo 'Database does not exists or is not setup correctly<br>';
+	      return;
+	  }
+	  $target_version=$dberror[2];
+	  echo 'Updating schema to '. $target_version . ': <br>';
+	  echo '<pre>';
+	  require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+	  
+	  $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+	  $debug_level=4;
+	  $Trap = new Trap($icingaweb2_etc);
+	  $Trap->setLogging($debug_level,'display');
+	  
+	  $prefix=$this->Config()->get('config', 'database_prefix');
+	  $updateSchema=$this->Module()->getBaseDir() . '/SQL/update_schema_v';
+	  
+	  $Trap->update_schema($updateSchema,$target_version,$prefix);
+	  echo '</pre>';
   }  
 }

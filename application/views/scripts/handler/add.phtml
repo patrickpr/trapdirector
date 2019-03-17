@@ -1,5 +1,5 @@
 <div class="controls">
-  <?= $this->tabs ?>
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Add trap handler</h1>
   <div class='action-bar'>
   </div>
@@ -46,8 +46,8 @@
 						<label for="id_service_hostgroup" class="control-label optional">Service</label>
 					</span>
 				</div>
-				<select name="service_hostgroup" id="id_service_hostgroup" empty_option="Select service" 
-				autosubmit="" onfocus="hostGroupServiceGet()">
+				<select name="service_hostgroup" id="id_service_hostgroup" 
+				 onfocus="hostGroupServiceGet()">
 					<option value="-1" selected>Enter host group first</option>
 				</select>		
 			</div>
@@ -82,7 +82,7 @@
 						<label for="id_service" class="control-label optional">Service</label>
 					</span>
 				</div>
-				<select name="service" id="id_service" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+				<select name="service" id="id_service" onfocus="serviceGet()">
 					<option value="-1" selected>Enter host first</option>
 				</select>		
 			</div>
@@ -92,7 +92,7 @@
 	<fieldset id="fieldset-objects_definition" class=""><legend>Trap definition</legend>		
 		<!-- trap OID selection -->
 		<div class="control-group">
-			<select name="mibs" id="id_mainMibs" empty_option="Select MIB" autosubmit="" 
+			<select name="mibs" id="id_mainMibs"
 				onChange="TrapNameGet('id_mainMibs','id_mainMibs_Trap')">
 				<option value='-1'>...</option>
 <?php  // Set mib list
@@ -107,8 +107,8 @@
 	}
 ?>			
 			</select>
-			<select name="mibs_trap" id="id_mainMibs_Trap" empty_option="Select MIB First" 
-				autosubmit="" onChange="selectTrapName()">
+			<select name="mibs_trap" id="id_mainMibs_Trap"
+				onChange="selectTrapName()">
 <?php
 		if (count($this->trapListForMIB)==0)
 		{
@@ -195,7 +195,16 @@
 		</table>
 	</fieldset>
 
-	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>	
+	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>
+	<div class="control-group">
+    	<div class="control-label-group">
+    		<span id="id_rules_label">
+    			<label for="id_rules" class="control-label optional">Rule</label>
+    		</span>
+    	</div>
+    	<input type="text" name="rules" id="id_rules" placeholder="Rules to evaluate"
+    	 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" /> (if rule is empty, it will always match)
+	</div>
 	<!-- Output Display -->
 	<div class="control-group">
 		<div class="control-label-group">
@@ -210,20 +219,11 @@
 	</div>
 	<div class="control-group">
 		<div class="control-label-group">
-			<span id="id_rules_label">
-				<label for="id_rules" class="control-label optional">Rule</label>
-			</span>
-		</div>
-		<input type="text" name="rules" id="id_rules" placeholder="Rules to evaluate"
-		 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" > (if rule is empty, it will always match)
-	</div>
-	<div class="control-group">
-		<div class="control-label-group">
 			<span id="id_rule_action_label">
 				<label for="id_rule_action_true" class="control-label optional">Action if rule matches</label>
 			</span>
 		</div>
-		<select name="service" id="id_rule_action_true" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+		<select name="service" id="id_rule_action_true" onfocus="serviceGet()">
 				<option value="-1" selected>Nothing</option>
 				<option value="0" >OK</option>
 				<option value="1" >Warning</option>
@@ -236,7 +236,7 @@
 				<label for="id_rule_action_false" class="control-label optional">Action if rule does not match</label>
 			</span>
 		</div>
-		<select name="service" id="id_rule_action_false" empty_option="Select service" autosubmit="" onfocus="serviceGet()">
+		<select name="service" id="id_rule_action_false" onfocus="serviceGet()">
 				<option value="-1" selected>Nothing</option>
 				<option value="0" >OK</option>
 				<option value="1" >Warning</option>
@@ -279,13 +279,12 @@ count_id=1;
 
 function displayWarning(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
 }
 function displayOK(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
 }
 
 function setToUpdate()

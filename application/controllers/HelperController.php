@@ -2,9 +2,9 @@
 
 namespace Icinga\Module\Trapdirector\Controllers;
 
-use Icinga\Web\Controller;
-use Icinga\Web\Url;
-
+//use Icinga\Web\Controller;
+//use Icinga\Web\Url;
+use Exception;
 use Icinga\Module\Trapdirector\TrapsController;
 use Trap;
 
@@ -29,7 +29,7 @@ class HelperController extends TrapsController
 		$retHosts=array('status'=>'OK','hosts' => array());
 
 		$hosts=$this->getHostByIP($hostFilter);
-		foreach ($hosts as $key=>$val)
+		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
 		}
@@ -56,7 +56,7 @@ class HelperController extends TrapsController
 		$retHosts=array('status'=>'OK','hosts' => array());
 
 		$hosts=$this->getHostGroupByName($hostFilter);
-		foreach ($hosts as $key=>$val)
+		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
 		}
@@ -98,7 +98,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No services found for host','hostid' => $hostArray[0]->id));
 		}
 		$retServices=array('status'=>'OK','services' => array(),'hostid' => $hostArray[0]->id);
-		foreach ($services as $key=>$val)
+		foreach ($services as $val)
 		{
 			array_push($retServices['services'],array($val->id , $val->name));
 		}
@@ -218,8 +218,7 @@ class HelperController extends TrapsController
 	*		status=>OK/No oid/not found
 	*		mib=>string
 	*		name=>string
-	*/
-	
+	*/	
 	public function translateoidAction()
 	{
 		$postData=$this->getRequest()->getPost();
@@ -250,6 +249,7 @@ class HelperController extends TrapsController
 		}
 
 	}
+
 	
 	/** Save or execute database purge of <n> days
 	*	days=>int 
@@ -347,22 +347,11 @@ class HelperController extends TrapsController
 		if (isset($postData['file']))
 		{ 
 			$file=$postData['file'];
-/*			if (!touch($file ))
-			{
-				$this->_helper->json(array('status'=>'File not writable :  '.$file));
-				return;
+			$fileHandler=@fopen($file,'w');
+			if ($fileHandler == false)
+			{   // File os note writabe / cannot create
+			    $this->_helper->json(array('status'=>'File not writable :  '.$file));
 			}
-			*/
-			// TODO : check why exception/error is not catched 
-			try {
-				touch($file);
-			}
-			catch (Exception $e) 
-			{
-				$this->_helper->json(array('status'=>'File not writable :  '.$file));
-				return;
-			}
-			
 		}
 		else
 		{
@@ -374,7 +363,6 @@ class HelperController extends TrapsController
 			{
 				$this->_helper->json(array('status'=>'No file'));
 			}
-			return;
 		}
 
 		if (isset($postData['level']))

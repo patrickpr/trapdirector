@@ -37,7 +37,7 @@ class MIBLoader
 				->order('mib ASC');				;
 		$names=$dbconn->fetchAll($query);
 		$mib=array();
-		foreach($names as $key=>$val)
+		foreach($names as $val)
 		{
 			array_push($mib,$val->mib);
 		}
@@ -60,7 +60,7 @@ class MIBLoader
 					array('name' => 'name', 'oid' => 'oid'))
 				->where("mib = '".$mib."' AND type=21") ;
 		$names=$dbconn->fetchAll($query);
-		foreach ($names as $key=>$val)
+		foreach ($names as $val)
 		{
 			$traps[$val->oid]=$val->name;
 		}			
@@ -102,7 +102,7 @@ class MIBLoader
 		$listObjects=$dbconn->fetchAll($query);
 		if ( count($listObjects)==0 ) return null;
 		
-		foreach ($listObjects as $key => $val)
+		foreach ($listObjects as $val)
 		{
 			$objects[$val->oid]['name']=$val->name;
 			$objects[$val->oid]['mib']=$val->mib;
@@ -148,8 +148,9 @@ class MIBLoader
 		}
 		
 		// Try to get oid name from snmptranslate
+		$matches=array();
 		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-		' '.$oid,$translate_output);
+		    ' '.$oid);
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) {
 			return null;
@@ -158,12 +159,11 @@ class MIBLoader
 		$retArray['name']=$matches[2];
 		
 		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -Td -On ' . $matches[0] .
-			" | grep SYNTAX | sed 's/SYNTAX[[:blank:]]*//'"
-		   ,$translate_output);
-		if (preg_match('/(.*)\{(.*)\}/',$translate,$typesMatch))
+			" | grep SYNTAX | sed 's/SYNTAX[[:blank:]]*//'");
+		if (preg_match('/(.*)\{(.*)\}/',$translate,$matches))
 		{
-			$retArray['type']=$typesMatch[1];
-			$retArray['type_enum']=$typesMatch[2];
+		    $retArray['type']=$matches[1];
+		    $retArray['type_enum']=$matches[2];
 		}
 		else
 		{

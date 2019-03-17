@@ -2,24 +2,12 @@
 
 namespace Icinga\Module\TrapDirector\Tables;
 
-use Icinga\Application\Icinga;
-use Icinga\Data\Filter\FilterAnd;
-use Icinga\Data\Filter\FilterChain;
-use Icinga\Data\Filter\FilterNot;
-use Icinga\Data\Filter\FilterOr;
-use Icinga\Data\Filter\Filter;
-use Icinga\Data\Selectable;
-use Icinga\Data\Paginatable;
-use Icinga\Exception\QueryException;
 use Icinga\Web\Request;
 use Icinga\Web\Url;
 use Icinga\Web\Widget;
 use Icinga\Web\Widget\Paginator;
 
-use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Tables\TrapTable;
-use Icinga\Module\TrapDirector\Config\MIBLoader;
-use stdClass;
 
 
 
@@ -75,7 +63,7 @@ class HandlerTableList extends TrapTable
 		// Titles
 		$htm .= "<thead>\n  <tr>\n";
 		$titles = $this->getTitles();
-		foreach ($titles as $key => $title) 
+		foreach ($titles as $title) 
 		{
 			$htm .= '    <th>' . $view->escape($view->translate($title)) . "</th>\n";
 		}

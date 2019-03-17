@@ -4,11 +4,12 @@ namespace Icinga\Module\Trapdirector\Clicommands;
 
 use Icinga\Application\Icinga;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
-
 use Icinga\Cli\Command;
-use Icinga\Module\Trapdirector\TrapsController;
+
+use Exception;
+
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
-use Icinga\Module\Trapdirector\Config\MIBLoader;
+
 use Trap;
 
 /**
@@ -18,7 +19,8 @@ use Trap;
 */
 class MibCommand extends Command
 {
-	/** Update mib database
+	/**
+	*	Update mib database
 	*
 	*	USAGE 
 	*
@@ -26,16 +28,66 @@ class MibCommand extends Command
 	*	
 	*	OPTIONS
 	*	
-	*	none
+	*	--pid <file> : run in background with pid in <file>
 	*/
 	public function updateAction()
 	{
-		$module=Icinga::app()->getModuleManager()->getModule($this->getModuleName());
+	    $background = $this->params->get('pid', null);
+	    $pid=1;
+	    if ($background != null)
+	    {
+	        $file=@fopen($background,'w');
+	        if ($file == false)
+	        {
+	            echo 'Error : cannot open pid file '.$background;
+	            return 1;
+	        }
+	        $pid = pcntl_fork();
+	        if ($pid == -1) {
+	            echo 'Error : Cannot fork process';
+	            return 1;
+	        }
+	    }
+	    $module=Icinga::app()->getModuleManager()->getModule($this->getModuleName());
 		require_once($module->getBaseDir() .'/bin/trap_class.php');
 		$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-		$debug_level=2;
 		$trap = new Trap($icingaweb2_etc);
-		$trap->setLogging($debug_level,'display');
+		if ($pid == 1)
+		{
+		    $trap->setLogging(2,'display');
+		}
+		else
+		{  // use default display TODO : if default is 'display' son process will be killed at first output....
+		    if ($pid != 0)
+		    {
+		        // father process
+		        fwrite($file,$pid);
+		        fclose($file);
+		        echo "OK : process $pid in bckground";
+		        return 0;
+		    }
+		    else
+		    {  // son process : close all file descriptors and go to a new session
+		        fclose($file);		        
+// 		        $sid = posix_setsid();
+                fclose(STDIN);
+                fclose(STDOUT);
+                fclose(STDERR);
+                try
+                {
+                    $trap->update_mib_database(false);
+                    $trap->update_mibs_options();
+                }
+                catch (Exception $e)
+                {
+                    $trap->trapLog('Error in updating : ' . $e->getMessage(),2);
+                }
+                unlink($background);
+                exit(0);
+		    }
+		    
+		}
+		
 		try
 		{
 			echo "Update main mib database : \n";
@@ -48,9 +100,14 @@ class MibCommand extends Command
 		catch (Exception $e)
 		{
 			echo 'Error in updating : ' . $e->getMessage();
-		}	   
+		}
+		if ($pid != 1)
+		{
+		    unlink($background);
+		}
 	}
-	/** purge all mib database
+	/**
+	*	purge all mib database NOT IMPLEMENTED
 	*
 	*	USAGE 
 	*
@@ -60,7 +117,7 @@ class MibCommand extends Command
 	*	
 	*	--confirm yes : needed to execute purge
 	*/
-	public function dbAction()
+	public function purgeAction()
 	{
 		$db_prefix=$this->Config()->get('config', 'database_prefix');
 		echo "Not implemented";

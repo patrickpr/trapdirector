@@ -1,5 +1,5 @@
 <div class="controls">
-  <?= $this->tabs ?>
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
 <h2> Delete selected traps from database </h2>
 </div>
 
@@ -27,7 +27,7 @@
 		<button type="button" id="id_update_lines" onclick="onclickDeleteAction('count')">
 			Update number of affected lines
 		</button>
-		Affected lines : <span id="id_num_lines">0</span>
+		With this filter, <b><span id="id_num_lines">0</span></b> traps will be deleted.
 	</div>
 	<div class="control-group">
 		<div class="control-label-group">

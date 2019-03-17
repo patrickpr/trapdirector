@@ -1,5 +1,5 @@
 <div class="controls">
-  <?= $tabs ?>
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Status and config of trap receivers</h1>
 </div>
 
@@ -7,9 +7,9 @@
   <h2>Database</h2>
   The current trap database contains : <br>
   <ul>
-	<li> <span id="trap_count"><?= $this->trap_count ?> traps </li>
-	<li> <span id="trap_object_count"><?= $this->trap_object_count ?> trap objects </li>
-	<li> <span id="rule_count"><?= $this->rule_count ?> rules </li>
+	<li> <span id="trap_count"><?= $this->trap_count ?> traps </span></li>
+	<li> <span id="trap_object_count"><?= $this->trap_object_count ?> trap objects </span></li>
+	<li> <span id="rule_count"><?= $this->rule_count ?> rules </span></li>
   </ul>
   Traps older than <input type="text" id="input_text_trap_days" maxlength="4" style="width:4em;"
   value="<?= $this->trap_days_delete ?>" /> days will be dropped.<br><br>
@@ -20,7 +20,7 @@
   
    <h2>Log destination</h2>
    Logs from the trap receiver will be sent to : <br>
-	<select name="logsel" id="select_log_destination" empty_option="Select ..." autosubmit="">
+	<select name="logsel" id="select_log_destination" >
 <?php
 		if (count($this->logDestinations)==0)
 		{
@@ -40,9 +40,9 @@
 		}
 ?>		
 	</select><br><br>
-	For file log : <input type="text" id="input_current_log" maxlength="20"
-	value="<?= $this->currentLogFile ?>" style="width=40em;"> (note : weird error for now when not writable)<br><br>
-	Log level : <select name="logsel" id="select_log_level" empty_option="Select ..." autosubmit="">
+	For file log : <input type="text" id="input_current_log" maxlength="50"
+	value="<?= $this->currentLogFile ?>" style="width=40em;"> <br><br>
+	Log level : <select name="logsel" id="select_log_level" >
 <?php
 		if (count($this->logLevels)==0)
 		{
@@ -72,14 +72,14 @@ logHelper='/icingaweb2/trapdirector/helper/logdestination';
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
 }
 function displayOK(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
 }
+
 
 function click_button_log()
 {

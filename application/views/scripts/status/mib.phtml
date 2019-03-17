@@ -1,5 +1,5 @@
 <div class="controls">
-  <?= $tabs ?>
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Mib Management</h1>
 </div>
 
@@ -13,7 +13,7 @@
 	<br>
 	<div id="id_animate_apply_mib2" ><i ></i></div>
 	<button id="id_apply_mib" type="button" onclick="updateMIB()">
-		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" ></a>
+		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" >
 		Update MIB Database
 	</button>  
 	Note : Command takes time to execute and is launched in background. Refresh the page to see objects count rising.<br>
@@ -35,7 +35,7 @@
   <ul>
 <?php 
 	//print_r($this->dirArray);
-	foreach($this->dirArray as $key=>$dir) 
+	foreach($this->dirArray as $dir) 
 	{ 
 		echo '<li>'.$dir.' : (aprox. '.exec('cat '.$dir.'/*  | grep "NOTIFICATION-TYPE" | wc -l 2>/dev/null');
 		echo " traps defined)</li>\n";
@@ -70,14 +70,14 @@ mibfileUploadHelper='/icingaweb2/trapdirector/status/mibfile';
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
 }
 function displayOK(message)
 {
-	// for now
-	alert(message);
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
 }
+
 
 function updateMIB()
 {
@@ -121,7 +121,9 @@ function updateMIB()
 			}
 	});		
 	
-	setTimeout(check_mib_update_action(),100000);
+	// TODO : function is executed once 
+	//setTimeout(function() { alert("test timeout");},5000);
+	setTimeout(function(){ check_mib_update_action();},10000);
 }
 
 function check_mib_update_action()

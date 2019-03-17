@@ -25,7 +25,8 @@ class ReceivedController extends TrapsController
 		$this->view->table=$this->applyPaginationLimits($this->getTrapListTable(),$this->getModuleConfig()->itemListDisplay());		
 		
 		// Set Filter
-		$postData=$this->getRequest()->getPost();
+		//$postData=$this->getRequest()->getPost();
+		$filter=array();
 		$filter['q']=$this->params->get('q');//(isset($postData['q']))?$postData['q']:'';
 		$filter['done']=$this->params->get('done');
 		$this->view->filter=$filter;
@@ -123,7 +124,7 @@ class ReceivedController extends TrapsController
 			foreach ($trapDetail as $key => $val) 
 			{	
 				$trapval[$key]=array();
-				foreach ($queryArrayData as $vkey => $vval) 
+				foreach (array_keys($queryArrayData) as $vkey ) 
 				{
 					array_push($trapval[$key],$val->$vkey);
 				}

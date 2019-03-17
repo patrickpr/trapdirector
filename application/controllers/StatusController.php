@@ -2,14 +2,16 @@
 
 namespace Icinga\Module\Trapdirector\Controllers;
 
-use Icinga\Web\Controller;
 use Icinga\Web\Url;
-
-use Icinga\Module\Trapdirector\TrapsController;
-
 use Icinga\Web\Form;
 use Zend_Form_Element_File as File;
 use Zend_Form_Element_Submit as Submit;
+
+use Exception;
+
+use Icinga\Module\Trapdirector\TrapsController;
+
+
 
 class StatusController extends TrapsController
 {
@@ -62,6 +64,11 @@ class StatusController extends TrapsController
 		
 	} 
   
+	/** Mib management
+	*	Post param : action=update_mib_db : update mib database
+	*	Post param : ation=check_update : check if mib update is finished
+	*	File post : mibfile -> save mib file
+	*/
 	public function mibAction()
 	{
 		$this->prepareTabs()->activate('mib');
@@ -77,29 +84,32 @@ class StatusController extends TrapsController
 				$action=$postData['action'];
 				if ($action == 'update_mib_db')
 				{ // Do the update in background
-					try
+					$return=exec('icingacli trapdirector mib update --pid /tmp/trapdirector_update.pid');
+					if (preg_match('/OK/',$return))
 					{
-						exec('icingacli trapdirector mib update >/dev/null  2>&1 &  echo $! > /tmp/trapdirector_update_pid.pid');
-						//TODO : check ret_code  and follow pid status
+					    $this->_helper->json(array('status'=>'OK'));
 					}
-					catch (Exception $e)
-					{
-						$this->_helper->json(array('status'=>$e->getMessage()));
-					}
-					
-					$this->_helper->json(array('status'=>'OK'));
-					//$this->_helper->json(array('status'=>$ret_c));
+					// Error
+					$this->_helper->json(array('status'=>$return));
 				}
 				if ($action == 'check_update')
 				{
-					exec('ps $(cat /tmp/trapdirector_update_pid.pid)',$output,$retVal);
+				    $file=@fopen('/tmp/trapdirector_update.pid','r');
+				    if ($file == false)
+				    {   // process is dead
+				        $this->_helper->json(array('status'=>'tu quoque fili','err'=>'Cannot open file'));
+				    }
+				    $pid=fgets($file);
+				    $output=array();
+				    $retVal=0;
+					exec('ps '.$pid,$output,$retVal);
 					if ($retVal == 0)
 					{ // process is alive
 						$this->_helper->json(array('status'=>'Alive and kicking'));
 					}
 					else
 					{ // process is dead
-						$this->_helper->json(array('status'=>'tu quoque fili'));
+					    $this->_helper->json(array('status'=>'tu quoque fili','err'=>'no proc'.$pid));
 					}
 				}
 				$this->_helper->json(array('status'=>'ERR : no '.$action.' action possible' ));
@@ -155,6 +165,8 @@ class StatusController extends TrapsController
 		$dirArray=explode(':',$DirConf);
 
 		// Get base directories from net-snmp-config
+		$output=$matches=array();
+		$retVal=0;
 		$sysDirs=exec('net-snmp-config --default-mibdirs',$output,$retVal);
 		if ($retVal==0)
 		{
@@ -185,11 +197,16 @@ class StatusController extends TrapsController
 		$this->view->fileList=$output;
 		
 		// Zend form 
-		$this->view->form=$form = new UploadForm('upload-form');
+		$this->view->form= new UploadForm('upload-form');
+		//$this->view->form= new Form('upload-form');
 		
 		
 	}
-	
+
+	/** Create services and templates
+	 *  Create template for trap service
+	 * 
+	 */
 	public function servicesAction()
 	{
 		$this->prepareTabs()->activate('services');
@@ -207,6 +224,8 @@ class StatusController extends TrapsController
 			$template_create = 'icingacli director service create --json \'{ "check_command": "dummy", ';
 			$template_create .= '"check_interval": "' .$postData['template_revert_time']. '", "check_timeout": "20", "disabled": false, "enable_active_checks": true, "enable_event_handler": true, "enable_notifications": true, "enable_passive_checks": true, "enable_perfdata": true, "max_check_attempts": "1", ';
 			$template_create .= '"object_name": "'.$postData['template_name'].'", "object_type": "template", "retry_interval": "'.$postData['template_revert_time'].'"}\'';
+			$output=array();
+			$ret_code=0;
 			exec($template_create,$output,$ret_code);
 			if ($ret_code != 0)
 			{

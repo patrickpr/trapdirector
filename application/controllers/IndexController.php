@@ -2,10 +2,6 @@
 
 namespace Icinga\Module\TrapDirector\Controllers;
 
-use Icinga\Web\Url;
-
-use Exception;
-
 use Icinga\Module\Trapdirector\TrapsController;
 
 /** 

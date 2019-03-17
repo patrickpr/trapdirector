@@ -5,9 +5,10 @@ namespace Icinga\Module\Trapdirector\Clicommands;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
 
 use Icinga\Cli\Command;
-use Icinga\Module\Trapdirector\TrapsController;
+
+use Exception;
+
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
-use Icinga\Module\Trapdirector\Config\MIBLoader;
 
 /**
  * Status of the SNMP trap receiver system
@@ -15,9 +16,10 @@ use Icinga\Module\Trapdirector\Config\MIBLoader;
 */
 class StatusCommand extends Command
 {
-	/** Get database counts
+	/**
+	* Get database counts
 	*
-	* 
+	* Get number of traps, rules
 	*/
 	public function dbAction()
 	{

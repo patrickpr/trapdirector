@@ -1,6 +1,12 @@
 <?php
 
 
+//use FontLib\EOT\File;
+
+include (dirname(__DIR__).'/library/Trapdirector/Icinga2Api.php');
+
+use Icinga\Module\Trapdirector\Icinga2API;
+
 class Trap
 {
 	// Configuration files a dirs
@@ -12,6 +18,14 @@ class Trap
 	protected $snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs';
 	protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
 	protected $db_prefix='traps_';
+
+	// API
+	protected $api_use=false;
+	protected $icinga2api=null;
+	protected $api_hostname='';
+	protected $api_port='';
+	protected $api_username='';
+	protected $api_password='';
 	
 	//**** Options from config database
 	// Logs 
@@ -57,6 +71,36 @@ class Trap
 		);
 	}
 	
+	/**
+	 * Get option from array of ini file, send message if empty
+	 * @param string $option_array Array of ini file
+	 * @param string $option_category category in ini file
+	 * @param string $option_name name of option in category
+	 * @param resource $option_var variable to fill if found, left untouched if not found
+	 * @param number $log_level default 2 (warning)
+	 * @param string $message warning message if not found
+	 * @return boolean true if found, or false
+	 */
+	protected function getOptionIfSet($option_array,$option_category,$option_name, &$option_var, $log_level = 2, $message = null)
+	{
+	    if (!isset($option_array[$option_category][$option_name]))
+	    {
+	        if ($message == null)
+	        {
+	            $message='No ' . $option_name . ' in config file: '. $this->trap_module_config;
+	        }
+	        $this->trapLog($message,$log_level,'syslog');
+	        return false;
+	    }
+	    else
+	    {
+	        $option_var=$option_array[$option_category][$option_name];
+	        return true;
+	    }
+	}
+	
+	/** Get options from ini file and database
+	*/
 	protected function getOptions()
 	{
 		$trap_config=parse_ini_file($this->trap_module_config,true);
@@ -65,46 +109,31 @@ class Trap
 			$this->trapLog("Error reading ini file : ".$this->trap_module_config,1,'syslog'); 
 		}
 		// Snmptranslate binary path
-		if (!isset($trap_config['config']['snmptranslate'])) 
-		{ // not in config : warning 
-			$this->trapLog("No snmptranslate in config file: ".$this->trap_module_config,2,'syslog'); 
-		}
-		else
-		{
-			$this->snmptranslate=$trap_config['config']['snmptranslate'];
-		}
-		// mibs path 
-		if (!isset($trap_config['config']['snmptranslate_dirs'])) 
-		{ // not in config : warning 
-			$this->trapLog("No snmptranslate_dirs in config file: ".$this->trap_module_config,2,'syslog'); 
-		}
-		else
-		{
-			$this->snmptranslate_dirs=$trap_config['config']['snmptranslate_dirs'];
-		}
-		// icinga2cmd path		
-		if (!isset($trap_config['config']['icingacmd'])) 
-		{ // not in config : warning 
-			$this->trapLog("No icingacmd in config file: ".$this->trap_module_config,2,'syslog'); 
-		}
-		else
-		{
-			$this->icinga2cmd=$trap_config['config']['icingacmd'];
-		}
-		// table prefix
-		if (!isset($trap_config['config']['database_prefix'])) 
-		{ // not in config : warning 
-			$this->trapLog("No database_prefix in config file: ".$this->trap_module_config,2,'syslog'); 
-		}
-		else
-		{
-			$this->db_prefix=$trap_config['config']['database_prefix'];
-		}	
+		$this->getOptionIfSet($trap_config,'config','snmptranslate', $this->snmptranslate);
+
+		// mibs path
+		$this->getOptionIfSet($trap_config,'config','snmptranslate_dirs', $this->snmptranslate_dirs);
+
+		// icinga2cmd path
+		$this->getOptionIfSet($trap_config,'config','icingacmd', $this->icinga2cmd);
 		
+		// table prefix
+		$this->getOptionIfSet($trap_config,'config','database_prefix', $this->db_prefix);
+
+		// API options
+		if ($this->getOptionIfSet($trap_config,'config','icingaAPI_host', $this->api_hostname))
+		{
+		    $this->api_use=true;
+		    $this->getOptionIfSet($trap_config,'config','icingaAPI_port', $this->api_port);
+		    $this->getOptionIfSet($trap_config,'config','icingaAPI_user', $this->api_username);
+		    $this->getOptionIfSet($trap_config,'config','icingaAPI_password', $this->api_password);
+		}
+				
 		/***** Database options :  ***/
 		$this->getDBConfigIfSet('log_level',$this->debug_level);
 		$this->getDBConfigIfSet('log_destination',$this->alert_output);
 		$this->getDBConfigIfSet('log_file',$this->debug_file);
+		$this->getAPI();
 	}
 
 	protected function getDBConfigIfSet($element,&$variable)
@@ -112,8 +141,9 @@ class Trap
 		$value=$this->getDBConfig($element);
 		if ($value != 'null') $variable=$value;
 	}
+	
 	/** Get data from db_config
-	*	@param $element name of param
+	*	@param $element string name of param
 	*	@return $value (or null)
 	*/	
 	protected function getDBConfig($element)
@@ -136,7 +166,7 @@ class Trap
 	*	@param	string $message Message to log
 	*	@param	int $level 1=critical 2=warning 3=trace 4=debug
 	*	@param  int $destination file/syslog/display
-	*	@return None
+	*	@return void
 	**/	
 	public function trapLog( $message, $level, $destination ='')
 	{	
@@ -197,6 +227,14 @@ class Trap
 		}
 	}
 	
+	protected function getAPI()
+	{
+	    if ($this->icinga2api == null)
+	    {
+	        $this->icinga2api = new Icinga2API($this->api_hostname,$this->api_port);
+	    }
+	    return $this->icinga2api;
+	}
 
 	/** Connects to trapdb 
 	*	@return PDO connection
@@ -287,7 +325,7 @@ class Trap
 	}	
 	
 	/** read data from stream
-	*	@param $stream input stream, defaults to "php://stdin"
+	*	@param $stream string input stream, defaults to "php://stdin"
 	*	@return array trap data
 	*/
 	public function read_trap($stream='php://stdin')
@@ -312,6 +350,7 @@ class Trap
 		{
 			$this->trapLog("Error reading IP !",1,''); 
 		}
+		$matches=array();
 		$ret_code=preg_match('/.DP: \[(.*)\]:(.*)->\[(.*)\]:(.*)/',$IP,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) 
 		{
@@ -325,7 +364,6 @@ class Trap
 			$this->trap_data['destination_port']=$matches[4];
 		}
 
-		$trap_vars=array();
 		while (($vars=chop(fgets($input_stream))) !=FALSE)
 		{
 			$ret_code=preg_match('/^([^ ]+) (.*)$/',$vars,$matches);
@@ -378,7 +416,7 @@ class Trap
 	}
 
 	/** Translate oid into array(MIB,Name)
-	* @param $ois oid to translate
+	* @param $oid string oid to translate
 	* @return null if not found or array(MIB,Name)
 	*/
 	public function translateOID($oid)
@@ -413,7 +451,8 @@ class Trap
 		
 		// Try to get oid name from snmptranslate
 		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-				' '.$oid,$translate_output);
+		    ' '.$oid);
+		$matches=array();
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) {
 			return NULL;
@@ -441,7 +480,7 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		$daysago = strtotime("-".$days." day");
 		$sql= 'delete from '.$this->db_prefix.'received where date_received < "'.date("Y-m-d H:i:s",$daysago).'";"';
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if ($db_conn->query($sql) == FALSE) {
 			$this->trapLog('Error erasing traps : '.$sql,1,'');
 		}
 		$this->trapLog('Erased traps older than '.$days.' day(s) : '.$sql,3);
@@ -497,7 +536,7 @@ class Trap
 		$this->trapLog('id found: '.$inserted_id,3,'');
 		
 		// Fill trap extended data table
-		foreach ($this->trap_data_ext as $key => $value) {
+		foreach ($this->trap_data_ext as $value) {
 			
 			// TODO : detect if trap value is encoded and decode it to UTF-8 for database
 			$firstcol=1;
@@ -525,8 +564,8 @@ class Trap
 	}
 
 	/** Get rules from rule database with ip and oid
-	*	@param $ip ipv4 or ipv6
-	*	@param $oid oid in numeric
+	*	@param $ip string ipv4 or ipv6
+	*	@param $oid string oid in numeric
 	*	@retrun PDO object
 	*/	
 	protected function getRules($ip,$oid)
@@ -566,7 +605,7 @@ class Trap
 				}
 				$grouphosts=$ret_code2->fetchAll();
 				//echo "rule grp :\n";print_r($grouphosts);echo "\n";
-				foreach ( $grouphosts as $gkey=>$host)
+				foreach ( $grouphosts as $host)
 				{
 					//echo $host['ip4']."\n";
 					if ($host['ip4']==$ip || $host['ip6']==$ip)
@@ -590,21 +629,47 @@ class Trap
 	{
 		$db_conn=$this->db_connect_trap();
 		$sql="UPDATE ".$this->db_prefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if ($db_conn->query($sql) == FALSE) {
 			$this->trapLog('Error in update query : ' . $sql,2,'');
 		}
 	}
 	
-	/** Send SERVICE_CHECK_RESULT 
+	/** Send SERVICE_CHECK_RESULT with icinga2cmd or API
+	 * 
+	 * @param string $host
+	 * @param string $service
+	 * @param number $state numerical staus 
+	 * @param string $display
+	 * @returnn bool true is service check was sent without error
 	*/
 	public function serviceCheckResult($host,$service,$state,$display)
 	{
-		$send = '[' . date('U') .'] PROCESS_SERVICE_CHECK_RESULT;' .
-			$host.';' .$service .';' . $state . ';'.$display;
-		$this->trapLog( $send." : to : " .$this->icinga2cmd,3,'');
-		
-		// TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why.
-		$output=exec('echo "'.$send.'" > ' .$this->icinga2cmd,$output);
+	    if ($this->api_use == false)
+	    {
+    		$send = '[' . date('U') .'] PROCESS_SERVICE_CHECK_RESULT;' .
+    			$host.';' .$service .';' . $state . ';'.$display;
+    		$this->trapLog( $send." : to : " .$this->icinga2cmd,3,'');
+    		
+    		// TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why.
+    		exec('echo "'.$send.'" > ' .$this->icinga2cmd);
+    		return true;
+	    }
+	    else
+	    {
+	        $api = $this->getAPI();
+	        $api->setCredentials($this->api_username, $this->api_password);
+	        list($retcode,$retmessage)=$api->serviceCheckResult($host,$service,$state,$display);
+	        if ($retcode == false)
+	        {
+	            $this->trapLog( "Error sending result : " .$retmessage,2,'');
+	            return false;
+	        }
+	        else 
+	        {
+	            $this->trapLog( "Sent result : " .$retmessage,3,'');
+	            return true;
+	        }
+	    }
 	}
 	
 	/** Resolve display. 
@@ -614,16 +679,17 @@ class Trap
 	*/
 	protected function applyDisplay($display)
 	{
-		while (preg_match('/_OID\(([0-9\.]+)\)/',$display,$matches) == 1)
+	    $matches=array();
+	    while (preg_match('/_OID\(([0-9\.]+)\)/',$display,$matches) == 1)
 		{
-			$fullText=$matches[0];
 			$oid=$matches[1];
 			$found=0;
-			foreach($this->trap_data_ext as $key => $val)
+			foreach($this->trap_data_ext as $val)
 			{
 				if ($oid == $val->oid)
 				{
 					$val->value=preg_replace('/"/','',$val->value);
+					$rep=0;
 					$display=preg_replace('/_OID\('.$oid.'\)/',$val->value,$display,-1,$rep);
 					if ($rep==0)
 					{
@@ -739,9 +805,9 @@ class Trap
 	*   comparison int vs strings will return null (error)
 	*	return : bool or null on error
 	*/
-	public function evaluation($rule,&$item){
+	public function evaluation($rule,&$item)
+	{
 		
-		$item2=0;
 		list($type1,$val1) = $this->eval_getElement($rule,$item);
 		//echo "Elmt: ".$val1." : ".substr($rule,$item)."\n";
 		if ($item==strlen($rule)) {/*echo "1val\n"*/;return $val1;}  // If only element, return value
@@ -792,7 +858,7 @@ class Trap
 					$rule2.=$rule[$item];
 					$item++;
 				}
-				if ($item == strlen ($rule)) throw new Exception("closing '".$tok."' not found in ".$rule ." at " .$item);
+				if ($item == strlen ($rule)) throw new Exception("closing '\"' not found in ".$rule ." at " .$item);
 				$rule2.=$rule[$item];
 				$item++;
 				continue;
@@ -816,12 +882,12 @@ class Trap
 		{
 			return true;
 		}
+		$matches=array();
 		while (preg_match('/_OID\(([0-9\.]+)\)/',$rule,$matches) == 1)
 		{
-			$fullText=$matches[0];
 			$oid=$matches[1];
 			$found=0;
-			foreach($this->trap_data_ext as $key => $val)
+			foreach($this->trap_data_ext as $val)
 			{
 				if ($oid == $val->oid)
 				{
@@ -830,6 +896,7 @@ class Trap
 						$val->value=preg_replace('/"/','',$val->value);
 						$val->value='"'.$val->value.'"';
 					}
+					$rep=0;
 					$rule=preg_replace('/_OID\('.$oid.'\)/',$val->value,$rule,-1,$rep);
 					if ($rep==0)
 					{
@@ -866,7 +933,9 @@ class Trap
 			return;
 		}
 		//print_r($rules);
-		foreach ($rules as $rkey => $rule)
+		// Evaluate all rules in sequence
+		$this->trap_action=null;
+		foreach ($rules as $rule)
 		{
 			
 			$host_name=$rule['host_name'];
@@ -886,13 +955,13 @@ class Trap
 					$this->trapLog('action OK : '.$action,3,'');
 					if ($action >= 0)
 					{
-						$this->serviceCheckResult($host_name,$service_name,$action,$display);
+						$this->serviceCheckResult($host_name,$service_name,$action,$display); // TODO : check return code for error
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
-						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
+						$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
+						$this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
 					}
 					else
 					{
-						$this->trap_action='No action';
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 					}
 					$this->trap_to_db=($action==-2)?false:true;
@@ -905,13 +974,13 @@ class Trap
 					$this->trapLog('action NOK : '.$action,3,'');
 					if ($action >= 0)
 					{
-						$this->serviceCheckResult($host_name,$service_name,$action,$display);
+					    $this->serviceCheckResult($host_name,$service_name,$action,$display); // TODO : check return code for error
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
-						$this->trap_action='Status '.$action.' to '.$host_name.'/'.$service_name;
+						$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
+						$this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
 					}
 					else
 					{
-						$this->trap_action='No action';
 						$this->add_rule_match($rule['id'],$rule['num_match']+1);
 					}
 					$this->trap_to_db=($action==-2)?false:true;					
@@ -945,8 +1014,12 @@ class Trap
 	public function add_rule_final($time)
 	{
 		$db_conn=$this->db_connect_trap();
+		if ($this->trap_action==null) 
+		{
+			$this->trap_action='No action';
+		}
 		$sql="UPDATE ".$this->db_prefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if ($db_conn->query($sql) == FALSE) {
 			$this->trapLog('Error in update query : ' . $sql,2,'');
 		}
 	}
@@ -954,8 +1027,8 @@ class Trap
 	/*********** UTILITIES *********************/
 	
 	/** Create database schema 
-	*	@param $schema_file	File to read schema from
-	*	@param $table_prefix to replace #PREFIX# in schema file by this
+	*	@param $schema_file	string File to read schema from
+	*	@param $table_prefix string to replace #PREFIX# in schema file by this
 	*/
 	public function create_schema($schema_file,$table_prefix)
 	{
@@ -973,12 +1046,64 @@ class Trap
 		}
 		$db_conn=$this->db_connect_trap();
 		$sql= $newline;
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if ($db_conn->query($sql) == FALSE) {
 			$this->trapLog('Error create schema : '.$sql,1,'');
 		}
 		$this->trapLog('Schema created',3);		
 	}
 
+	/** Update database schema 
+	 *     @param $prefix string file prefix of sql update File
+	 *     @param $target_version int target db version number
+	 *     @param $table_prefix string to replace #PREFIX# in schema file by this
+	 */
+	public function update_schema($prefix,$target_version,$table_prefix)
+	{
+	    // Get current db number
+	    $db_conn=$this->db_connect_trap();
+	    $sql='SELECT id,value from '.$this->db_prefix.'db_config WHERE name=\'db_version\' ';
+	    $this->trapLog('SQL query : '.$sql,4,'');
+	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	        $this->trapLog('Cannot get db version. Query : ' . $sql,2,'');
+	        return;
+	    }
+	    $version=$ret_code->fetchAll();
+	    $cur_version=$version[0]['value'];
+	    $db_version_id=$version[0]['id'];
+	    //echo "version all :\n";print_r($version);echo " \n $cur_ver \n";
+	    
+	    while($cur_version<$target_version)
+	    {
+	       $cur_version++;
+	       $this->trapLog('Updating to version : ' .$cur_version ,3,'');
+	       $updateFile=$prefix.$cur_version.'.sql';
+	       $input_stream=fopen($updateFile, 'r');
+	       if ($input_stream==FALSE)
+	       {
+	           $this->trapLog("Error reading update file ". $updateFile,2,'');
+	           return;
+	       }
+	       $newline='';
+	       while (($line=fgets($input_stream)) != FALSE)
+	       {
+	           $newline.=chop(preg_replace('/#PREFIX#/',$table_prefix,$line));
+	       }
+	       $db_conn=$this->db_connect_trap();
+	       $sql= $newline;
+	       if ($db_conn->query($sql) == FALSE) {
+	           $this->trapLog('Error updating schema : '.$sql,1,'');
+	       }
+	       $sql='UPDATE '.$this->db_prefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
+	       $this->trapLog('SQL query : '.$sql,4,'');
+	       if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	           $this->trapLog('Cannot update db version. Query : ' . $sql,2,'');
+	           return;
+	       }
+	       
+	       $this->trapLog('Schema updated',3);
+	    }
+	}
+	
 	/** reset service to OK after time defined in rule
 	*	TODO logic is : get all service in error + all all rules, see if getting all rules then select services is better 
 	*	@return : like a plugin : status code (0->3) <message> | <perfdata>
@@ -1011,9 +1136,9 @@ class Trap
 		$now=date('U');
 		
 		$numreset=0;
-		foreach ($rules as $key=>$rule)
+		foreach ($rules as $rule)
 		{
-			foreach ($services as $skey => $service)
+			foreach ($services as $service)
 			{
 				if ($service['service_name'] == $rule['service_name'] &&
 					$service['host_name'] == $rule['host_name'] &&
@@ -1032,8 +1157,10 @@ class Trap
 
 	private function get_type_enum($oid)
 	{
+	    $matchesType=array();
+	    $retVal=0;
 		$type_enum=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-			' -Td '.$oid. ' 2>/dev/null | grep -E "SYNTAX.*\{.*\}"',$returnALL,$retVal);
+		    ' -Td '.$oid. ' 2>/dev/null | grep -E "SYNTAX.*\{.*\}"',$matchesType,$retVal);
 		if ($retVal != 0)
 		{
 			return null;
@@ -1076,7 +1203,7 @@ class Trap
 				" WHERE id='".
 				$this->dbOidAll[$this->dbOidIndex[$oid]]['id'] ."' ;";
 				//$this->trapLog('SQL query : '.$sql,4,'');
-				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				if ($db_conn->query($sql) == FALSE) {
 					$this->trapLog('Error in query : ' . $sql,1,'');
 				}			
 			}
@@ -1088,15 +1215,17 @@ class Trap
 		else
 		{	// create
 			// First get mib :
-			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-			' '.$oid,$return_all,$retVal);
+			$return=$match2=array();
+			$retVal=0;
+			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			' '.$oid,$return,$retVal);
 			if ($retVal!=0)
 			{
 				$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid,1,'');
 			}
-			if (!preg_match('/^(.*)::/',$return,$match2))
+			if (!preg_match('/^(.*)::/',$return[0],$match2))
 			{
-				$this->trapLog('error finding mib '.$return,2,'');
+			    $this->trapLog('error finding mib '.$return[0],2,'');
 				return;
 			}
 			$mib=$match2[1];
@@ -1121,7 +1250,7 @@ class Trap
 			}					
 			$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
 			'('.$sqlT.') VALUES ('.$sqlV.');';
-			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			if ($db_conn->query($sql) == FALSE) {
 				$this->trapLog('Error in query : ' . $sql,1,'');
 			}					
 		}		
@@ -1139,13 +1268,15 @@ class Trap
 		}
 		$traps=$ret_code->fetchAll();
 		
-		foreach ($traps as $key=>$trap)
+		foreach ($traps as $trap)
 		{
 			$trapOID=$trap['oid'];
 			$trapID=$trap['id'];
+			$retVal=0;
+			$match=array();
 			// get OBJECTS for this trap OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$trapOID,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1210,7 +1341,7 @@ class Trap
 			}
 			// get SYNTAX for this OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1274,7 +1405,7 @@ class Trap
 			}
 			// get SYNTAX for this OID
 			$snmptrans=null;
-			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
@@ -1324,8 +1455,9 @@ class Trap
 	{
 		// Timing 
 		$timeTaken = microtime(true);
+		$retVal=0;
 		// Get all mib objects from all mibs
-		$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+		exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 				' -On -Tto 2>/dev/null',$this->objectsAll,$retVal);
 		if ($retVal!=0)
 		{
@@ -1381,7 +1513,7 @@ class Trap
 			
 			// get next line 
 			$curElement++;
-
+			$match=$snmptrans=array();
 			if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
 						$this->objectsAll[$curElement],$match))
 			{
@@ -1389,7 +1521,7 @@ class Trap
 			}
 			if ($match[2]==0) // object type=0 : check if v1 trap
 			{
-				$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+				exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid . ' | grep OBJECTS ',$snmptrans,$retVal);
 				if ($retVal!=0)
 				{
@@ -1414,7 +1546,7 @@ class Trap
 			$this->update_oid($oid,$name,$type,$textConv,$dispHint,$type_enum);
 			
 			// get trap objects
-			$return=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{

@@ -10,13 +10,14 @@ use Icinga\Module\Trapdirector\TrapsController;
 
 
 //use Icinga\Web\Form as Form;
-/**
+/** Rules management
 
 */
 class HandlerController extends TrapsController
 {
 
-	
+	/** index : list existing rules 
+	*/
 	public function indexAction()
 	{	
 		$this->checkReadPermission();
@@ -34,6 +35,10 @@ class HandlerController extends TrapsController
 		//$this->displayExitError('Handler/indexAction','Not implemented');
 	}
 
+	/** Add a handler  
+	*	Get params fromid : setup from existing trap (id of trap table)
+	*	Get param ruleid : edit from existing handler (id of rule table)
+	*/
 	public function addAction()
 	{
 		$this->checkConfigPermission();
@@ -65,6 +70,7 @@ class HandlerController extends TrapsController
 		$this->view->selectGroup=false; // Select by group if true
 		$this->view->hostgroupid=-1; // host group id
 		$this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
+		
 		// Get Mib List from file
 		$this->view->mibList=$this->getMIB()->getMIBList();
 		
@@ -92,14 +98,14 @@ class HandlerController extends TrapsController
 			// if one unique host found -> put id text input
 			if (count($hosts)==1) {
 				$this->view->hostname=$hosts[0]->name;
-				$hostid=$hosts[0]->id;
+				//$hostid=$hosts[0]->id;
 				// Tell JS to get services when page is loaded
 				$this->view->serviceGet=true;
 				
 			}
 			else
 			{
-				foreach($hosts as $key->$val)
+				foreach($hosts as $key=>$val)
 				{
 					array_push($this->view->hostlist,$hosts[$key]->name);
 				}
@@ -212,6 +218,7 @@ class HandlerController extends TrapsController
 			$curObjectList=array();
 			$index=1; // TODO must make sure the index is the same than in display
 			// check in display & rule for : OID(<oid>)
+			$matches=array();
 			while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
 					preg_match('/_OID\(([\.0-9]+)\)/',$rule,$matches))
 			{
@@ -253,7 +260,7 @@ class HandlerController extends TrapsController
 	
 	/** Validate form and output message to user  
 	*	@param in postdata 
-	* 	@return status : OK / <Message>
+	* 	@return string status : OK / <Message>
 	**/
 	protected function handlerformAction()
 	{
@@ -297,7 +304,7 @@ class HandlerController extends TrapsController
 				'redirect'=>'../handler/'
 			));
 		}		
-		foreach ($params as $key => $value)
+		foreach (array_keys($params) as $key)
 		{
 			if ($params[$key]['post']==null) continue; // data not sent in post vars
 			if (! isset($postData[$params[$key]['post']]))
@@ -459,7 +466,7 @@ class HandlerController extends TrapsController
 				->from($this->getModuleConfig()->getTrapRuleName(),$queryArray)
 				->where('id=?',$ruleid);
 			$ruleDetail=$db->fetchRow($query);
-			if ( $ruleDetail == null ) throw new Exception('No rule was found with id = '.$trapid);
+			if ( $ruleDetail == null ) throw new Exception('No rule was found with id = '.$ruleid);
 		}
 		catch (Exception $e)
 		{
@@ -470,6 +477,8 @@ class HandlerController extends TrapsController
 
 	}
 
+	/** Setup tabs for rules 
+	*/
 	protected function prepareTabs()
 	{
 		return $this->getTabs()->add('status', array(

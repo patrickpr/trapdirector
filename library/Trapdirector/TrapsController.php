@@ -3,18 +3,12 @@
 namespace Icinga\Module\Trapdirector;
 
 use Icinga\Web\Controller;
-use Icinga\Web\Url;
 
-use Icinga\Data\Db;
 use Icinga\Data\Paginatable;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
 
-use Icinga\Application\Modules\Module;
 
 use Exception;
-use Icinga\Exception\ConfigurationError;
-use Icinga\Exception\QueryException;
-use Icinga\Exception\ProgrammingError;
 
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Tables\TrapTableList;
@@ -24,7 +18,6 @@ use Icinga\Module\Trapdirector\Config\MIBLoader;
 use Trap;
 
 use Zend_Db_Expr;
-use Zend_Db_Select;
 
 class TrapsController extends Controller
 {
@@ -383,7 +376,7 @@ class TrapsController extends Controller
 		foreach ($hosts as $key => $host)
 		{ // For each host, get all services and add in common_services if not found
 			$host_services=$this->getServicesByHostid($host->host_object_id);
-			foreach($host_services as $skey=>$service)
+			foreach($host_services as $service)
 			{
 				if (isset($common_services[$service->name2]['num']))
 				{
@@ -399,7 +392,7 @@ class TrapsController extends Controller
 		$result=array();
 		
 		//print_r($common_services);
-		foreach ($common_services as $key=>$val)
+		foreach (array_keys($common_services) as $key)
 		{
 			if ($common_services[$key]['num'] > 1)
 			{
@@ -412,8 +405,8 @@ class TrapsController extends Controller
 
 	/** Get services object id by host name / service name in IDO database
 	*	does not catch exceptions
-	*	@param $hostname host name
-	*	@param $name service name
+	*	@param $hostname string host name
+	*	@param $name string service name
 	*	@return int  service id
 	*/
 	protected function getServiceIDByName($hostname,$name) 
@@ -470,12 +463,16 @@ class TrapsController extends Controller
 			$this->getModuleConfig()->getTrapRuleName(),
 			$params
 		);
+		if($query==false)
+		{
+		  return null;
+		}
 		return $db->lastInsertId();
 	}	
 
 	/** Update handler rule in traps DB
 	*	@param array(<db item>=><value>)
-	*	@return affected rows
+	*	@return array affected rows
 	*/
 	protected function updateHandlerRule($params,$ruleID)
 	{
@@ -509,8 +506,8 @@ class TrapsController extends Controller
 	}
 
 	/** Delete trap by ip & oid
-	*	@param $ip source IP (v4 or v6)
-	*	@param $oid oid
+	*	@param $ip string source IP (v4 or v6)
+	*	@param $oid string oid
 	*/
 	protected function deleteTrap($ip,$oid)
 	{
@@ -532,13 +529,13 @@ class TrapsController extends Controller
 			$condition
 		);
 		// TODO test ret code etc...
-		return $query;		
+		return $query;
 	}
-
+   
 
 	/** count trap by ip & oid
-	*	@param $ip source IP (v4 or v6)
-	*	@param $oid oid
+	*	@param $ip string source IP (v4 or v6)
+	*	@param $oid string oid
 	*/
 	protected function countTrap($ip,$oid)
 	{
@@ -634,8 +631,9 @@ class TrapsController extends Controller
 	*/
 	protected function isDirectorInstalled()
 	{
-		$modules=exec('icingacli module list',$output);
-		foreach ($ouput as $line)
+	    $output=array();
+	    exec('icingacli module list',$output);
+	    foreach ($output as $line)
 		{
 			if (preg_match('/^director .*enabled/',$line))
 			{

@@ -1,5 +1,5 @@
 <div class="controls">
-  <?= $this->tabs ?>
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Trap Detail</h1>
   <div class='action-bar'>
  
@@ -21,7 +21,7 @@
 <table>
 <tbody>
 <?php
-  foreach ($this->rowset as $key => $val) 
+  foreach ($this->rowset as $val) 
   {
 	  echo '<tr><td>';
 	  echo $val[0];
@@ -40,17 +40,17 @@
 <h3> Additional data </h3>
 <table><thead>
 <?php
-	foreach ($this->data_title as $key => $val)
+	foreach ($this->data_title as $val)
 	{
 		echo '<th> ' . $val[0] . "</th>\n";
 	}	
 ?>
 </thead><tbody>
 <?php
-	foreach ($this->data_val as $key => $val)
+	foreach ($this->data_val as $val)
 	{
 		echo '<tr>';
-		foreach ($val as $vkey => $vval)
+		foreach ($val as $vval)
 		{
 				echo '<td> ' . $vval . "</td>\n";
 		}

@@ -3,23 +3,14 @@
 namespace Icinga\Module\TrapDirector\Tables;
 
 use Icinga\Application\Icinga;
-use Icinga\Data\Filter\FilterAnd;
-use Icinga\Data\Filter\FilterChain;
-use Icinga\Data\Filter\FilterNot;
-use Icinga\Data\Filter\FilterOr;
-use Icinga\Data\Filter\Filter;
+
 use Icinga\Data\Selectable;
 use Icinga\Data\Paginatable;
-use Icinga\Exception\QueryException;
+
 use Icinga\Web\Request;
-use Icinga\Web\Url;
+
 use Icinga\Web\Widget;
 use Icinga\Web\Widget\Paginator;
-
-use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
-
-use stdClass;
-
 
 
 abstract class TrapTable implements Paginatable
