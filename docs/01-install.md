@@ -76,6 +76,40 @@ Then go back to module configuration, database should be OK :
 
 ![install-4](img/install-4.jpg)
 
+Setup API user
+---------------
+
+API user allows the module to use Icinga2 API to submit check results, in case icingaweb2 is not on the same server than the module.
+
+To setup a user in icinga2, edit the "/etc/icinga2/conf.d/api-users.conf" file and add a user or use existing one : 
+
+```
+object ApiUser "trapdirector" {
+  password = "trapdirector"
+  permissions = [ "/status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
+}
+```
+!! BETA VERSION : Permissions will maybe change in near future (but the module will check for this).
+
+Then reload icinga2 (systemctl reload icinga2)
+
+Then setup in the module configuration.
+
+Note : If no IP/hostname is set, API usage is disabled : 
+
+![install-10](img/install-10.jpg)
+
+Set : 
+* icinga2 host IP : IP or hostname of icinga2 server
+* Port : by default 5665
+* API username
+* API password
+
+Then, the module will test connection and report error or OK : 
+
+![install-11](img/install-11.jpg)
+
+
 Snmptrapd configuration
 ------------------------
 

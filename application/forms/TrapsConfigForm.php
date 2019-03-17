@@ -143,7 +143,7 @@ class TrapsConfigForm extends ConfigForm
 		        'value'			=> '',
 		    )
 	    );
-		$this->addElement(
+		/*$this->addElement(
 		    'radio',
 		    'config_icinga2api_use',
 		    array(
@@ -151,7 +151,7 @@ class TrapsConfigForm extends ConfigForm
 		        'label'         => $this->translate('Use icinga2 API'),
 		        'value'			=> array('Yes', 'No'),//array('1' => 'Yes', '0' => 'No'),
 		    )
-		);
+		);*/  
 		    // For Icinga2 API connexion
 	//	$icinga2API=new Fieldset('Icinga2 API connection');
 	/* 	$icinga2API_select=new radioBtn('icinga2API_use');
