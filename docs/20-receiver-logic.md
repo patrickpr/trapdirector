@@ -38,10 +38,10 @@ Extracts trap oid and stores objects (OID/value)
 Evaluate all rules one by one.
 If a rule is empty, it will always be true : the "on match" action will by executed
 
-If action is other than 'do nothing' then send passive service check to icingacmd
+If action is other than 'do nothing' or 'ignore' then send passive service check to icingacmd
 example : "[1547221876] PROCESS_SERVICE_CHECK_RESULT;Icinga host;LinkTrapStatus;2;Trap linkUp received at 0:0:00:00.00 from Just here" > /var/run/icinga2/cmd/icinga2.cmd
 
-3) stores trap with status
+3) stores trap with status (except if action is 'ignore')
 - done : rule was found , whether or not it matches or action has been made
 - unknown : no sourceIP/OID rule was found
 - error : ....
