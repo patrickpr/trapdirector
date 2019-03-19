@@ -89,7 +89,7 @@ object ApiUser "trapdirector" {
   permissions = [ "/status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
 }
 ```
-!! BETA VERSION : Permissions will maybe change in near future (but the module will check for this).
+Note (BETA VERSION) : Permissions will maybe change in near future (but the module will check for this, see below).
 
 Then reload icinga2 (systemctl reload icinga2)
 
@@ -105,10 +105,13 @@ Set :
 * API username
 * API password
 
-Then, the module will test connection and report error or OK : 
+Then, the module will test connection and report OK if all is fine : 
 
 ![install-11](img/install-11.jpg)
 
+Or show an error (here missing permission) : 
+
+![install-12](img/install-12.jpg)
 
 Snmptrapd configuration
 ------------------------

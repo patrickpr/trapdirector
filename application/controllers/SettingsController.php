@@ -8,6 +8,7 @@ use Icinga\Application\Icinga;
 use Icinga\Exception\ProgrammingError;
 use RunTimeException;
 
+use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
 use Icinga\Module\Trapdirector\Icinga2Api;
@@ -68,14 +69,17 @@ class SettingsController extends TrapsController
 	    $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
     	$apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
     	try {
-    	    $this->view->apimessage=$apitest->test();
+    	    list($this->view->apimessageError,$this->view->apimessage)=$apitest->test(TrapModuleConfig::getapiUserPermissions());
+    	    //$this->view->apimessageError=false;
     	} catch (RuntimeException $e) {
-    	    $this->view->apimessage=$e->getMessage();
+    	    $this->view->apimessage='API config : ' . $e->getMessage();
+    	    $this->view->apimessageError=true;
     	} 
 	}
 	else
 	{
 	    $this->view->apimessage='API parameters not configured';
+	    $this->view->apimessageError=true;
 	}
 	// List DB in $ressources
 	$resources = array();

@@ -70,26 +70,42 @@ class Icinga2API
         throw new RuntimeException('Certificate auth not implemented');
     }
 
-    public function test()
+    public function test(array $permissions)
     {
-        //$client = new ApiClient('localhost');
-        //$client->setCredentials('root', 'icinga');
-        //$getHeader = array('X-HTTP-Method-Override: GET');
-        /*$body = array(
-            'joins' => array(
-                'host'
-            ),
-            //'filter' => 'service.state!=service_state && match("networks",host.groups) && host.last_hard_state!=1 && host.last_check!=-1 && host.acknowledgement!=host_ack',
-            'filter' => 'service.state!=service_state && host.acknowledgement!=host_ack',
-            'filter_vars' => array(
-                'service_state' => 'ServiceOK',
-                'host_ack' 	=> 2
-            )
-        );
-        */
-        $this->request("get", "", NULL, NULL);
-        // TODO : check result ? -> if (preg_match('/permissions/', $result));
-        return 'API connection OK';
+        $result=$this->request("get", "", NULL, NULL);
+        var_dump($result);
+        $permOk=1;
+        $permMissing='';
+        if (property_exists($result, 'results') && property_exists($result->results[0], 'permissions'))
+        {
+            
+            foreach ( $permissions as $mustPermission)
+            {
+                $curPermOK=0;
+                foreach ( $result->results[0]->permissions as $curPermission)
+                {
+                    $curPermission=preg_replace('/\*/','.*',$curPermission); // put * as .* to created a regexp
+                    if (preg_match('#'.$curPermission.'#',$mustPermission))
+                    {
+                        $curPermOK=1;
+                        break;
+                    }
+                }
+                if ($curPermOK == 0)
+                {
+                    $permOk=0;
+                    $permMissing=$mustPermission;
+                    break;
+                }
+            }
+            if ($permOk == 0)
+            {
+                return array(true,'API connection OK, but missing permission : '.$permMissing);
+            }
+            return array(false,'API connection OK');
+            
+        }
+        return array(true,'API connection OK, but cannot get permissions');
     }
     
     

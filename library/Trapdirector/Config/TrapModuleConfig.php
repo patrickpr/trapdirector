@@ -4,16 +4,28 @@ namespace Icinga\Module\TrapDirector\Config;
 
 class TrapModuleConfig
 {
+    /********** Database configuration ***********************/
 	// Database prefix for tables 
-	protected $table_prefix;
-	
+    protected $table_prefix; //< Database prefix for tables 	
 	protected $DBConfigDefaults=array(
 		'db_remove_days' => 60, // number of days before removing traps
 		'log_destination' => 'syslog', // Log destination for trap handler
 		'log_file' => '/tmp/trapdirector.log', // Log file
 		'log_level' => 2, // log level
 	);
+	// get default values for dbconfig
+	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
+	// Minimum DB version
+	static public function getDbMinVersion() { return 1;}	
+	// Current DB version
+	static public function getDbCurVersion() { return 1;}
+
+	/************ Module configuration **********************/
+	// Module base path
+	static public function urlPath() { return 'trapdirector'; }
+	static public function getapiUserPermissions() { return array("status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result"); } //< api user permissions required
 	
+	/*********** Log configuration *************************/
 	protected $logLevels=array(0=>'No output', 1=>'critical', 2=>'warning', 3=>'trace', 4=>'ALL');
 	public function getlogLevels() { return $this->logLevels;}
 	protected $logDestinations=array('syslog'=>'syslog','file'=>'file','display'=>'display');
@@ -23,6 +35,8 @@ class TrapModuleConfig
 	{
 		$this->table_prefix=$prefix;
 	}
+	
+	/************  Database table names ********************/
 	// DB table name of trap received list : prefix 't'
 	public function getTrapTableName() 
 	{ 
@@ -45,21 +59,15 @@ class TrapModuleConfig
 	{ 
 		return array('c' => $this->table_prefix . 'db_config');
 	}
-
+	
 	// Mib cache tables
 	public function getMIBCacheTableName() { return $this->table_prefix . 'mib_cache'; }
 	public function getMIBCacheTableTrapObjName() { return $this->table_prefix . 'mib_cache_trap_object'; }
 	public function getMIBCacheTableSyntax() { return $this->table_prefix . 'mib_cache_syntax'; }
 	public function getMIBCacheTableTC() { return array('t' => $this->table_prefix . 'mib_cache_tc'); }
 	
-	// get default values for dbconfig
-	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
-	// Minimum DB version 
-	public function getDbMinVersion() { return 1;}
 	
-	// Current DB version 
-	public function getDbCurVersion() { return 1;}
-	
+	/****************** Database queries *******************/
 	// DB columns to display in view table (prefix is set for table in getTrapTableName)
 	// Note : must have 'id' and 'timestamp'
 	public function getTrapListDisplayColumns()
@@ -155,10 +163,7 @@ class TrapModuleConfig
 			'modified'		=> 'UNIX_TIMESTAMP(r.modified)'
 		);
 	}	
-	
-	// Module base path
-	public function urlPath() { return 'trapdirector'; }
-	
+		
 	// Trap detail (<key> => <title> <sql select>)
 	public function trapDetailQuery()
 	{
