@@ -79,7 +79,7 @@ Then go back to module configuration, database should be OK :
 Setup API user
 ---------------
 
-API user allows the module to use Icinga2 API to submit check results, in case icingaweb2 is not on the same server than the module.
+API user allows the module to use Icinga2 API to submit check results, in case icinga2 is not on the same server than the module.
 
 To setup a user in icinga2, edit the "/etc/icinga2/conf.d/api-users.conf" file and add a user or use existing one : 
 
