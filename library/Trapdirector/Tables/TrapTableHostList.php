@@ -13,11 +13,13 @@ use Icinga\Module\Trapdirector\Tables\TrapTable;
 
 
 
-class TrapTableList extends TrapTable
+class TrapTableHostList extends TrapTable
 {	
 	// Db connection : getConnection / setConnection
 	protected $connection;
 	
+	// Host grouping
+	protected $lastHost;
 	// Filters 
 	
     protected $filter;
@@ -26,10 +28,49 @@ class TrapTableList extends TrapTable
 	
 	protected function getTitles() {
 		// TODO : check moduleconfig is set
-		return $this->moduleConfig->getTrapListTitles();
+	    return $this->moduleConfig->getTrapHostListTitles();
 	}
 		
-	// ******************  Render table in html  
+	// ******************  Render table in html 
+	
+	// Host grouping
+	protected function renderHostIfNew($IP,$hostname)
+	{
+	    $view = $this->getView();
+	    
+	    if ($this->lastHost === $IP) {
+	        return;
+	    }
+	    
+	    if ($this->lastHost === null) 
+	    {
+	        $htm = "<thead>\n  <tr>\n";
+	    } else {
+	        $htm = "</tbody>\n<thead>\n  <tr>\n";
+	    }
+	    
+	    if ($this->columnCount === null) 
+	    {
+	        $this->columnCount = count($this->getTitles());
+	    }
+	    
+	    $htm .= '<th colspan="' . $this->columnCount . '">' . $view->escape($IP);
+	    if ($hostname != null)
+	    {
+	        $htm .= ' ('.$hostname.')';
+	    }
+	    $htm .= '</th>' . "\n";
+	    if ($this->lastHost === null) {
+	        $htm .= "  </tr>\n";
+	    } else {
+	        $htm .= "  </tr>\n</thead>\n";
+	    }
+	    
+	    $this->lastHost = $IP;
+	    
+	    return $htm . "<tbody>\n";
+	}		
+	
     public function __toString()
     {
         return $this->render();
@@ -40,7 +81,7 @@ class TrapTableList extends TrapTable
 		$data=$this->getTable();
 		$view = $this->getView();
 		$this->columnCount = count($this->getTitles());
-		$this->lastDay=null;
+		$this->lastHost=null;
 		// Table start
 		$htm  = '<table class="simple common-table table-row-selectable">';
 		
@@ -58,9 +99,11 @@ class TrapTableList extends TrapTable
 		
 		foreach ($data as $row) 
 		{
+
 			$firstCol = true;
-			// Put date header
-			$htm .= $this->renderDayIfNew($row->timestamp);
+			// Put host header
+			$source_name=(property_exists($row,'source_name'))?$row->source_name:null;
+			$htm .= $this->renderHostIfNew($row->source_ip,$source_name);
 			
 			
 			// Render row
@@ -70,7 +113,7 @@ class TrapTableList extends TrapTable
 				// Check missing value
 				if (property_exists($row, $rowkey)) 
 				{
-					$val = ($rowkey=='timestamp') ?  strftime('%T',$row->$rowkey) : $row->$rowkey;
+					$val = ($rowkey=='last_sent') ?  strftime('%c',$row->$rowkey) : $row->$rowkey;
 				} else {
 					$val = '-';
 				}
@@ -79,8 +122,8 @@ class TrapTableList extends TrapTable
 							. $view->qlink(
 									$view->escape($val),  
 									Url::fromPath(
-										$this->moduleConfig->urlPath() . '/received/trapdetail', 
-										array('id' => $row->id)
+										$this->moduleConfig->urlPath() . '/received', 
+										array('q' => $row->trap_oid)
 									)
 							)
 							. '</td>';
@@ -98,16 +141,16 @@ class TrapTableList extends TrapTable
 	}
 
     public function count()
-    {
+    {   // TODO : not tested
         $db=$this->db();
 		
-		$query = $db->select()->from(
-            $this->moduleConfig->getTrapTableName(),
-            array('COUNT(*)')
-        );
+		$query = $this->getBaseQuery();
 		$this->applyFiltersToQuery($query);
+		$values=$db->fetchAll($query);
 		
-        return $db->fetchOne($query);
+		return count($values);
+		
+        //return $db->fetchOne($query);
     }
 	
     public function getPaginator()
@@ -139,8 +182,9 @@ class TrapTableList extends TrapTable
 		
 		$query = $db->select()->from(
             $this->moduleConfig->getTrapTableName(),
-            $this->moduleConfig->getTrapListDisplayColumns()
-        )->order('timestamp DESC');
+		    $this->moduleConfig->getTrapHostListDisplayColumns()
+		    )->group(array('t.source_ip','t.trap_oid')
+		    )->order('t.source_ip');
 
         return $query;
     }	 

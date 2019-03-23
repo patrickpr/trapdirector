@@ -12,6 +12,7 @@ use Exception;
 
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Tables\TrapTableList;
+use Icinga\Module\Trapdirector\Tables\TrapTableHostList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
 
@@ -22,7 +23,8 @@ use Zend_Db_Expr;
 class TrapsController extends Controller
 {
 	protected $moduleConfig;  	//< TrapModuleConfig instance
-	protected $trapTableList; 	//< TrapTableList 
+	protected $trapTableList; 	//< TrapTableList (by date)
+	protected $trapTableHostList; 	//< TrapTableList (by hosts)
 	protected $handlerTableList; 	//< HandlerTableList instance
 	protected $trapDB;			//< Trap database
 	protected $icingaDB;		//< Icinga IDO database;
@@ -50,6 +52,15 @@ class TrapsController extends Controller
 			$this->trapTableList->setConfig($this->getModuleConfig());
 		}
 		return $this->trapTableList;
+	}
+	
+	public function getTrapHostListTable()
+	{
+	    if ($this->trapTableHostList == Null) {
+	        $this->trapTableHostList = new TrapTableHostList();
+	        $this->trapTableHostList->setConfig($this->getModuleConfig());
+	    }
+	    return $this->trapTableHostList;
 	}
 	
 	public function getHandlerListTable() {

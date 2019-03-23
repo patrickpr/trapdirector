@@ -12,7 +12,9 @@ use Icinga\Module\Trapdirector\TrapsController;
 */
 class ReceivedController extends TrapsController
 {
-	
+	/**
+	 * List traps by date
+	 */
 	public function indexAction()
 	{	
 		$this->checkReadPermission();
@@ -134,27 +136,66 @@ class ReceivedController extends TrapsController
 		}
 	}
 
+	/**
+	 * List traps by hosts
+	 */
+	public function hostsAction()
+	{
+	    $this->checkReadPermission();
+	    $this->prepareTabs()->activate('hosts');
+	    
+	    $db = $this->getDb();
+	    $this->getTrapHostListTable()->setConnection($db);
+	    
+	    // Apply pagination limits
+	    $this->view->table=$this->applyPaginationLimits($this->getTrapHostListTable(),$this->getModuleConfig()->itemListDisplay());
+	    
+	    // Set Filter
+	    //$postData=$this->getRequest()->getPost();
+	    $filter=array();
+	    $filter['q']=$this->params->get('q');//(isset($postData['q']))?$postData['q']:'';
+	    $filter['done']=$this->params->get('done');
+	    $this->view->filter=$filter;
+	    $this->view->table->updateFilter(Url::fromRequest(),$filter);
+	}
+	
 	public function deleteAction()
 	{
 		$this->checkConfigPermission();
 		$this->prepareTabs()->activate('delete');
-		
-		
-		
+				
 		return;
 	}
 	
+	/**
+	 * Create tabs for /received
+	 * @return object tabs
+	 */
 	protected function prepareTabs()
 	{
 		return $this->getTabs()->add('traps', array(
 			'label'	=> $this->translate('Traps'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/received')
-		)->add('delete', array(
-			'label' => $this->translate('delete'),
+		    )
+		    ->add('hosts', array(
+		        'label' => $this->translate('Hosts'),
+		        'url'   => $this->getModuleConfig()->urlPath() . '/received/hosts')
+		    )
+		    ->add('delete', array(
+			'label' => $this->translate('Delete'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/received/delete')
-		);
+		  );
 	} 
 
+	/**
+	 * Helper to count / delete lines
+	 * POST params : 
+	 * - OID : partial oid of traps (if empty not used in filter)
+	 * - IP : IP or partial IP of host (if empty not used in filter)
+	 * - action : 
+	 *     count : return JSON : status:OK, count : number of lines selected by filter
+	 *     delete : delete traps selected by filter
+	 */
 	public function deletelinesAction()
 	{
 		$postData=$this->getRequest()->getPost();

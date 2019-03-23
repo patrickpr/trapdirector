@@ -73,7 +73,7 @@ class Icinga2API
     public function test(array $permissions)
     {
         $result=$this->request("get", "", NULL, NULL);
-        var_dump($result);
+        //var_dump($result);
         $permOk=1;
         $permMissing='';
         if (property_exists($result, 'results') && property_exists($result->results[0], 'permissions'))

@@ -384,7 +384,7 @@ class HandlerController extends TrapsController
 		
 	}
 
-	/** Get trap detail by trapid. // TODO : push this in TrapsController.php
+	/** Get trap detail by trapid. 
 	*	@param $trapid int id of trap in received table
 	*	@return array (objects)
 	*/
@@ -449,7 +449,7 @@ class HandlerController extends TrapsController
 		return $trapDetail;
 	}
 
-	/** Get rule detail by ruleid. // TODO : push this in TrapsController.php
+	/** Get rule detail by ruleid.
 	*	@param $ruleid int id of rule in rule table
 	*	@return array (objects)
 	*/
@@ -484,11 +484,7 @@ class HandlerController extends TrapsController
 		return $this->getTabs()->add('status', array(
 			'label' => $this->translate('Traps'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/handler')
-		);/* TODO : see if useful and think about rules display
-			->add('ignore', array(
-			'label' => $this->translate('Traps to ignore'),
-			'url'   => $this->getModuleConfig()->urlPath() . '/handler/ignore')
-		);*/
+		);
 	} 
 	
 }

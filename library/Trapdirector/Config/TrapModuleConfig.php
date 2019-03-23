@@ -111,6 +111,34 @@ class TrapModuleConfig
 		);
 	}
 
+	// DB columns to display in host view table (prefix is set for table in getTrapTableName)
+	// Note : must have 'source_ip' and 'last_sent'
+	public function getTrapHostListDisplayColumns()
+	{
+	    return array(
+	        'source_name'  =>  't.source_name',
+	        'source_ip'    =>  't.source_ip',
+	        'trap_oid'     =>  't.trap_oid',
+	        'count'        =>  'count(*)',
+	        'last_sent'    =>  'UNIX_TIMESTAMP(max(t.date_received))'
+	    );
+	}
+	public function getTrapHostListSearchColumns()
+	{
+	    return array(); // No search needed on this table
+	}
+	// Titles display in Trap List table
+	public function getTrapHostListTitles()
+	{
+	    return array(
+	        'trap_oid'		=> 'Trap OID',
+	        'count'		    => 'Number of traps received',
+	        'last_sent'     => 'Last trap received'
+	    );
+	}
+	
+	
+	
 	// DB columns to display in view table (prefix is set for table in getTrapTableName)
 	// Note : must have 'id' and 'timestamp'
 	public function getHandlerListDisplayColumns()

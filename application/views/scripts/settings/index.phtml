@@ -64,8 +64,19 @@
 	</li>
 	<li>
 	<p> Create schema of database : <a class="action-link" href='../trapdirector/settings/createschema'>Create Schema</a> </p>
+	<br/>
+	<li>
+		To create an API user, edit /etc/icinga2/conf.d/api-users.conf : <br/>
+		<pre>
+object ApiUser "trapdirector" {
+  password = "trapdirector"
+  permissions = [ "/status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
+}</pre>
+		Then reload icinga2.<br><br/>
 	</li>
-	<li> <p>Set up snmptrapd.conf (usualy in /etc/snmp/) to add a traphandle:<br><br>
+	
+	<li>
+	<p>Set up snmptrapd.conf (usualy in /etc/snmp/) to add a traphandle:<br><br>
 		<em>
 		traphandle default <?= $this->traps_in_config ?> <br><br>
 		</em>

@@ -1,0 +1,17 @@
+<div class="controls">
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
+  <h1>List of received traps</h1>
+
+ <?php //No filter for now.
+   ?> 
+ <br />
+ <?= $this->table->getPaginator(); ?> 
+</div>
+
+<div class="content" data-base-target="_next">
+  
+
+<?= $this->table->render(); ?>
+
+
+</div>
