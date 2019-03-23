@@ -1,5 +1,5 @@
 Name: Icinga SNMP trap director
-Version: 0.9.0
+Version: 0.9.1
 Depends: monitoring
-Description: SNMP traps config tool for Icinga 2
+Description: SNMP traps configuration tool for Icinga 2
  Receives traps and updates service state based on rules  
