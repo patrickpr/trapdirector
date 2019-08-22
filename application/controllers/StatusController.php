@@ -197,7 +197,7 @@ class StatusController extends TrapsController
 		$this->view->fileList=$output;
 		
 		// Zend form 
-		$this->view->form= new UploadForm('upload-form');
+		$this->view->form= new UploadForm();
 		//$this->view->form= new Form('upload-form');
 		
 		
@@ -259,9 +259,9 @@ class StatusController extends TrapsController
 // TODO : see if useless 
 class UploadForm extends Form
 { 
-    public function __construct($name = null, $options = array())
+    public function __construct($options = null) 
     {
-        parent::__construct($name, $options);
+        parent::__construct($options);
         $this->addElements2();
     }
 
