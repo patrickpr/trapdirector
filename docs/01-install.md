@@ -86,7 +86,7 @@ To setup a user in icinga2, edit the "/etc/icinga2/conf.d/api-users.conf" file a
 ```
 object ApiUser "trapdirector" {
   password = "trapdirector"
-  permissions = [ "/status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
+  permissions = [ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
 }
 ```
 Note (BETA VERSION) : Permissions will maybe change in near future (but the module will check for this, see below).
