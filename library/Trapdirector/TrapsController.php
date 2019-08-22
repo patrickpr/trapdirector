@@ -188,11 +188,21 @@ class TrapsController extends Controller
         }		
 	}
 	
-	protected function checkModuleConfigPermission()
+    /**
+     * Check if user has write permission
+     * @param number $check optional : if set to 1, return true (user has permission) or false instead of displaying error page
+     * @return boolean : user has permission
+     */
+	protected function checkModuleConfigPermission($check=0)
 	{
         if (! $this->Auth()->hasPermission('trapdirector/module_config')) {
-            $this->displayExitError('Permissions','No permission fo configure module');
-        }		
+            if ($check == 0)
+            {
+                $this->displayExitError('Permissions','No permission fo configure module');
+            }
+            return false;
+        }
+        return true;
 	}
 
 	/*************************  Trap class get **********************/

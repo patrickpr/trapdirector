@@ -19,10 +19,10 @@ class SettingsController extends TrapsController
 {
   public function indexAction()
   {
-	//TODO : let error DB show without permissions but dont allow configuration form. 
-	//TODO : also check ido database as set on this page.
-	//TODO : $this->checkModuleConfigPermission();
-	
+    // CHeck permissions : display tests in any case, but no configuration.
+	$this->view->configPermission=$this->checkModuleConfigPermission(1);
+	// But check read permission
+	$this->checkReadPermission();
 	// Get message : sent on configuration problems detected by controllers
 	$this->view->errorDetected=$this->params->get('dberror');
 	
@@ -94,8 +94,6 @@ class SettingsController extends TrapsController
 
 	$this->view->form = $form = new TrapsConfigForm();
 	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
-	//$form->setRedirectUrl('trapdirector/status');
-	//echo $form->getRedirectUrl();
 	
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';

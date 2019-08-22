@@ -209,7 +209,7 @@ abstract class TrapTable implements Paginatable
     }
 	
 	protected function renderFilter($filter)
-	{ // TODO
+	{ // TODO : create a better filter wher user can choose host/oid to filter
 	}
 	
     protected function applyFiltersToQuery($query)

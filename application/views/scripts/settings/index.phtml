@@ -41,6 +41,14 @@
     	}	
 	?>
 	<br/>
+	
+	
+	<?php
+	   // ****************  If user has no config permission, don't display form & install instructions *************
+	   if ($this->configPermission)
+	   {
+	?>
+	
     <?= /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $form */ $form ?>
 	<hr>
 	
@@ -93,6 +101,10 @@ object ApiUser "trapdirector" {
 	</li>	
 	</ul>
 	<p> Enjoy ! </p>
-			
+
+	<?php
+	   // ****************  End of user configuration permission  test *************
+	   }
+	?>			
 		
 </div>

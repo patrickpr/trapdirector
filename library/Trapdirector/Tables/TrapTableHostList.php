@@ -8,9 +8,8 @@ use Icinga\Web\Url;
 use Icinga\Web\Widget;
 use Icinga\Web\Widget\Paginator;
 
+
 use Icinga\Module\Trapdirector\Tables\TrapTable;
-
-
 
 
 class TrapTableHostList extends TrapTable
@@ -141,7 +140,7 @@ class TrapTableHostList extends TrapTable
 	}
 
     public function count()
-    {   // TODO : not tested
+    {  
         $db=$this->db();
 		
 		$query = $this->getBaseQuery();

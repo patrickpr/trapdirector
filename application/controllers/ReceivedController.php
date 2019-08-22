@@ -38,7 +38,7 @@ class ReceivedController extends TrapsController
 
 	}
 
-	/** TODO : after SQL code from Handler controller put in trapsController,
+	/** TODO : put SQL code in trapsController,
 	*	use the getTrapDetail / getTrapObject functions
 	*/	
 	public function trapdetailAction() 
