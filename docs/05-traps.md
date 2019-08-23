@@ -119,6 +119,7 @@ Here the rule "( $5$ = 3 ) & ( $3$ = 2) " means :
 If 'ifIndex' is 3 AND ifAdminStatus is 2 THEN rule matches
 
 Rule accepts numbers and strings with these operators : < <= > >= = != ~
+And the special negate operator : !
 
 The "~" operator is for regexp : $1$ ~ "test" will be evaluated to true if $1$ contains test.
 
@@ -132,13 +133,17 @@ Examples :
 
 $5$ = 3  &  $3$ = 2 : works, same as the example
 
-$5$ = 3  &  $3$ = 2 | $4$ = 1 : works like : ($5$ = 3  &  $3$ = 2) | $4$ = 1 . Better with parenthesis !
+$5$ = 3  &  $3$ = 2 | $4$ = 1 : works, evaluated as : $5$ = 3  &  ($3$ = 2 | $4$ = 1 ). Better with parenthesis !
 
 ($5$ = "eth0") & ( $3$ = 2) : works as expected
 
 ($5$ = "eth0") < $3$ : ERROR
 
-($5$ ~ "eth[0-2]" : will match eth0, eth1 & eth2  (!! it will also match eth11 eth21 !! )
+($5$ ~ "eth[0-2]") : will match eth0, eth1 & eth2  (!! it will also match eth11 eth21 !! )
+
+! $5$ = 3 : same as $5$ != 3  , also same as !($5$ = 3)
+
+($5$ = "eth0") & $3$ = 2 : ERROR : can be ambiguous if $3$ is boolean
 
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore trap (e.g. no database record)
 
