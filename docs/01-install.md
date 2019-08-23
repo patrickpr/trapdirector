@@ -19,8 +19,21 @@ Install files
 ---------------
 
 1. Download latest release and unzip in a temporary directory.
-2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory
+2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory (or modules directory if not standard installation)
 3. trapdirector/mibs/ must be writable by icinga web user to upload mibs from web GUI
+
+
+Non standard IcingaWeb2 installation
+------------------------------------
+
+If IcingaWeb2 configuration directory is not "/etc/icingaweb2", you must set up manually the path in the file : 
+[...]/modules/trapdirector/bin/trap_in.php 
+```
+[....]
+// Icinga etc path : need to change this on non standard icinga installation.
+$icingaweb2_etc="/etc/icingaweb2";
+[....]
+```
 
 Create Database
 -----------------
