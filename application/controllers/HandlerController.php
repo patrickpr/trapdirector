@@ -35,6 +35,29 @@ class HandlerController extends TrapsController
 		//$this->displayExitError('Handler/indexAction','Not implemented');
 	}
 
+	/** test_rule : test a rule
+	 */
+	public function testruleAction()
+	{
+	    $this->checkReadPermission();
+	    $this->getTabs()->add('get',array(
+	        'active'	=> true,
+	        'label'		=> $this->translate('Test Rule'),
+	        'url'		=> Url::fromRequest()
+	    ));
+	    
+	    //$db = $this->getDb();
+
+	    if ($this->params->get('rule') !== null) 
+	    {
+	        $this->view->rule= $this->params->get('rule');
+	    }
+	    else
+	    {
+	        $this->view->rule='';
+	    }
+	}
+	
 	/** Add a handler  
 	*	Get params fromid : setup from existing trap (id of trap table)
 	*	Get param ruleid : edit from existing handler (id of rule table)
@@ -126,6 +149,7 @@ class HandlerController extends TrapsController
 			$allObjects=$this->getMIB()->getObjectList($trapDetail->trap_oid);
 			// Get all objects in current Trap
 			$currentTrapObjects=$this->getTrapobjects($trapid);
+			$oid_index=1;
 			foreach ($currentTrapObjects as $key => $val)
 			{
 				$currentObjectType='Unknown';
@@ -136,6 +160,7 @@ class HandlerController extends TrapsController
 					$currentObjectTypeEnum=$allObjects[$val->oid]['type_enum'];
 				}
 				$currentObject=array(
+				    $oid_index,
 					$val->oid,
 					$val->oid_name_mib,
 					$val->oid_name,
@@ -143,6 +168,7 @@ class HandlerController extends TrapsController
 					$currentObjectType,
 					$currentObjectTypeEnum
 				);
+				$oid_index++;
 				array_push($this->view->objectList,$currentObject);
 				// set currrent object to null in allObjects
 				if (isset($allObjects[$val->oid]))
@@ -156,25 +182,27 @@ class HandlerController extends TrapsController
 				{
 					if ($val==null) { continue; }
 					array_push($this->view->objectList, array(
+					    $oid_index,
 						$key,
 						$allObjects[$key]['mib'],
 						$allObjects[$key]['name'],
-						'No val. in trap',
+						'',
 						$allObjects[$key]['type'],
 						$allObjects[$key]['type_enum']
 					));
+					$oid_index++;
 				}
 			}
 			
 			// Add a simple display
 			$this->view->display='Trap '.$trapDetail->trap_name.' received';
+			$this->view->create_basic_rule=true;
 			return;
 		}
 		
 		
 		if ($this->params->get('ruleid') !== null) {
 			/************* Rule editing ***************/
-			// TODO : issue warning if host or service doesn't exists anymore
 			$ruleid=$this->params->get('ruleid');
 			$this->view->ruleid=$ruleid;
 			$this->view->setToUpdate=true;
@@ -187,21 +215,65 @@ class HandlerController extends TrapsController
 			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch; 
 			$this->view->hostgroupname=$ruleDetail->host_group_name;
 			
+			// Warning message if host/service don't exists anymore
+			$this->view->warning_message='';
 			if ($this->view->hostname != null)
 			{
-				// Tell JS to get services when page is loaded
-				$this->view->serviceGet=true;
-				// get service id for form to set :			
-				$serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
-				$this->view->serviceSet=$serviceID[0]->id;
-				$this->view->selectGroup=false;				
+			    $this->view->selectGroup=false;
+			    // Check if hostname still exists
+			    $host_get=$this->getHostByName($this->view->hostname);
+			    
+			    if (count($host_get)==0)
+			    {
+			        $this->view->warning_message='Host '.$this->view->hostname. ' doesn\'t exists anymore';
+			        $this->view->serviceGet=false;
+			    }
+			    else
+			    {
+    				// Tell JS to get services when page is loaded
+    				$this->view->serviceGet=true;
+    				// get service id for form to set :			
+    				$serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
+    				if (count($serviceID) ==0)
+    				{
+    				    $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
+    				} 
+    				else
+    				{
+    				    $this->view->serviceSet=$serviceID[0]->id;
+    				}
+			    }
 			}
 			else
 			{
-				// Tell JS to get services when page is loaded
-				$this->view->serviceGroupGet=true;
-				$this->view->serviceSet=$ruleDetail->service_name;
-				$this->view->selectGroup=true;
+			    $this->view->selectGroup=true;
+			    // Check if groupe exists
+			    $group_get=$this->getHostGroupByName($this->view->hostgroupname);
+			    if (count($group_get)==0)
+			    {
+			        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
+			        $this->view->serviceGroupGet=false;
+			    }
+			    else
+			    {
+			        $grpServices=$this->getServicesByHostGroupid($group_get[0]->id);
+			        $foundGrpService=0;
+			        foreach ($grpServices as $grpService)
+			        {
+			            if ($grpService[0] == $ruleDetail->service_name)
+			            {
+			                $foundGrpService=1;
+			                $this->view->serviceSet=$ruleDetail->service_name;
+			            }
+			        }
+			        
+			        // Tell JS to get services when page is loaded
+			        $this->view->serviceGroupGet=true;
+			        if ($foundGrpService==0)
+			        {
+			            $this->view->warning_message.=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
+			        }
+			    }				
 			}
 			$this->view->mainoid=$ruleDetail->trap_oid;
 			$oidName=$this->getMIB()->translateOID($ruleDetail->trap_oid);
@@ -216,7 +288,7 @@ class HandlerController extends TrapsController
 			$display=$ruleDetail->display;
 			$rule=$ruleDetail->rule;
 			$curObjectList=array();
-			$index=1; // TODO must make sure the index is the same than in display
+			$index=1; 
 			// check in display & rule for : OID(<oid>)
 			$matches=array();
 			while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
@@ -226,6 +298,7 @@ class HandlerController extends TrapsController
 				if (($object=$this->getMIB()->translateOID($curOid)) != null)
 				{
 					array_push($curObjectList, array(
+					    $index,
 						$curOid,
 						$object['mib'],
 						$object['name'],
@@ -237,6 +310,7 @@ class HandlerController extends TrapsController
 				else
 				{
 					array_push($curObjectList, array(
+					    $index,
 						$curOid,
 						'not found',
 						'not found',
@@ -255,8 +329,6 @@ class HandlerController extends TrapsController
 			$this->view->objectList=$curObjectList; 			
 		}
 	}
-
-	
 	
 	/** Validate form and output message to user  
 	*	@param in postdata 
@@ -299,9 +371,11 @@ class HandlerController extends TrapsController
 				$this->_helper->json(array('status'=>$e->getMessage()));
 				return;
 			}
+			//$this->Module()->
 			$this->_helper->json(array(
 				'status'=>'OK',
-				'redirect'=>'../handler/'
+			    'redirect'=>'trapdirector/handler'
+			      
 			));
 		}		
 		foreach (array_keys($params) as $key)
@@ -370,7 +444,6 @@ class HandlerController extends TrapsController
 			}
 			else
 			{
-				// TODO : check if one row modified only ?
 				$this->updateHandlerRule($dbparams,$params['db_rule']['val']);
 				$ruleID=$params['db_rule']['val'];
 			}

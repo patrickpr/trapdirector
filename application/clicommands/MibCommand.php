@@ -121,7 +121,7 @@ class MibCommand extends Command
 	{
 		$db_prefix=$this->Config()->get('config', 'database_prefix');
 		echo "Not implemented";
-		// TODO
+		// TODO : implement
 		return;
 		$Config = new TrapModuleConfig($db_prefix);
 		

@@ -205,7 +205,6 @@ class Icinga2API
             CURLOPT_CUSTOMREQUEST	=> strtoupper($method),
             CURLOPT_RETURNTRANSFER 	=> true,
             CURLOPT_CONNECTTIMEOUT 	=> 10,
-            //TODO: fix it
             CURLOPT_SSL_VERIFYHOST 	=> false,
             CURLOPT_SSL_VERIFYPEER 	=> false,
         );

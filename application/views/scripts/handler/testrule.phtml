@@ -1,0 +1,224 @@
+<div class="controls">
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
+  <h1>Test Rule</h1>
+  <div class='action-bar'>
+  </div>
+
+	Test rule form ( copy/paste result in handler page ).
+ <br /> 
+
+</div>
+
+
+<div class="content">
+	<fieldset id="fieldset-rule" class=""><legend>Rule</legend>
+		<div id="Rule">
+			<div class="control-group">
+				<div class="control-label-group">
+					<span>
+						<label for="id_rule" class="control-label optional">Rule text</label>
+					</span>
+				</div>
+				<input type="text" name="rule" id="id_rule" placeholder="Enter rule with $n$ variables"
+					oninput="updateVar()"
+					value="<?= $this->rule ?>" 
+					size=90
+					onblur="updateVar()"
+					/> 
+					<!--  style="display:none"  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+			</div>
+		</div>
+	</fieldset>
+	<fieldset id="fieldset-var" class=""><legend>Variables</legend>
+		<div id="RuleVars">
+			<table>
+				<thead>
+    				<tr>
+    					<th>Variable Name</th>
+    					<th>Variable Value</th>
+    					<th>Variable type</th>
+    				</tr>
+    			</thead>
+    			<tbody id="var_table">
+<!--     				<tr id="variable_1">
+    					<td>$1$</td>
+    					<td><input type="text" name="rule" id="id_var_1" placeholder="Enter value" size=30 oninput="check_type(1)"/></td>
+    					<td>String</td>
+    				</tr>
+ -->    				
+    			</tbody>
+			</table>
+		</div>
+	</fieldset>
+	<fieldset id="fieldset-test" class=""><legend>Test</legend>
+		<div id="Ruletest">
+			<button type="button" name="doTest" id="id_doTest" value="doTest">Test</button>
+		</div>
+		<div id="testResult">
+			<textarea id="id_testResult" rows="5" cols="90" disabled></textarea>
+		</div>
+	</fieldset>
+
+</div>
+
+<script type='text/javascript'>
+
+var testHelper='/icingaweb2/trapdirector/helper/testrule';
+var varList=[
+	// name (number), value, type : string, number, empty
+	//{1:[1,"value", 1]}
+];
+var count_var=0;
+
+$(function() {
+
+	$( "#id_doTest" ).click(function( event ) {
+		event.preventDefault();
+		submitTest();
+	});
+});
+
+function displayWarning(message)
+{
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
+}
+function displayOK(message)
+{
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
+}
+
+function updateVar()
+{
+	var rule=$("#id_rule").val();
+	var variables=rule.match(/\$[0-9]+\$/g);
+	
+	for (var i=0;i<count_var;i++) varList[i][3]=0;
+
+	if (variables!=null) 
+	{
+    	variables.forEach( function (varName) {
+    		 varName=varName.substr(1,varName.length-2);
+    		 var cur_index=index_variable(varName);
+    		 if (cur_index==-1) {
+    			cur_index=add_variable(varName,'');
+    		}
+    		varList[cur_index][3]=1 
+    	});
+	}
+	for (var i=0;i<count_var;i++) {
+		if (varList[i][0]!=null && varList[i][3]==0) {
+			delete_variable(i);
+		}
+	}
+	//var tst=count_var + ' : ';
+	//for (var i=0;i<count_var;i++) { tst += (varList[i][0]==null)?'N':varList[i][0] ; tst += '/' + varList[i][1] + '  ,'; } 
+	//$("#id_testResult").html(tst);	
+}
+
+function submitTest()
+{
+	var resultText=$("#id_testResult"); 
+	resultText.html('');// Empty result box
+	// Substitute variables with values
+	var cur_rule=$("#id_rule").val();
+	var variables=cur_rule.match(/\$[0-9]+\$/g);
+	if (variables!=null) 
+	{
+		for(var i=0;i<variables.length;i++)
+		{
+       		var varName=variables[i].substr(1,variables[i].length-2);
+       		var cur_index=index_variable(varName);
+       		if (cur_index==-1 || varList[cur_index][2]=='empty') {
+       			resultText.html('Unknown/empty var $'+varName+'$');
+       			return;
+       		}
+       		var cur_var='$'+varName+'$';
+       		var cur_var_value=(varList[cur_index][2]=='number')?varList[cur_index][1]:'"'+varList[cur_index][1]+'"';
+       		cur_rule=cur_rule.replace(cur_var,cur_var_value);
+   		};
+	}
+	resultText.html("Expression evaluated : " + cur_rule + "\n");
+	// Do ajax call
+	$.ajax({
+			url: testHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"rule"		: 	cur_rule,
+				"action"	:	'evaluate'
+			},
+	        success: function (data) 
+			{
+				if (data.status == "OK") 
+				{
+					$("#id_testResult").html($("#id_testResult").html()+'Evaluated as : '+data.message);
+				} 
+				else 
+				{
+					$("#id_testResult").html($("#id_testResult").html()+"Error in evaluation : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("Error : " + data);
+			}
+	});	
+}
+
+function get_var_type(varValue)
+{
+	if (varValue == '') return 'empty';
+	//if (varValue.match(/^(\.[0-9]+)|([0-9]+(\.[0-9]*)?)$/) != null )
+	if (varValue.match(/^[0-9]*\.?[0-9]+$/) != null )
+		return 'number';
+	return 'string';
+}
+
+function check_type(index)
+{
+	var varValue=$("#id_var_"+index).val();
+	var type=get_var_type(varValue);
+	//$("#id_testResult").html('eval #id_var_'+index + ' : ' + varValue +' : '+  type);
+	$("#variable_type_"+index).html(type);
+	varList[index][2]=type;
+	varList[index][1]=varValue;
+}
+
+function add_variable(varName,varValue)
+{
+	//alert ('add : ' + varName);
+	var cur_index=count_var;
+	var varType=get_var_type(varValue);
+	varList[cur_index]=[varName,varValue,varType];
+
+	htm=	"<tr id='variable_"+cur_index+"'>\n";
+	htm += 	"	<td>$"+varName+"$</td>\n";
+	htm += 	"	<td id='variable_var_"+cur_index+"'><input type='text' name='rule' id='id_var_"+cur_index+"' placeholder='Enter value' size=30 oninput='check_type("+cur_index+")' value='"+varValue+"'/></td>\n";
+	htm += 	"	<td id='variable_type_"+cur_index+"'>"+varType+"</td>\n";
+	htm += 	"</tr>\n";
+
+	$("#var_table").append(htm);
+	count_var++;
+	return cur_index;
+}
+
+function index_variable(varName)
+{
+	for(var i=0;i<count_var;i++)
+		if (varList[i][0] == varName) return i;
+	return -1;
+}
+
+function delete_variable(varIndex)
+{
+	//if (varList[varIndex][1]==null) return;
+	//alert('delete : '+varIndex);
+	$("#variable_"+varIndex).remove();
+	varList[varIndex][0]=null;
+}
+
+
+</script>

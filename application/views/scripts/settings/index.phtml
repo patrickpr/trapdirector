@@ -12,8 +12,11 @@
 			echo '<p style="background-color:#FFE555; font-weight:bold; font-size:110%">';
 			echo $dispMessage . '</p>';
 		}
-
-		if ( /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->errorDetected != null) {
+		/** @var \Icinga\Module\Trapdirector\Controllers\ $this */
+		echo "<br>";
+		echo $this->username;
+		echo "<br>";
+		if (  $this->errorDetected != null) {
 			printwarn( 'DB error detected in app ');
 		}
 		if ($this->db_error == 0) {
@@ -38,7 +41,12 @@
     	else 
     	{
     	    printok($this->apimessage);
-    	}	
+    	}
+    	
+    	if ($this->icingaEtcWarn==1)
+    	{
+    	    printwarn('IcingaWeb2 etc directory is not standard ('. $this->icingaweb2_etc .') : change it bin/trap_in.php file');
+    	}
 	?>
 	<br/>
 	

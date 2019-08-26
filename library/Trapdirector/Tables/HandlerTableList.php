@@ -36,7 +36,6 @@ class HandlerTableList extends TrapTable
     protected $searchColumns = array();
 	
 	protected function getTitles() {
-		// TODO : check moduleconfig is set
 		return $this->moduleConfig->getHandlerListTitles();
 	}
 	

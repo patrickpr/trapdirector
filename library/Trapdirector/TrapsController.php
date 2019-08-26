@@ -151,7 +151,7 @@ class TrapsController extends Controller
 	public function getIdoDb($test=false)
 	{
 		if ($this->icingaDB != null && $test = false) return $this->icingaDB;
-		// TODO : get ido database by config or directly in icingaweb2 config
+		// TODO : get ido database directly from icingaweb2 config
 		$dbresource=$this->Config()->get('config', 'IDOdatabase');;
 
 		$this->icingaDB=$this->getDbByName($dbresource,$test,false);
@@ -373,7 +373,6 @@ class TrapsController extends Controller
 	
 	/** Get services from hostgroup object id ( hostgroup_object_id) in IDO database
 	* 	gets all hosts in hostgroup and return common services
-	*	TODO : problem id are different.... way to aggregate ?
 	*	does not catch exceptions
 	*	@param $id	int object_id
 	*	@return array display_name (of service), service_object_id
@@ -394,8 +393,9 @@ class TrapsController extends Controller
 		$hosts=$db->fetchAll($query);
 		
 		$common_services=array();
+		$num_hosts=count($hosts);
 		foreach ($hosts as $key => $host)
-		{ // For each host, get all services and add in common_services if not found
+		{ // For each host, get all services and add in common_services if not found or add counter
 			$host_services=$this->getServicesByHostid($host->host_object_id);
 			foreach($host_services as $service)
 			{
@@ -415,7 +415,7 @@ class TrapsController extends Controller
 		//print_r($common_services);
 		foreach (array_keys($common_services) as $key)
 		{
-			if ($common_services[$key]['num'] > 1)
+		    if ($common_services[$key]['num'] == $num_hosts)
 			{
 				array_push($result,array($key,$common_services[$key]['name']));
 			}
@@ -473,12 +473,12 @@ class TrapsController extends Controller
 	*/
 	protected function addHandlerRule($params)
 	{
-		// TODO Check for rule consistency and get user name
+		// TODO Check for rule consistency
 		$db = $this->getDb()->getConnection();
 		// Add last modified date = creation date and username
 		$params['created'] = new Zend_Db_Expr('CURRENT_TIMESTAMP()');
 		$params['modified'] = new 	Zend_Db_Expr('CURRENT_TIMESTAMP()');
-		$params['modifier'] ='me' ;
+		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
 		$query=$db->insert(
 			$this->getModuleConfig()->getTrapRuleName(),
@@ -497,11 +497,11 @@ class TrapsController extends Controller
 	*/
 	protected function updateHandlerRule($params,$ruleID)
 	{
-		// TODO Check for rule consistency and get user name
+		// TODO Check for rule consistency
 		$db = $this->getDb()->getConnection();
 		// Add last modified date = creation date and username
 		$params['modified'] = new 	Zend_Db_Expr('CURRENT_TIMESTAMP()');
-		$params['modifier'] ='me' ;
+		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
 		$numRows=$db->update(
 			$this->getModuleConfig()->getTrapRuleName(),

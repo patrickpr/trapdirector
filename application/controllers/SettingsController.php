@@ -19,6 +19,7 @@ class SettingsController extends TrapsController
 {
   public function indexAction()
   {
+
     // CHeck permissions : display tests in any case, but no configuration.
 	$this->view->configPermission=$this->checkModuleConfigPermission(1);
 	// But check read permission
@@ -94,7 +95,23 @@ class SettingsController extends TrapsController
 
 	$this->view->form = $form = new TrapsConfigForm();
 	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
-	
+
+	// Check standard Icingaweb2 path
+	$this->view->icingaEtcWarn=0;
+	$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+	if ($icingaweb2_etc != "/etc/icingaweb2/")
+	{
+	    $output=array();
+	    
+	    exec('cat ' . $this->module->getBaseDir() .'/bin/trap_in.php | grep "\$icingaweb2_etc=" ',$output);
+	    
+	    if (! preg_match('#"'. $icingaweb2_etc .'"#',$output[0]))
+	    {
+    	    $this->view->icingaEtcWarn=1;
+	        $this->view->icingaweb2_etc=$icingaweb2_etc;
+	    }
+	}
+	    
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
 	// Make form handle request.

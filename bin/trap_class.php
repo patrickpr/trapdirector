@@ -32,7 +32,6 @@ class Trap
 	protected $debug_level=2;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
 	protected $alert_output='syslog'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
-	protected $syslog_logfile=null; // TODO check if useful
 	//**** End options from database
 	
 	//protected $debug_file="php://stdout";	
@@ -183,7 +182,6 @@ class Trap
 					file_put_contents ($this->debug_file, $message , FILE_APPEND);
 					break;
 				case 'syslog':
-					// TODO : check if openlog is needed to set ident, etc...
 					switch($level)
 					{
 						case 1 : $prio = LOG_ERR;break;
@@ -212,11 +210,11 @@ class Trap
 		switch ($output_type)
 		{
 			case 'file':
-				if ($output_option != null) $this->debug_file=$output_option;
+			    if ($output_option == null) throw new Exception("File logging without file !");
+				$this->debug_file=$output_option;
 				$this->alert_output='file';
 				break;
 			case 'syslog':
-				if ($output_option != null) $this->syslog_logfile=$output_option;
 				$this->alert_output='syslog';
 				break;
 			case 'display':
@@ -372,7 +370,7 @@ class Trap
 				$this->trapLog('No match on trap data : '.$vars,2,'');
 			} else 
 			{
-				if ($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0')
+			    if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
 				{
 					$this->trap_data['trap_oid']=$matches[2];				
 				}
@@ -391,7 +389,7 @@ class Trap
 			$this->trapLog('no trap oid found',1,'');
 		} 
 
-		// Translate oids. (TODO : maybe in separate function)
+		// Translate oids.
 		
 		$retArray=$this->translateOID($this->trap_data['trap_oid']);
 		if ($retArray != null)
@@ -530,8 +528,8 @@ class Trap
 			$this->trapLog('Erreur recuperation id',1,'');
 		}
 
-		// TODO check value of $inserted_id
 		$inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
+		if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
 		$this->trap_id=$inserted_id;
 		$this->trapLog('id found: '.$inserted_id,3,'');
 		
@@ -650,7 +648,7 @@ class Trap
     			$host.';' .$service .';' . $state . ';'.$display;
     		$this->trapLog( $send." : to : " .$this->icinga2cmd,3,'');
     		
-    		// TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why.
+    		// TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why. Or not as using API will be by default....
     		exec('echo "'.$send.'" > ' .$this->icinga2cmd);
     		return true;
 	    }
@@ -740,8 +738,11 @@ class Trap
 		
 		if ($rule[$item] == '(')
 		{ // grouping
-			$start=$item+1;
-			while (($rule[$item] != ')' ) && ($item < strlen($rule))) 
+		    $item++;
+			$start=$item;
+			$parenthesis_count=0; 
+			while (($item < strlen($rule)) // Not end of string AND
+			      && ( ($rule[$item] != ')' ) || $parenthesis_count > 0) ) // Closing ')' or embeded ()
 			{ 
 				if ($rule[$item] == '"' )
 				{ // pass through string
@@ -749,6 +750,14 @@ class Trap
 					$item=$this->eval_getNext($rule,$item,'"');
 				} 
 				else{
+				    if ($rule[$item] == '(')
+				    {
+				        $parenthesis_count++;
+				    }
+				    if ($rule[$item] == ')')
+				    {
+				        $parenthesis_count--;
+				    }
 					$item++;
 				}
 			}
@@ -758,9 +767,10 @@ class Trap
 			$item++;
 			$start=0;
 			//echo "group : ".$val."\n";
+			// returns evaluation of group as type 2 (boolean)
 			return array(2,$this->evaluation($val,$start));		
 		}
-		throw new Exception("number/string not found in ".$rule ." at " .$item);
+		throw new Exception("number/string not found in ".$rule ." at " .$item . ' : ' .$rule[$item]);
 		
 	}
 	
@@ -770,6 +780,7 @@ class Trap
 		if ($item==strlen($rule)) throw new Exception("closing '".$tok."' not found in ".$rule ." at " .$item);
 		return $item+1;
 	}
+	
 	protected function eval_getOper($rule,&$item)
 	{
 		while ($rule[$item]==' ') $item++;
@@ -801,23 +812,59 @@ class Trap
 	*	Public function for expressions testing
 	*	accepts : < > = <= >= !=  (typec = 0)
 	*	operators : & | (typec=1)
-	*	with : integers [0-9]+ (type 0) or strings "" (type 1) or results (type 2)
+	*	with : integers/float  (type 0) or strings "" (type 1) or results (type 2)
 	*   comparison int vs strings will return null (error)
 	*	return : bool or null on error
 	*/
 	public function evaluation($rule,&$item)
 	{
-		
+	    //echo "Evaluation of ".substr($rule,$item)."\n";
+		if ( $rule[$item] == '!') // If '!' found, negate next expression.
+		{
+		    $negate=true;
+		    $item++;
+		}
+		else
+		{
+		    $negate=false;
+		}
+		// First element : number, string or ()
 		list($type1,$val1) = $this->eval_getElement($rule,$item);
-		//echo "Elmt: ".$val1." : ".substr($rule,$item)."\n";
-		if ($item==strlen($rule)) {/*echo "1val\n"*/;return $val1;}  // If only element, return value
+		//echo "Elmt1: ".$val1."/".$type1." : ".substr($rule,$item)."\n";
+		
+		if ($item==strlen($rule)) // If only element, return value, but only boolean
+		{
+		  if ($type1 != 2) throw new Exception("Cannot use num/string as boolean : ".$rule);
+		  if ($negate == true) $val1= ! $val1;
+		  return $val1;
+		}  
+		
+		// Second element : operator
 		list($typec,$comp) = $this->eval_getOper($rule,$item);
 		//echo "Comp : ".$comp." : ".substr($rule,$item)."\n";
-		list($type2,$val2) = $this->eval_getElement($rule,$item);
-		//echo "Elmt: ".$val2." : ".substr($rule,$item)."\n";
+        
+		// Third element : number, string or ()
+		if ( $rule[$item] == '!') // starts with a ! so evaluate whats next
+		{
+		    $item++;
+		    if ($typec != 1) throw new Exception("Mixing boolean and comparison : ".$rule);
+		    $val2= ! $this->evaluation($rule,$item);
+		    $type2=2; // result is a boolean 
+		}
+		else 
+		{
+		    list($type2,$val2) = $this->eval_getElement($rule,$item);
+		}
+		//echo "Elmt2: ".$val2."/".$type2." : ".substr($rule,$item)."\n";
 		
-		if ($type1!=$type2) { return null;} // cannot compare different types
-		if ($typec==1 && $type1 !=2) {return null;} // cannot use & or | with string/number 
+		if ($type1!=$type2)  // cannot compare different types
+		{ 
+		    throw new Exception("Cannot compare string & number : ".$rule);
+		}
+		if ($typec==1 && $type1 !=2) // cannot use & or | with string/number
+		{
+		    throw new Exception("Cannot use boolean operators with string & number : ".$rule);
+		}
 		
 		switch ($comp){
 			case '<':	$retVal= ($val1 < $val2); break;
@@ -831,6 +878,8 @@ class Trap
 			case '&':	$retVal= ($val1 && $val2); break;
 			default:  throw new Exception("Error in expression - unknown comp : ".$comp);
 		}
+		if ($negate == true) $retVal = ! $retVal; // Inverse result if negate before expression
+		
 		if ($item==strlen($rule)) return $retVal; // End of string : return evaluation
 		// check for logical operator :
 		switch ($rule[$item])
@@ -878,7 +927,7 @@ class Trap
 	
 	protected function eval_rule($rule)
 	{
-		if ($rule==null || $rule == '')
+		if ($rule==null || $rule == '') // Empty rule is always true
 		{
 			return true;
 		}
@@ -891,9 +940,9 @@ class Trap
 			{
 				if ($oid == $val->oid)
 				{
-					if (!preg_match('/^[0-9]+\.?[0-9]*$/',$val->value))
-					{ // If not a number, get rid of all " and put " around it
-						$val->value=preg_replace('/"/','',$val->value);
+					if (!preg_match('/^[0-9]*\.?[0-9]+$/',$val->value))
+					{ // If not a number, change " to ' and put " around it
+						$val->value=preg_replace('/"/',"'",$val->value);
 						$val->value='"'.$val->value.'"';
 					}
 					$rep=0;
@@ -908,9 +957,8 @@ class Trap
 				}
 			}
 			if ($found==0)
-			{	// OID not found : put false(0) instead
-				// TODO : make difference between 0 and false.
-				$rule=preg_replace('/_OID\('.$oid.'\)/','0',$rule,-1,$rep);				
+			{	// OID not found : throw error
+			    throw new Exception('OID '.$oid.' not found in trap');
 			}
 		}
 		$item=0;
@@ -942,7 +990,7 @@ class Trap
 			$service_name=$rule['service_name'];
 			
 			$display=$this->applyDisplay($rule['display']);
-			
+			$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
 			try
 			{
 				$this->trapLog('Rule to eval : '.$rule['rule'],3,'');
@@ -955,10 +1003,15 @@ class Trap
 					$this->trapLog('action OK : '.$action,3,'');
 					if ($action >= 0)
 					{
-						$this->serviceCheckResult($host_name,$service_name,$action,$display); // TODO : check return code for error
-						$this->add_rule_match($rule['id'],$rule['num_match']+1);
-						$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
-						$this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+						if ($this->serviceCheckResult($host_name,$service_name,$action,$display) == false)
+						{
+						    $this->trap_action.='Error sending status : check cmd/API';
+						}
+						else
+						{
+						    $this->add_rule_match($rule['id'],$rule['num_match']+1);
+						    $this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+						}
 					}
 					else
 					{
@@ -974,10 +1027,15 @@ class Trap
 					$this->trapLog('action NOK : '.$action,3,'');
 					if ($action >= 0)
 					{
-					    $this->serviceCheckResult($host_name,$service_name,$action,$display); // TODO : check return code for error
-						$this->add_rule_match($rule['id'],$rule['num_match']+1);
-						$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
-						$this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+					    if ($this->serviceCheckResult($host_name,$service_name,$action,$display)==false)
+					    {
+					        $this->trap_action.='Error sending status : check cmd/API';
+					    }
+					    else
+					    {
+    						$this->add_rule_match($rule['id'],$rule['num_match']+1);
+    						$this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+					    }
 					}
 					else
 					{
@@ -1000,12 +1058,14 @@ class Trap
 			}
 			catch (Exception $e) 
 			{ 
-				$this->trapLog('Error in rule eval',2,'');
-				//echo $e->getMessage() . "\n";
+			    $this->trapLog('Error in rule eval',2,$e->getMessage());
+			    $this->trap_action.=' '.$e->getMessage();
+			    $this->trap_data['status']='error';
 			}
 			
 		}
-		$this->trap_data['status']='done';
+		if ($this->trap_data['status']!='error')
+		      $this->trap_data['status']='done';
 	}
 
 	/** Add Time a action to rule
@@ -1105,7 +1165,7 @@ class Trap
 	}
 	
 	/** reset service to OK after time defined in rule
-	*	TODO logic is : get all service in error + all all rules, see if getting all rules then select services is better 
+	*	TODO logic is : get all service in error + all rules, see if getting all rules then select services is better 
 	*	@return : like a plugin : status code (0->3) <message> | <perfdata>
 	**/
 	public function reset_services()

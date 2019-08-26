@@ -398,5 +398,59 @@ class HelperController extends TrapsController
 			
 	}	
 	
+	/** Test a rule evaluation
+	 *	rule=>rule to evaluate
+	 *	action=>'evaluate'
+	 *	return : status=>OK/Message error & message : return of evaluation
+	 */
+	public function testruleAction()
+	{
+	    
+	    $postData=$this->getRequest()->getPost();
+	    if (isset($postData['rule']))
+	    {
+	        $rule=$postData['rule'];
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No Rule'));
+	    }
+	    if (isset($postData['action']))
+	    {
+	        $action=$postData['action'];
+	        if ($action != 'evaluate')
+	        {
+	            $this->_helper->json(array('status'=>'unknown action '.$action));
+	            return;
+	        }
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No action'));
+	        return;
+	    }
+	    if ($action == 'evaluate')
+	    {
+	        try
+	        {
+	            require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+	            $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+	            $Trap = new Trap($icingaweb2_etc);
+	            // Cleanup spaces before eval
+	            $rule=$Trap->eval_cleanup($rule);
+	            // Eval
+	            $item=0;
+	            $rule=$Trap->evaluation($rule,$item);
+	        }
+	        catch (Exception $e)
+	        {
+	            $this->_helper->json(array('status'=>'Evaluation error : '.$e->getMessage() ));
+	            return;
+	        }
+	        $return=($rule==true)?'true':'false';
+	        $this->_helper->json(array('status'=>'OK', 'message' => $return));
+	    }
+	    
+	}	
 	
 }

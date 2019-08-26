@@ -1,3 +1,6 @@
+<?php
+use Icinga\Web\Url;
+?>
 <div class="controls">
   <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Add trap handler</h1>
@@ -68,7 +71,7 @@
 					<!-- <optgroup label=""> -->
 		<?php
 			foreach($this->hostlist as $hostopt)
-			{ // Seems useless : TODO
+			{ 
 				echo '<option>' . $hostopt . '<option>';
 			}
 		?>
@@ -113,11 +116,11 @@
 		if (count($this->trapListForMIB)==0)
 		{
 			echo "<option value='-1'>&lt;-- Select MIB First</option>\n";
-			$execute_trap_select=false;
+			$this->execute_trap_select=false;
 		}
 		else
 		{
-			$execute_trap_select=true; // do actions like if user selected this
+			$this->execute_trap_select=true; // do actions like if user selected this but with no update
 			foreach ($this->trapListForMIB as $key => $val)
 			{
 				echo '<option value=' . $key;
@@ -196,14 +199,19 @@
 	</fieldset>
 
 	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>
-	<div class="control-group">
+	<div class="control-group" data-base-target="_next">
+		<a href="/icingaweb2/trapdirector/handler/testrule" class="link-button icon-wrench">Open rule tester</a>
     	<div class="control-label-group">
     		<span id="id_rules_label">
-    			<label for="id_rules" class="control-label optional">Rule</label>
+    			<label for="id_rules" class="control-label optional">Rule (an empty rule will always return true)</label>
     		</span>
     	</div>
-    	<input type="text" name="rules" id="id_rules" placeholder="Rules to evaluate"
-    	 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" /> (if rule is empty, it will always match)
+    	<input type="text" name="rules" id="id_rules" placeholder="Rule to evaluate"
+    	 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" 
+    	 size=90/>
+    	 <button type="button" name="testrule" id="id_test_rule" value="test" >Test rule</button>
+    	 <span id="testrule_result"></span>
+    	 <br>
 	</div>
 	<!-- Output Display -->
 	<div class="control-group">
@@ -213,7 +221,8 @@
 			</span>
 		</div>
 		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
-			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>" 
+			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>"
+			size=90
 			>
 
 	</div>
@@ -261,6 +270,7 @@
 
 </div>
 
+
 <script type='text/javascript'>
 
 hostHelper='/icingaweb2/trapdirector/helper/gethosts';
@@ -271,6 +281,10 @@ trapfrommmibHelper='/icingaweb2/trapdirector/helper/gettraps';
 translateoidHelper='/icingaweb2/trapdirector/helper/translateoid';
 getobjectsHelper='/icingaweb2/trapdirector/helper/gettrapobjects';
 form_submit='/icingaweb2/trapdirector/handler/handlerform';
+testHelper='/icingaweb2/trapdirector/helper/testrule';
+
+test2='<?= Url::fromPath("trapdirector/")?>';
+
 objectsList=[
 	//{1:[1,'.1.3.6.1.2.1.1.2.5','IF-MIB','ifindex','1','Integer (1...32222)]}
 ];
@@ -374,7 +388,7 @@ function submitMain()
 	newRule=$("#id_rules").val();
 	newDisplay=$("#id_display").val();
 	for (i=1;i<objectsList_id;i++)
-	{	// TODO : only works if count_id<10....		
+	{
 		if (objectsList[i]==null) continue;
 		var objRegexp = new RegExp("\\$"+objectsList[i][0]+"\\$","g");
 		newRule=newRule.replace(objRegexp,'_OID('+ objectsList[i][1] +')');
@@ -467,6 +481,7 @@ function onclickAddObjects()
 					{
 						//alert(trapObjectsList[key]['type_enum']);
 						click_button_oid_add_cb(
+							count_id,
 							key,
 							trapObjectsList[key]['mib'],
 							trapObjectsList[key]['name'],
@@ -474,6 +489,7 @@ function onclickAddObjects()
 							trapObjectsList[key]['type'],
 							trapObjectsList[key]['type_enum']
 						);
+						count_id++;
 						  
 					}				
 				} 
@@ -490,23 +506,33 @@ function click_button_oid_add()
 {// first resolve oid if possible then continue in click_button_oid_add_cb
 	//alert('add 1');
 	add_oid=$("#id_trapdataNewOID").val();
-	translateOID(add_oid,click_button_oid_add_cb);
+	//test_oid= new RegExp(".1[0-9\.]+");
+	if (add_oid[0] != '.') add_oid='.'+add_oid; // add starting "."
+	if ( add_oid.match(/^.1[0-9\.]+$/) == null) {
+		displayWarning("Not a valid oid");
+	}
+	else {
+		translateOID(add_oid,click_button_oid_add_cb);
+	}
 }
 
-function click_button_oid_add_cb(oid,mib,name,value,type,type_enum)
+function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum)
 {
 	ido=objectsList_id;
 	addarray=[count_id,oid,mib,name,''];
 	objectsList[objectsList_id]=addarray;
 	objectsList_id++;
-	count_id++;
+	if (value.match(/^".*"$/)) value=value.substr(1,value.length-2); // Get rid of surrounding "" done by PDS::quote
+	//if (count_id <= index_oid) count_id=index_oid+1;
+	//alert(count_id);
 	
 	htm=	"<tr id='obj_table_oid_"+ido+"'>\n";
-	htm += 	"	<td id='obj_table_oid_"+ido+"_SC'>$"+(count_id-1)+"$</td>\n";
+	htm += 	"	<td id='obj_table_oid_"+ido+"_SC'>$"+(index_oid)+"$</td>\n";
 	htm +=	"	<td>"+oid+"</td>\n";
 	htm +=	"	<td>"+mib+"</td>\n";
 	htm +=	"	<td>"+name+"</td>\n";
-	htm +=	"	<td>"+value+"</td>\n";	
+	htm +=	"	<td>\n";
+	htm +=	"		<input type='text' id='obj_table_oid_"+ido+"_value' placeholder='No value' size=20 value='"+value+"'/></td>\n";	
 	htm +=	"	<td class='traphover'>"+type+" <span class='tohover'>"+type_enum+"</span></td>\n";
 	htm +=	"	<td><button type='button' onclick='click_button_table_del("+ido+")'>";
 	htm +=	"		Del.</button></td>\n";
@@ -539,7 +565,7 @@ function click_button_table_del(rowid)
 	}	
 	$("#obj_table_oid_"+rowid).remove();
 	objectsList[rowid]=null;
-	// renumber without gaps ? Must then renumber in display & rule :  TODO
+	// renumber without gaps ? Must then renumber in display & rule :  TODO : renumber or just leave like this
 	//newcount=1;
 	
 }
@@ -561,11 +587,13 @@ function translateOID(oid,callback)
 				if (data.status == "OK") 
 				{
 					//alert(data.type_enum);
-					callback(oid,data.mib,data.name,'',data.type,data.type_enum);				
+					callback(count_id,oid,data.mib,data.name,'',data.type,data.type_enum);
+					count_id++;				
 				} 
 				else 
 				{
-					callback(oid,'not found','not found');		
+					callback(count_id,oid,'not found','not found');
+					count_id++;		
 				}
 			},
 			error: function (data)
@@ -575,12 +603,13 @@ function translateOID(oid,callback)
 	});
 }
 
-function selectTrapName()
+function selectTrapName(update=1) // On trap select update textual details and mainOID (or not with update =0) 
 {
 	trapInput=$("#id_mainMibs_Trap").val();
 	if (trapInput == -1) return; // do nothing if "..." is selected
-	$("#id_mainoid").val(trapInput);
-	
+	if (update==1) {
+		$("#id_mainoid").val(trapInput);
+	}
 	mib=$("#id_mainMibs option:selected" ).text();
 	name=$("#id_mainMibs_Trap option:selected" ).text();
 	$("#id_mainoid_trapname").html(" "+mib+"::"+name+" ");
@@ -793,6 +822,76 @@ function hostGroupFilterGet()
 
 }
 
+function test_rule()
+{
+	var resultText=$("#testrule_result"); 
+	resultText.html('');// Empty result box
+	// Get shortcut and val 
+	var listVars=[];
+	//var index_list=1;
+
+	for (var i=1; i < objectsList_id; i++) { 
+		if ($("#obj_table_oid_"+i+"_SC") != null) {
+			var varName=$("#obj_table_oid_"+i+"_SC").html();
+			varName = varName.replace(/\$/g,'');
+			var varValue = $("#obj_table_oid_"+i+"_value").val();			
+			listVars[varName]=varValue;
+			//console.log('add : ' + varName +'/' +listVars[varName]);
+		}
+	}
+
+	// Substitute variables with values
+	var cur_rule=$("#id_rules").val();
+	var variables=cur_rule.match(/\$[0-9]+\$/g);
+
+	if (variables!=null)
+	{
+		for(var i=0;i<variables.length;i++)
+		{
+       		var varName=variables[i].substr(1,variables[i].length-2);
+       		if ( listVars[varName] === undefined || listVars[varName] == null){
+       			resultText.html('Unknown/empty var $'+varName+'$');
+       			return;
+       		}
+       		var curVar='$'+varName+'$';
+       		var curVarValue;
+       		if (listVars[varName].match(/^[0-9]*\.?[0-9]+$/) != null )
+       			curVarValue = listVars[varName];
+       		else
+       			curVarValue = '"' + listVars[varName] + '"';
+       		cur_rule=cur_rule.replace(curVar,curVarValue);
+   		};
+	}
+	resultText.html("Expression evaluated : " + cur_rule + "\n");
+
+	// Do ajax call
+	$.ajax({
+			url: testHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"rule"		: 	cur_rule,
+				"action"	:	'evaluate'
+			},
+	        success: function (data) 
+			{
+				if (data.status == "OK") 
+				{
+					resultText.html(resultText.html()+' : ' +data.message);
+				} 
+				else 
+				{
+					resultText.html(resultText.html()+' : Error in evaluation : '+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("Error : " + data);
+			}
+	});	
+}
 
 $(function() {
 
@@ -805,6 +904,18 @@ $(function() {
 		event.preventDefault();
 		deleteMain();
 	});
+	
+	$( "#id_test_rule").click(function( event ) {
+		event.preventDefault();
+		test_rule();
+	});
+	
+<?php 
+    if ($this->warning_message != '')
+    {
+        echo 'displayWarning("'. $this->warning_message .'");';
+    }
+?>
 <?php 
 	if ($this->serviceGet == true) { 
 		echo "serviceGet(";
@@ -827,7 +938,7 @@ $(function() {
 	}
 ?>
 
-<?php if ($execute_trap_select == true) { echo "selectTrapName();\n" ;} ?>
+<?php if ($this->execute_trap_select == true) { echo "selectTrapName(update=0);\n" ;} ?>
 
 <?php if ($this->setToUpdate == true) { echo "setToUpdate();\n" ;} ?>
 
@@ -839,16 +950,31 @@ $(function() {
 ?>
 
 <?php
+
+    $rule='';
 	foreach ( $this->objectList as $trapObj )
 	{
+	    $trapObj[4]=preg_replace("/\"/",'', $trapObj[4]);
 		echo 'click_button_oid_add_cb(';
-		echo '"' . $trapObj[0] . '","' . // oid
-				$trapObj[1] . '","' . // mib
-				$trapObj[2] . '","' . //name 
-				preg_replace("/\"/",'\"', $trapObj[3]) . '","' . // value
-				$trapObj[4] .'","' . //type
-				$trapObj[5] .'"'; //type_enum
+		echo    $trapObj[0] . ',"' . // index
+		  		$trapObj[1] . '","' . // oid
+				$trapObj[2] . '","' . // mib
+				$trapObj[3] . '","' . //name 
+				$trapObj[4] . '","' . // value
+				$trapObj[5] . '","' . //type
+				$trapObj[6] . '"'; //type_enum
 		echo ");\n";
+		
+		$ruleValue=preg_match('/^[0-9]*\.?[0-9]+$/',$trapObj[4])!=0 ? $trapObj[4] : '\"' . $trapObj[4] .'\"';
+		if ($rule!='') $rule .= ' & ';
+		$rule.='( $' . $trapObj[0] . '$ = ' . $ruleValue . ' )';
+		echo "count_id=".$trapObj[0]."+1;\n";
+	}
+	
+	if ($this->create_basic_rule == true)
+	{
+	    echo '$("#id_rules").val("'.$rule .'");';
+	   
 	}
 ?>
 });
