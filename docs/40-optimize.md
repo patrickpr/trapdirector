@@ -24,6 +24,8 @@ Better :
 	
 	-On : no oid translate
 	
+	-Oe : no enumerations translate
+	
 Temp snmpd file in memory : 
 
 tmpfs /var/run/snmpd                     tmpfs defaults,size=128m 0 0
