@@ -112,38 +112,7 @@ Here, the display will be for example : "Trap linkUP received for 3"
 
 * 2 : Rule
 
-Here you define a rule. Actions if rule matches is defined below.
-
-Here the rule "( $5$ = 3 ) & ( $3$ = 2) " means : 
-
-If 'ifIndex' is 3 AND ifAdminStatus is 2 THEN rule matches
-
-Rule accepts numbers and strings with these operators : < <= > >= = != ~
-And the special negate operator : !
-
-The "~" operator is for regexp : $1$ ~ "test" will be evaluated to true if $1$ contains test.
-
-You can group with parenthesis and logical operators are : | &
-
-To test existence of object, do : ($3$)
-
-space are ignored and comparison operators are evaluated before logical ones.
-
-Examples : 
-
-$5$ = 3  &  $3$ = 2 : works, same as the example
-
-$5$ = 3  &  $3$ = 2 | $4$ = 1 : works, evaluated as : $5$ = 3  &  ($3$ = 2 | $4$ = 1 ). Better with parenthesis !
-
-($5$ = "eth0") & ( $3$ = 2) : works as expected
-
-($5$ = "eth0") < $3$ : ERROR
-
-($5$ ~ "eth[0-2]") : will match eth0, eth1 & eth2  (!! it will also match eth11 eth21 !! )
-
-! $5$ = 3 : same as $5$ != 3  , also same as !($5$ = 3)
-
-($5$ = "eth0") & $3$ = 2 : ERROR : can be ambiguous if $3$ is boolean
+Have a look ![here](08-rules-evaluation.md) for how to make rules.
 
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore trap (e.g. no database record)
 

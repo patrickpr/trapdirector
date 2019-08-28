@@ -3,6 +3,8 @@ User Guide
 
 * Create rule from existing trapd : ![Here](05-traps.md)
 
+* Rule logic and syntax : ![Here](08-rules-evaluation.md)
+
 * Create a rule from scratch : ![Here](10-createrule.md)
 
 * Mib management : ![Here](15-mib.md)
