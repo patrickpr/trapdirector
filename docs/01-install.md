@@ -172,13 +172,15 @@ Edit the launch options of snmptrapd
 
 In : `/usr/lib/systemd/system/snmptrapd.service`
 
+If you have a line like `EnvironmentFile=-/etc/sysconfig/snmptrapd` change this file instead (see below for RH6)
+
 Change : `Environment=OPTIONS="-Lsd"`
 
-To : `Environment=OPTIONS="-Lsd -n -t -On"`
+To : `Environment=OPTIONS="-Lsd -n -t -Oen"`
 
 Note : if you have a weird 204 error on startup (happened on one centOS7 system), change ExecStart instead : 
 
-`ExecStart=/usr/sbin/snmptrapd -n -t -On $OPTIONS -f`
+`ExecStart=/usr/sbin/snmptrapd -n -t -Oen $OPTIONS -f`
 
 * For RH6/CenOS6 and other /etc/init.d system services 
 
@@ -186,7 +188,7 @@ In : `/etc/sysconfig/snmptrapd`
 
 Change : `# OPTIONS="-Lsd -p /var/run/snmptrapd.pid"`
 
-To : `OPTIONS="-Lsd -n -t -On -p /var/run/snmptrapd.pid"`
+To : `OPTIONS="-Lsd -n -t -Oen -p /var/run/snmptrapd.pid"`
 
 Enable & start snmptrad service : 
 ------------------------
