@@ -489,7 +489,7 @@ class Trap
 	public function writeTrapToDB()
 	{
 		
-		// Of action is ignore -> don't send t DB
+		// If action is ignore -> don't send t DB
 		if ($this->trap_to_db == false) return;
 		
 		
@@ -978,6 +978,7 @@ class Trap
 		{
 			$this->trapLog('No rules found for this trap',3,'');
 			$this->trap_data['status']='unknown';
+			$this->trap_to_db=true;
 			return;
 		}
 		//print_r($rules);
@@ -1058,14 +1059,20 @@ class Trap
 			}
 			catch (Exception $e) 
 			{ 
-			    $this->trapLog('Error in rule eval',2,$e->getMessage());
-			    $this->trap_action.=' '.$e->getMessage();
+			    $this->trapLog('Error in rule eval : '.$e->getMessage(),2,'');
+			    $this->trap_action.=' ERR : '.$e->getMessage();
 			    $this->trap_data['status']='error';
 			}
 			
 		}
-		if ($this->trap_data['status']!='error')
-		      $this->trap_data['status']='done';
+		if ($this->trap_data['status']=='error')
+		{
+		  $this->trap_to_db=true; // Always put errors in DB for the use can see
+		}
+		else
+		{
+		  $this->trap_data['status']='done';
+		}
 	}
 
 	/** Add Time a action to rule
