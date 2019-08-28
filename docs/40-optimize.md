@@ -14,7 +14,7 @@ Basic :
 
 Better : 
 
-	Environment=OPTIONS="-Lsd -n -t -On"
+	Environment=OPTIONS="-Lsd -n -t -Oen"
 	
 	-n : no hostame resolution 
 	
