@@ -214,6 +214,8 @@ class HandlerController extends TrapsController
 			$this->view->setRuleMatch=$ruleDetail->action_match;
 			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch; 
 			$this->view->hostgroupname=$ruleDetail->host_group_name;
+			$this->view->modified=gmdate("Y-m-d\TH:i:s\Z",$ruleDetail->modified);
+			$this->view->modifier=$ruleDetail->modifier;
 			
 			// Warning message if host/service don't exists anymore
 			$this->view->warning_message='';

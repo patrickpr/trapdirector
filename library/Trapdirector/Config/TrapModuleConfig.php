@@ -188,7 +188,8 @@ class TrapModuleConfig
 			'service_name'	=> 'r.service_name',
 			'revert_ok'		=> 'r.revert_ok',
 			'display'		=> 'r.display',
-			'modified'		=> 'UNIX_TIMESTAMP(r.modified)'
+			'modified'		=> 'UNIX_TIMESTAMP(r.modified)',
+            'modifier'		=> 'r.modifier'
 		);
 	}	
 		

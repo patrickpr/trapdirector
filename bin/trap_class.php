@@ -368,7 +368,8 @@ class Trap
 			if ($ret_code==0 || $ret_code==FALSE) 
 			{
 				$this->trapLog('No match on trap data : '.$vars,2,'');
-			} else 
+			}
+			else 
 			{
 			    if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
 				{

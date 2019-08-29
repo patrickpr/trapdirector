@@ -18,8 +18,9 @@ use Icinga\Web\Url;
 		value="<?= $this->ruleid ?>" >
 	<input type="hidden" name="hostid" id="id_Hidden_hostid"
 		value="<?= $this->hostid ?>">
+	<span>Last modified by <?= $this->modifier?> at <?= $this->modified?></span>
 	<input type="hidden" name="hostid" id="id_Hidden_hostgroup"
-		value="<?= $this->hostgroupid ?>">		
+		value="<?= $this->hostgroupid ?>">	
 	<fieldset id="fieldset-source_definition" class=""><legend>Trap source</legend>
 		<input type="checkbox" id="id_host_or_hostgroup"
 			onChange="toggle_host_hostgroup()"
@@ -270,7 +271,10 @@ use Icinga\Web\Url;
 
 </div>
 
-
+<!-- 
+    <script type='text/javascript'> webPath='<?= Url::fromPath("trapdirector/") ?>' </script>
+    <script type='text/javascript' src='<?= Url::fromPath("trapdirector/") ?>public/js/module.js'> </script>
+ -->
 <script type='text/javascript'>
 
 hostHelper='/icingaweb2/trapdirector/helper/gethosts';
@@ -282,8 +286,6 @@ translateoidHelper='/icingaweb2/trapdirector/helper/translateoid';
 getobjectsHelper='/icingaweb2/trapdirector/helper/gettrapobjects';
 form_submit='/icingaweb2/trapdirector/handler/handlerform';
 testHelper='/icingaweb2/trapdirector/helper/testrule';
-
-test2='<?= Url::fromPath("trapdirector/")?>';
 
 objectsList=[
 	//{1:[1,'.1.3.6.1.2.1.1.2.5','IF-MIB','ifindex','1','Integer (1...32222)]}

@@ -24,6 +24,8 @@ try
 
 	$Trap->writeTrapToDB();
 
+	$Trap->add_rule_final(microtime(true) - $time1);
+	
 }
 catch (Exception $e) 
 {
@@ -31,7 +33,6 @@ catch (Exception $e)
 }
 
 //end
-$Trap->add_rule_final(microtime(true) - $time1);
 
 exit(0);
 
