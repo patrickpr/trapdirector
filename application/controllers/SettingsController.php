@@ -82,6 +82,10 @@ class SettingsController extends TrapsController
 	    $this->view->apimessage='API parameters not configured';
 	    $this->view->apimessageError=true;
 	}
+	
+	//*********** Test snmptrapd alive and options
+	list ($this->view->snmptrapdError, $this->view->snmptrapdMessage) = $this->checkSnmpTrapd();
+
 	// List DB in $ressources
 	$resources = array();
 	$allowed = array('mysql', 'pgsql'); // TODO : check pgsql OK and maybe other DB
@@ -196,4 +200,31 @@ class SettingsController extends TrapsController
 	  $Trap->update_schema($updateSchema,$target_version,$prefix);
 	  echo '</pre>';
   }  
+
+  private function checkSnmpTrapd()
+  {
+      $psOutput=array();
+      // First check is someone is listening to port 162. As not root, we can't have pid... 
+      exec('netstat -an |grep -E "udp.*:162"',$psOutput);
+      if (count($psOutput) == 0)
+      {
+          return array(1,'Port UDP/162 is not open : snmptrapd must not be started');
+      }
+      $psOutput=array();
+      exec('ps fax |grep snmptrapd |grep -v grep',$psOutput);
+      if (count($psOutput) == 0)
+      {
+          return array(1,"UDP/162 : OK, but no snmptrapd process (?)");
+      }
+      // Assume there is only one line... TODO : see if there is a better way to do this
+      $line = preg_replace('/^.*snmptrapd /','',$psOutput[0]);
+      if (!preg_match('/-n/',$line))
+          return array(1,'snmptrapd has no -n option : '.$line);
+      if (!preg_match('/-O[^ ]*n/',$line))
+          return array(1,'snmptrapd has no -On option : '.$line);
+      if (!preg_match('/-O[^ ]*e/',$line))
+          return array(1,'snmptrapd has no -Oe option : '.$line);
+      
+      return array(0,'snmptrapd listening to UDP/162, options : '.$line);
+  }
 }

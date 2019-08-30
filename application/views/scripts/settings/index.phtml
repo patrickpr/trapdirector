@@ -47,6 +47,13 @@
     	{
     	    printwarn('IcingaWeb2 etc directory is not standard ('. $this->icingaweb2_etc .') : change it bin/trap_in.php file');
     	}
+
+    	if ($this->snmptrapdError ==0) {
+    	    printok($this->snmptrapdMessage);
+    	} else {
+    	    printwarn($this->snmptrapdMessage);
+    	}
+    	
 	?>
 	<br/>
 	

@@ -333,6 +333,7 @@ class Trap
 
 		if ($input_stream==FALSE)
 		{
+		    $this->writeTrapErrorToDB("Error reading trap (code 1/Stdin)");
 			$this->trapLog("Error reading stdin !",1,''); 
 		}
 
@@ -340,19 +341,22 @@ class Trap
 		$this->receivingHost=chop(fgets($input_stream));
 		if ($this->receivingHost == FALSE)
 		{
+		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line Host)");
 			$this->trapLog("Error reading Host !",1,''); 
 		}
 		// line 2 IP:port=>IP:port
 		$IP=chop(fgets($input_stream));
 		if ($IP == FALSE)
 		{
+		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line IP)");
 			$this->trapLog("Error reading IP !",1,''); 
 		}
 		$matches=array();
 		$ret_code=preg_match('/.DP: \[(.*)\]:(.*)->\[(.*)\]:(.*)/',$IP,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) 
 		{
-			$this->trapLog('Error parsing IP : '.$IP,2,'');
+		    $this->writeTrapErrorToDB("Error parsing trap (code 2/IP)");
+			$this->trapLog('Error parsing IP : '.$IP,1,'');
 		} 
 		else 
 		{		
@@ -387,6 +391,7 @@ class Trap
 
 		if ($this->trap_data['trap_oid']=='unknown') 
 		{
+		    $this->writeTrapErrorToDB("No trap oid found : check snmptrapd configuration (code 3/OID)",$this->trap_data['source_ip']);
 			$this->trapLog('no trap oid found',1,'');
 		} 
 
@@ -483,6 +488,54 @@ class Trap
 			$this->trapLog('Error erasing traps : '.$sql,1,'');
 		}
 		$this->trapLog('Erased traps older than '.$days.' day(s) : '.$sql,3);
+	}
+
+	/** Write error to received trap database
+	 */
+	public function writeTrapErrorToDB($message,$sourceIP=null,$trapoid=null)
+	{
+	    
+	    $db_conn=$this->db_connect_trap();
+	    
+	    $insert_col='';
+	    $insert_val='';
+	    // add date time
+	    $insert_col ='date_received,status';
+	    $insert_val = "'" . date("Y-m-d H:i:s")."','error'";
+        
+	    if ($sourceIP !=null)
+	    {
+	        $insert_col .=',source_ip';
+	        $insert_val .=",'". $sourceIP ."'";
+	    }
+	    if ($trapoid !=null)
+	    {
+	        $insert_col .=',trap_oid';
+	        $insert_val .=",'". $trapoid ."'";
+	    }
+	    $insert_col .=',status_detail';
+	    $insert_val .=",'". $message ."'";
+	    
+	    $sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.');';
+	    
+	    $this->trapLog('sql : '.$sql,3,'');
+	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	        $this->trapLog('Error SQL insert : '.$sql,1,'');
+	    }
+	    
+	    $this->trapLog('SQL insertion OK',3,'');
+	    
+	    // Get last id to insert oid/values in secondary table
+	    $sql='SELECT LAST_INSERT_ID();';
+	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	        $this->trapLog('Erreur recuperation id',1,'');
+	    }
+	    
+	    $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
+	    if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
+	    $this->trap_id=$inserted_id;
+	    $this->trapLog('id found: '.$inserted_id,3,'');
+	    
 	}
 	
 	/** Write trap data to trap database
