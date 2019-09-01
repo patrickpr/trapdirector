@@ -6,6 +6,9 @@ labels: ''
 assignees: ''
 
 ---
+**Get debug logs**
+Trapdirector -> Status&Mibs -> Status : set Log level to ALL
+Insert debug logs from syslog or file depending on your log destination
 
 **Describe the bug**
 A clear and concise description of what the bug is.
