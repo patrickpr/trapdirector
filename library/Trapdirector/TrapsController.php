@@ -151,12 +151,47 @@ class TrapsController extends Controller
 	public function getIdoDb($test=false)
 	{
 		if ($this->icingaDB != null && $test = false) return $this->icingaDB;
-		// TODO : get ido database directly from icingaweb2 config
+		// TODO : get ido database directly from icingaweb2 config -> (or not if using only API)
 		$dbresource=$this->Config()->get('config', 'IDOdatabase');;
 
-		$this->icingaDB=$this->getDbByName($dbresource,$test,false);
-		if ($test == true) return 0;
-		return $this->icingaDB;
+		if ( ! $dbresource )
+		{
+		    if ($test) return array(1,'No database in config.ini');
+		    $this->redirectNow('trapdirector/settings?idodberror=1');
+		    return null;
+		}
+		
+		try
+		{
+		    $dbconn = IcingaDbConnection::fromResourceName($dbresource);
+		}
+		catch (Exception $e)
+		{
+		    if ($test) return array(2,"Database $dbresource does not exists in IcingaWeb2");
+		    $this->redirectNow('trapdirector/settings?idodberror=2');
+		    return null;
+		}
+		
+		if ($test == false) { $this->icingaDB = $dbconn; return $this->icingaDB;}
+		
+		try
+		{
+		    $query = $dbconn->select()
+		    ->from('icinga_dbversion',array('version'));
+		    $version=$dbconn->fetchRow($query);
+		    if ( ($version == null) || ! property_exists($version,'version') )
+		    {
+		        return array(4,"$dbresource does not look like an IDO database");
+		    }
+		}
+		catch (Exception $e)
+		{
+		    return array(3,"Error connecting to $dbresource : " . $e->getMessage());
+		    $this->redirectNow('trapdirector/settings?dberror=4');
+		    return null;
+		}
+		
+		return array(0,'');
 	}
 	
     protected function applyPaginationLimits(Paginatable $paginatable, $limit = 25, $offset = null)

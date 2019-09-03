@@ -1,0 +1,22 @@
+-------------------------------------------------------------------------------------------------
+Version 1.0.1
+Date : NOT RELEASED
+Database update : No
+Migration path : from version > 1.0.0
+
+BUGS
+====
+
+<none>
+
+ENHANCEMENTS
+============
+
+1) Added ido database test in settings and redirects to settings when pages tries an access to ido that fails.
+
+
+-------------------------------------------------------------------------------------------------
+Version 1.0.0
+Date : 31/08/2019
+
+First stable version

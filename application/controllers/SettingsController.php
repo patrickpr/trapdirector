@@ -25,7 +25,13 @@ class SettingsController extends TrapsController
 	// But check read permission
 	$this->checkReadPermission();
 	// Get message : sent on configuration problems detected by controllers
-	$this->view->errorDetected=$this->params->get('dberror');
+	$dberrorMsg=$this->params->get('dberror');
+	if ($dberrorMsg != '')
+	    $this->view->errorDetected=$dberrorMsg;
+    $dberrorMsg=$this->params->get('idodberror');
+    if ($dberrorMsg != '')
+        $this->view->errorDetected=$dberrorMsg;
+	        
 	
 	// Test Database
 	$db_message=array( // index => ( message OK, message NOK, optional link if NOK ) 
@@ -63,6 +69,10 @@ class SettingsController extends TrapsController
 			new ProgrammingError('Out of bond result from database test');
 	}
 	$this->view->message=$db_message;
+	
+	$dberror=$this->getIdoDb(true); // Get IDO DB in test mode
+	$this->view->ido_db_error=$dberror[0];
+	$this->view->ido_message='IDO Database : ' . $dberror[1];
 	
 	//********* Test API
 	if ($this->Config()->get('config', 'icingaAPI_host') != '')

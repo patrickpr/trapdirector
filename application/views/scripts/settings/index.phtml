@@ -33,7 +33,13 @@
 			    echo "<p style='font-size:110%;font-weight:bold;'>Configure it here : <a href=". $this->message[$this->db_error][2] .">". $this->message[$this->db_error][2] ."</a></p></br>";
 			}
 		}
-
+		if ($this->ido_db_error == 0) {
+		    printok('IDO Database OK');
+		}
+		else
+		{
+		    printwarn($this->ido_message);
+		}
     	if ( /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessageError */ $this->apimessageError == true)
     	   {
     	       /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessage */  printwarn($this->apimessage);
