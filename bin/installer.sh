@@ -150,7 +150,7 @@ function check_api() {
 	add_to_config "icingaAPI_port" "5665"
 	add_to_config "icingaAPI_user" "${apiUser}"
 	add_to_config "icingaAPI_password" "${apiPass}"
-	
+
 	return 0;
 
 }
