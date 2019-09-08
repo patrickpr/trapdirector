@@ -24,8 +24,11 @@ UDP: [127.0.0.1]:33025->[127.0.0.1]:162
 .1.3.6.1.2.1.2.2.1.7 1
 .1.3.6.1.2.1.2.2.1.8 1
 ```
+Here UDP from localhost to localhost
+Following lines are traps objects, including the trap oid.
 
-translated, this trap is : 
+Translated, this trap means : 
+
 ```
 sysUpTimeInstance	0:0:00:00.00
 snmpTrapOID.0		IF-MIB::linkUp
@@ -33,9 +36,6 @@ sysLocation.0		Just here
 ifAdminStatus		up(1)
 ifOperStatus		up(1)
 ```
-
-Here UDP from localhost to localhost
-Following lines are traps objects, including the trap oid (here .1.3.6.1.6.3.1.1.5.4)
 
 trap_in.php
 ---------------
