@@ -38,6 +38,8 @@ class Trap
 	// Databases
 	protected $trapDB; //< trap database
 	protected $idoDB; //< ido database
+	protected $trapDBType; //< Type of database for traps (mysql, pgsql)
+	protected $idoDBType; //< Type of database for ido (mysql, pgsql)
 	
 	// Trap received data
 	protected $receivingHost;
@@ -317,7 +319,10 @@ class Trap
 		$db_host=$db_config[$db_name]['host'];
 		$db_sql_name=$db_config[$db_name]['dbname'];
 		$db_user=$db_config[$db_name]['username'];
-		$db_pass=$db_config[$db_name]['password'];	
+		$db_pass=$db_config[$db_name]['password'];
+		if ($database == 'traps') $this->trapDBType = $db_type;
+		if ($database == 'traps') $this->idoDBType = $db_type;
+		
 		$this->trapLog( "$db_type $db_host $db_sql_name $db_user $db_pass",3,''); 
 		return array($db_type,$db_host,$db_sql_name,$db_user,$db_pass);
 	}	
@@ -566,23 +571,47 @@ class Trap
 			$insert_val .= ($val==null)? 'NULL' : $db_conn->quote($val);
 			$firstcol=0;
 		}
-
-		$sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.') RETURNING id;';
-
-		$this->trapLog('sql : '.$sql,3,'');
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('Error SQL insert : '.$sql,1,'');
-		}
-		$this->trapLog('SQL insertion OK',3,'');
 		
-		// Get last id to insert oid/values in secondary table
-		if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
-			$this->trapLog('Erreur recuperation id',1,'');
+		$sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.')';
+		switch ($this->trapDBType)
+		{
+			case 'pgsql': 
+				$sql .= ' RETURNING id;';
+				$this->trapLog('sql : '.$sql,3,'');
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error SQL insert : '.$sql,1,'');
+				}
+				$this->trapLog('SQL insertion OK',3,'');
+				// Get last id to insert oid/values in secondary table
+				if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
+														   
+					$this->trapLog('Erreur recuperation id',1,'');
+				}
+				if (! isset($inserted_id_ret['id'])) {
+					$this->trapLog('Error getting id',1,'');
+				}
+				$this->trap_id=$inserted_id_ret['id'];
+			break;
+			case 'mysql': 
+				$sql .= ';';
+				$this->trapLog('sql : '.$sql,3,'');
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Error SQL insert : '.$sql,1,'');
+				}
+				$this->trapLog('SQL insertion OK',3,'');
+				// Get last id to insert oid/values in secondary table
+				$sql='SELECT LAST_INSERT_ID();';
+				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+					$this->trapLog('Erreur recuperation id',1,'');
+				}
+
+				$inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
+				if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
+				$this->trap_id=$inserted_id;
+			break;
+			default: 
+				$this->trapLog('Error SQL type  : '.$this->trapDBType,1,'');
 		}
-		if (! isset($inserted_id_ret['id'])) {
-			$this->trapLog('Error getting id',1,'');
-		}
-		$this->trap_id=$inserted_id_ret['id'];
 		$this->trapLog('id found: '.$this->trap_id,3,'');
 		
 		// Fill trap extended data table
@@ -615,7 +644,7 @@ class Trap
 	/** Get rules from rule database with ip and oid
 	*	@param $ip string ipv4 or ipv6
 	*	@param $oid string oid in numeric
-	*	@retrun PDO object or false
+	*	@return PDO object or false
 	*/	
 	protected function getRules($ip,$oid)
 	{
@@ -1558,7 +1587,7 @@ class Trap
 		$maxRet=$ret_code->fetch();
 		if (array_key_exists('MAX(textual_convention)', $maxRet)) //Mysql
 		{ 
-		    $num=$maxRet['MAX(type)'];
+		    $num=$maxRet['MAX(textual_convention)'];
 		}
 		else if (array_key_exists('max', $maxRet)) // Postgre
 		{
