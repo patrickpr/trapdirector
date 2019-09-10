@@ -18,7 +18,12 @@ use Icinga\Web\Url;
 		value="<?= $this->ruleid ?>" >
 	<input type="hidden" name="hostid" id="id_Hidden_hostid"
 		value="<?= $this->hostid ?>">
-	<span>Last modified by <?= $this->modifier?> at <?= $this->modified?></span>
+	<?php 
+	   if ($this->modifier != null)
+	   {
+	       echo '<span>Last modified by ' . $this->modifier. ' at ' . $this->modified .'</span>';
+	   }
+	?>
 	<input type="hidden" name="hostid" id="id_Hidden_hostgroup"
 		value="<?= $this->hostgroupid ?>">	
 	<fieldset id="fieldset-source_definition" class=""><legend>Trap source</legend>
@@ -946,10 +951,8 @@ $(function() {
 <?php if ($this->setToUpdate == true) { echo "setToUpdate();\n" ;} ?>
 
 <?php 
-	if ($this->setRuleNoMatch !=null ) 
-		{ echo "$('#id_rule_action_false').val(".$this->setRuleNoMatch.");\n" ;}
-	if ($this->setRuleMatch !=null ) 
-		{ echo "$('#id_rule_action_true').val(".$this->setRuleMatch.");\n" ;} 	
+    echo "$('#id_rule_action_true').val(".$this->setRuleMatch.");\n" ;	
+	echo "$('#id_rule_action_false').val(".$this->setRuleNoMatch.");\n" ;
 ?>
 
 <?php

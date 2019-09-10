@@ -4,6 +4,7 @@
 namespace Icinga\Module\Trapdirector;
 
 use RuntimeException;
+use Exception;
 
 class Icinga2API 
 {
@@ -26,8 +27,6 @@ class Icinga2API
         JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded.',
         JSON_ERROR_SYNTAX => 'Syntax error.',
         JSON_ERROR_UTF8 => 'Malformed UTF-8 characters, possibly incorrectly encoded.',
-        // These last 3 messages are only supported on PHP >= 5.5.
-        // See http://php.net/json_last_error#refsect1-function.json-last-error-returnvalues
         JSON_ERROR_RECURSION => 'One or more recursive references in the value to be encoded.',
         JSON_ERROR_INF_OR_NAN => 'One or more NAN or INF values in the value to be encoded.',
         JSON_ERROR_UNSUPPORTED_TYPE => 'A value of a type that cannot be encoded was given.',
@@ -115,19 +114,27 @@ class Icinga2API
     
     /**
      * Create or return curl ressource
-     * @throws RuntimeException
+     * @throws Exception
      * @return resource
      */
     protected function curl() {
         if ($this->curl === null) {
             $this->curl = curl_init(sprintf('https://%s:%d', $this->host, $this->port));
             if (!$this->curl) {
-                throw new RuntimeException('CURL INIT ERROR: ' . curl_error($this->curl));
+                throw new Exception('CURL INIT ERROR: ' . curl_error($this->curl));
             }
         }
         return $this->curl;
     }
 
+    /**
+     * Send a passive service check
+     * @param string $host : host name 
+     * @param string $service : service name
+     * @param int $state : state of service
+     * @param string $display : service passive check output
+     * @return array (status = true (oK) or false (nok), string message)
+     */
     public function serviceCheckResult($host,$service,$state,$display)
     {
         //Send a POST request to the URL endpoint /v1/actions/process-check-result
@@ -142,7 +149,7 @@ class Icinga2API
         try 
         {
             $result=$this->request('POST', $url, null, $body);
-        } catch (RuntimeException $e) 
+        } catch (Exception $e) 
         {
             return array(false, $e->getMessage());
         }
@@ -172,6 +179,106 @@ class Icinga2API
         }
         return array(false,'Unkown result, open issue with this : '.print_r($result,true));
     }
+ 
+    /**
+     * return array of host by IP (4 or 6)
+     * @param string $ip
+     * @throws Exception
+     * @return array objects : array('__name','name','display_name')
+     */
+    public function getHostByIP($ip) 
+    {
+        /*
+         *  curl -k -s -u  trapdirector:trapdirector -H 'X-HTTP-Method-Override: GET' -X POST 'https://localhost:5665/v1/objects/hosts' 
+         *  -d '{"filter":"host.group==\"test_trap\"","attrs": ["address" ,"address6"]}'
+            
+            {"results":[{"attrs":{"__name":"Icinga host","address":"127.0.0.1","display_name":"Icinga host","name":"Icinga host"},"joins":{},"meta":{},"name":"Icinga host","type":"Host"}]}
+         */
+        
+        $url='objects/hosts';
+        $body=array(
+            "filter"        => 'host.address=="'.$ip.'" || host.address6=="'.$ip.'"',
+            "attrs"         => array('__name','name','display_name')
+        );
+        try
+        {
+            $result=$this->request('POST', $url, array('X-HTTP-Method-Override: GET'), $body);
+        } catch (Exception $e)
+        {
+            throw new Exception($e->getMessage());
+        }
+        
+        if (property_exists($result,'error') )
+        {
+            if (property_exists($result,'status'))
+            {
+                throw new Exception('Ret code ' .$result->error.' : ' . $result->status);
+            }
+            else
+            {
+                throw new Exception('Ret code ' .$result->error.' : Unkown status');
+            }
+        }
+        if (property_exists($result, 'results'))
+        {
+            $numHost=0;
+            $hostArray=array();
+            while (isset($result->results[$numHost]) && property_exists ($result->results[$numHost],'attrs'))
+            {
+                $hostArray[$numHost] = $result->results[$numHost]->attrs;
+                $numHost++;
+            }
+            return $hostArray;            
+        }
+        throw new Exception('Unkown result');
+    }
+
+    /**
+     * Get all host and IP from hostgroup
+     * @param string $hostGroup
+     * @throws Exception
+     * @return array : attributes : address, address6, name
+     */
+    public function getHostsIPByHostGroup($hostGroup)
+    {        
+        $url='objects/hosts';
+        $body=array(
+            "filter"        => '\"'.$hostGroup.'\" in host.groups',
+            "attrs"         => array('address','address','name')
+        );
+        try
+        {
+            $result=$this->request('POST', $url, array('X-HTTP-Method-Override: GET'), $body);
+        } catch (Exception $e)
+        {
+            throw new Exception($e->getMessage());
+        }
+        
+        if (property_exists($result,'error') )
+        {
+            if (property_exists($result,'status'))
+            {
+                throw new Exception('Ret code ' .$result->error.' : ' . $result->status);
+            }
+            else
+            {
+                throw new Exception('Ret code ' .$result->error.' : Unkown status');
+            }
+        }
+        if (property_exists($result, 'results'))
+        {
+            $numHost=0;
+            $hostArray=array();
+            while (isset($result->results[$numHost]) && property_exists ($result->results[$numHost],'attrs'))
+            {
+                $hostArray[$numHost] = $result->results[$numHost]->attrs;
+                $hostArray[$numHost]->name = $result->results[$numHost]->name;
+                $numHost++;
+            }
+            return $hostArray;
+        }
+        throw new Exception('Unkown result');
+    }
     
     /**
      * Send request to API
@@ -179,7 +286,7 @@ class Icinga2API
      * @param string $url (after /v1/ )
      * @param array $headers
      * @param array $body 
-     * @throws RuntimeException
+     * @throws Exception
      * @return array
      */
     public function request($method, $url, $headers, $body) {
@@ -188,6 +295,7 @@ class Icinga2API
         if ($body !== null) {
             $body = json_encode($body);
             array_push($curlHeaders, 'Content-Type: application/json');
+            //array_push($curlHeaders, 'X-HTTP-Method-Override: GET');
         }
         //var_dump($body);
         //var_dump($this->url($url));
@@ -214,11 +322,11 @@ class Icinga2API
         curl_setopt_array($curl, $opts);
         $res = curl_exec($curl);
         if ($res === false) {
-            throw new RuntimeException('CURL ERROR: ' . curl_error($curl));
+            throw new Exception('CURL ERROR: ' . curl_error($curl));
         }
         $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if ($statusCode === 401) {
-            throw new RuntimeException('Unable to authenticate, please check your API credentials');
+            throw new Exception('Unable to authenticate, please check your API credentials');
         }
         return $this->fromJsonResult($res);
     }
@@ -226,14 +334,14 @@ class Icinga2API
     /**
      * 
      * @param string $json json encoded 
-     * @throws RuntimeException
+     * @throws Exception
      * @return array json decoded
      */
     protected function fromJsonResult($json) {
         $result = @json_decode($json);
         //var_dump($json);
         if ($result === null) {
-            throw new RuntimeException('Parsing JSON failed: '.$this->getLastJsonErrorMessage(json_last_error()));
+            throw new Exception('Parsing JSON failed: '.$this->getLastJsonErrorMessage(json_last_error()));
         }
         return $result;
     }

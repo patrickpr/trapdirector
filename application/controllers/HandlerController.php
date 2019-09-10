@@ -87,13 +87,15 @@ class HandlerController extends TrapsController
 		$this->view->hostid=-1; // normally set by javascript serviceGet()
 		$this->view->ruleid=-1; // Rule id in DB for update & delete
 		$this->view->setToUpdate=false; // set form as update form
-		$this->view->setRuleMatch=false; // set action on rule match (null does default)
-		$this->view->setRuleNoMatch=false; // set action on rule no match (null does default)
+		$this->view->setRuleMatch=-1; // set action on rule match (default nothing)
+		$this->view->setRuleNoMatch=-1; // set action on rule no match (default nothing)
 		
 		$this->view->selectGroup=false; // Select by group if true
 		$this->view->hostgroupid=-1; // host group id
 		$this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
 		
+		$this->view->modifier=null;
+		$this->view->modified=null;
 		// Get Mib List from file
 		$this->view->mibList=$this->getMIB()->getMIBList();
 		
@@ -212,7 +214,7 @@ class HandlerController extends TrapsController
 			$this->view->hostname=$ruleDetail->host_name;
 			$this->view->revertOK=$ruleDetail->revert_ok;
 			$this->view->setRuleMatch=$ruleDetail->action_match;
-			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch; 
+			$this->view->setRuleNoMatch=$ruleDetail->action_nomatch;
 			$this->view->hostgroupname=$ruleDetail->host_group_name;
 			$this->view->modified=gmdate("Y-m-d\TH:i:s\Z",$ruleDetail->modified);
 			$this->view->modifier=$ruleDetail->modifier;
@@ -439,7 +441,7 @@ class HandlerController extends TrapsController
 					$dbparams[$key] = $val['val'];
 				}
 			}
-			//echo '<br>';	print_r($dbparams);echo '<br>';
+			// echo '<br>';	print_r($dbparams);echo '<br>';
 			if ($params['db_rule']['val'] == -1 ) 
 			{
 				$ruleID=$this->addHandlerRule($dbparams);

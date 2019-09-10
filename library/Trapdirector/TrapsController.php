@@ -511,8 +511,8 @@ class TrapsController extends Controller
 		// TODO Check for rule consistency
 		$db = $this->getDb()->getConnection();
 		// Add last modified date = creation date and username
-		$params['created'] = new Zend_Db_Expr('CURRENT_TIMESTAMP()');
-		$params['modified'] = new 	Zend_Db_Expr('CURRENT_TIMESTAMP()');
+		$params['created'] = new Zend_Db_Expr('NOW()');
+		$params['modified'] = new 	Zend_Db_Expr('NOW()');
 		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
 		$query=$db->insert(
@@ -535,7 +535,7 @@ class TrapsController extends Controller
 		// TODO Check for rule consistency
 		$db = $this->getDb()->getConnection();
 		// Add last modified date = creation date and username
-		$params['modified'] = new 	Zend_Db_Expr('CURRENT_TIMESTAMP()');
+		$params['modified'] = new 	Zend_Db_Expr('NOW()');
 		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
 		$numRows=$db->update(

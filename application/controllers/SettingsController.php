@@ -6,10 +6,12 @@ use Icinga\Data\ResourceFactory;
 use Icinga\Web\Url;
 use Icinga\Application\Icinga;
 use Icinga\Exception\ProgrammingError;
+use Icinga\Exception\ConfigurationError;
 use RunTimeException;
 
-use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
+
 use Icinga\Module\Trapdirector\TrapsController;
+use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
 use Icinga\Module\Trapdirector\Icinga2Api;
 
@@ -32,7 +34,14 @@ class SettingsController extends TrapsController
     if ($dberrorMsg != '')
         $this->view->errorDetected=$dberrorMsg;
 	        
-	
+    // ******************* TODO : set this as default for ido database *******************
+    //echo $this->Config()->module('monitoring','backends')->get('icinga','resource');
+    
+    // Test if configuration exists, if not create for installer script
+    if ($this->Config()->isEmpty() == true)
+    {
+        // TODO
+    }
 	// Test Database
 	$db_message=array( // index => ( message OK, message NOK, optional link if NOK ) 
 		0	=>	array('Database configuration OK','',''),
@@ -98,7 +107,7 @@ class SettingsController extends TrapsController
 
 	// List DB in $ressources
 	$resources = array();
-	$allowed = array('mysql', 'pgsql'); // TODO : check pgsql OK and maybe other DB
+	$allowed = array('mysql', 'pgsql'); // TODO : support other DB ?
 	foreach (ResourceFactory::getResourceConfigs() as $name => $resource) {
 		if ($resource->get('type') === 'db' && in_array($resource->get('db'), $allowed)) {
 			$resources[$name] = $name;
@@ -154,7 +163,28 @@ class SettingsController extends TrapsController
 	else
 	{
 		echo 'Creating schema : <br>';
-		
+
+		// Get module database name
+		$dbName=$this->Config()->get('config', 'database');
+
+		try {
+		  $dbResource = ResourceFactory::getResourceConfig($dbName);
+		  $dbType=$dbResource->get('db');
+		  switch ($dbType) {
+		      case 'mysql':
+		          $dbFileExt='sql';
+		          break;
+		      case 'pgsql':
+		          $dbFileExt='pgsql';
+		          break;
+		      default:
+		          throw new ConfigurationError('Unsuported database : '.$dbType);
+		  }
+		} catch (ConfigurationError $e )
+		{
+		    echo 'Database configuration error : ' . $e->getMessage();
+		    return;
+		}
 		echo '<pre>';
 		require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 		
@@ -164,8 +194,9 @@ class SettingsController extends TrapsController
 		$Trap->setLogging($debug_level,'display');
 		
 		$prefix=$this->Config()->get('config', 'database_prefix');
+		// schema file : <path>/SQL/schema_v<verion>.<dbtype>
 		$schema=$this->Module()->getBaseDir() . 
-			'/SQL/schema_v'. $this->getModuleConfig()->getDbCurVersion() .'.sql';
+		'/SQL/schema_v'. $this->getModuleConfig()->getDbCurVersion() . '.' . $dbFileExt;
 		
 		$Trap->create_schema($schema,$prefix);
 		echo '</pre>';

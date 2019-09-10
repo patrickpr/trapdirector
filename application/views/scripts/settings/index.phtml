@@ -19,46 +19,53 @@
 		if (  $this->errorDetected != null) {
 			printwarn( 'DB error detected in app ');
 		}
-		if ($this->db_error == 0) {
-		    printok($this->message[0][0]);			
-		} 
-		else 
+		if ($this->db_error == 0 && $this->ido_db_error == 0 && $this->apimessageError == false && $this->icingaEtcWarn==0 && $this->snmptrapdError ==0)
 		{
-		    for ($i=1;$i<$this->db_error;$i++) {
-		        printok($this->message[$i][0]);
-			}
-			printwarn($this->message[$this->db_error][1]);
-			if ($this->message[$this->db_error][2]!='') 
-			{
-			    echo "<p style='font-size:110%;font-weight:bold;'>Configure it here : <a href=". $this->message[$this->db_error][2] .">". $this->message[$this->db_error][2] ."</a></p></br>";
-			}
-		}
-		if ($this->ido_db_error == 0) {
-		    printok('IDO Database OK');
+		    printok('All tests OK : DB, IdoDB, API, snmptrapd');
 		}
 		else
 		{
-		    printwarn($this->ido_message);
-		}
-    	if ( /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessageError */ $this->apimessageError == true)
-    	   {
-    	       /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessage */  printwarn($this->apimessage);
-    	   }
-    	else 
-    	{
-    	    printok($this->apimessage);
-    	}
-    	
-    	if ($this->icingaEtcWarn==1)
-    	{
-    	    printwarn('IcingaWeb2 etc directory is not standard ('. $this->icingaweb2_etc .') : change it bin/trap_in.php file');
-    	}
-
-    	if ($this->snmptrapdError ==0) {
-    	    printok($this->snmptrapdMessage);
-    	} else {
-    	    printwarn($this->snmptrapdMessage);
-    	}
+    		if ($this->db_error == 0) {
+    		    printok($this->message[0][0]);			
+    		} 
+    		else 
+    		{
+    		    for ($i=1;$i<$this->db_error;$i++) {
+    		        printok($this->message[$i][0]);
+    			}
+    			printwarn($this->message[$this->db_error][1]);
+    			if ($this->message[$this->db_error][2]!='') 
+    			{
+    			    echo "<p style='font-size:110%;font-weight:bold;'>Configure it here : <a href=". $this->message[$this->db_error][2] .">". $this->message[$this->db_error][2] ."</a></p></br>";
+    			}
+    		}
+    		if ($this->ido_db_error == 0) {
+    		    printok('IDO Database OK');
+    		}
+    		else
+    		{
+    		    printwarn($this->ido_message);
+    		}
+        	if ( /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessageError */ $this->apimessageError == true)
+        	   {
+        	       /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $apimessage */  printwarn($this->apimessage);
+        	   }
+        	else 
+        	{
+        	    printok($this->apimessage);
+        	}
+        	
+        	if ($this->icingaEtcWarn==1)
+        	{
+        	    printwarn('IcingaWeb2 etc directory is not standard ('. $this->icingaweb2_etc .') : change it bin/trap_in.php file');
+        	}
+    
+        	if ($this->snmptrapdError ==0) {
+        	    printok($this->snmptrapdMessage);
+        	} else {
+        	    printwarn($this->snmptrapdMessage);
+        	}
+        }
     	
 	?>
 	<br/>

@@ -483,7 +483,7 @@ class Trap
 		}
 		$db_conn=$this->db_connect_trap();
 		$daysago = strtotime("-".$days." day");
-		$sql= 'delete from '.$this->db_prefix.'received where date_received < "'.date("Y-m-d H:i:s",$daysago).'";"';
+		$sql= 'delete from '.$this->db_prefix.'received where date_received < \''.date("Y-m-d H:i:s",$daysago).'\';';
 		if ($db_conn->query($sql) == FALSE) {
 			$this->trapLog('Error erasing traps : '.$sql,1,'');
 		}
@@ -562,37 +562,34 @@ class Trap
 				$insert_col .=',';
 				$insert_val .=',';
 			}
-			$insert_col .= ' `' . $col .'` ';
+			$insert_col .= $col ;
 			$insert_val .= ($val==null)? 'NULL' : $db_conn->quote($val);
 			$firstcol=0;
 		}
 
-		$sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.');';
+		$sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.') RETURNING id;';
 
 		$this->trapLog('sql : '.$sql,3,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('Error SQL insert : '.$sql,1,'');
 		}
-		
 		$this->trapLog('SQL insertion OK',3,'');
-
+		
 		// Get last id to insert oid/values in secondary table
-		$sql='SELECT LAST_INSERT_ID();';
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
 			$this->trapLog('Erreur recuperation id',1,'');
 		}
-
-		$inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
-		if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
-		$this->trap_id=$inserted_id;
-		$this->trapLog('id found: '.$inserted_id,3,'');
+		if (! isset($inserted_id_ret['id'])) {
+			$this->trapLog('Error getting id',1,'');
+		}
+		$this->trap_id=$inserted_id_ret['id'];
+		$this->trapLog('id found: '.$this->trap_id,3,'');
 		
 		// Fill trap extended data table
-		foreach ($this->trap_data_ext as $value) {
-			
+		foreach ($this->trap_data_ext as $value) {			
 			// TODO : detect if trap value is encoded and decode it to UTF-8 for database
 			$firstcol=1;
-			$value->trap_id = $inserted_id;
+			$value->trap_id = $this->trap_id;
 			$insert_col='';
 			$insert_val='';
 			foreach ($value as $col => $val)
@@ -602,7 +599,7 @@ class Trap
 					$insert_col .=',';
 					$insert_val .=',';
 				}
-				$insert_col .= ' `' . $col .'` ';
+				$insert_col .= $col;
 				$insert_val .= ($val==null)? 'NULL' : $db_conn->quote($val);
 				$firstcol=0;
 			}
@@ -612,13 +609,13 @@ class Trap
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
 				$this->trapLog('Erreur insertion data : ' . $sql,2,'');
 			}	
-		}		
+		}	
 	}
 
 	/** Get rules from rule database with ip and oid
 	*	@param $ip string ipv4 or ipv6
 	*	@param $oid string oid in numeric
-	*	@retrun PDO object
+	*	@retrun PDO object or false
 	*/	
 	protected function getRules($ip,$oid)
 	{
@@ -628,6 +625,7 @@ class Trap
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,2,'');
+			return false;
 		}
 		$rules_all=$ret_code->fetchAll();
 		//echo "rule all :\n";print_r($rules_all);echo "\n";
@@ -638,9 +636,11 @@ class Trap
 			if ($rule['ip4']==$ip || $rule['ip6']==$ip)
 			{
 				$rules_ret[$rule_ret_key]=$rules_all[$key];
+				//TODO : get host name by API (and check if correct in rule).
 				$rule_ret_key++;
 				continue;
 			}
+			// TODO : get hosts IP by API
 			if (isset($rule['host_group_name']) && $rule['host_group_name']!=null)
 			{ // get ips of group members by oid
 				$db_conn2=$this->db_connect_ido();
@@ -722,6 +722,13 @@ class Trap
 	            return true;
 	        }
 	    }
+	}
+	
+	public function getHostByIP($ip)
+	{
+	    $api = $this->getAPI();
+	    $api->setCredentials($this->api_username, $this->api_password);
+	    return $api->getHostByIP($ip);
 	}
 	
 	/** Resolve display. 
@@ -1161,14 +1168,38 @@ class Trap
 			$this->trapLog("Error reading schema !",1,''); 
 		}
 		$newline='';
+		$cur_table='';
+		$cur_table_array=array();
+		$db_conn=$this->db_connect_trap();
+		
 		while (($line=fgets($input_stream)) != FALSE)
 		{
 			$newline.=chop(preg_replace('/#PREFIX#/',$table_prefix,$line));
+			if (preg_match('/; *$/', $newline)) 
+            {
+                $sql= $newline;
+                if ($db_conn->query($sql) == FALSE) {
+                    $this->trapLog('Error create schema : '.$sql,1,'');
+                }
+                if (preg_match('/^ *CREATE TABLE ([^ ]+)/',$newline,$cur_table_array))
+                {
+                    $cur_table='table '.$cur_table_array[1];
+                }
+                else
+                {
+                    $cur_table='secret SQL stuff :-)';
+                }
+                $this->trapLog('Creating : ' . $cur_table, 3,'');
+                $newline='';
+            }
 		}
-		$db_conn=$this->db_connect_trap();
+		
 		$sql= $newline;
-		if ($db_conn->query($sql) == FALSE) {
-			$this->trapLog('Error create schema : '.$sql,1,'');
+		if ($sql != '')
+		{
+    		if ($db_conn->query($sql) == FALSE) {
+    			$this->trapLog('Error create schema : '.$sql,1,'');
+    		}
 		}
 		$this->trapLog('Schema created',3);		
 	}
@@ -1433,7 +1464,7 @@ class Trap
 			foreach ($trapObjects as $trapObject)
 			{
 				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_trap_object '.
-				'(trap_id,object_name) VALUE ('.$trapID.' , \''.$trapObject.'\');';
+				'(trap_id,object_name) VALUES ('.$trapID.' , \''.$trapObject.'\');';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
 					$this->trapLog('No result in query : ' . $sql,1,'');
 				}
@@ -1446,7 +1477,20 @@ class Trap
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,1,'');
 		}
-		$num=$ret_code->fetch()['MAX(type)'];
+		$maxRet=$ret_code->fetch();
+		if (array_key_exists('MAX(type)', $maxRet)) //Mysql
+		{ 
+		    $num=$maxRet['MAX(type)'];
+		}
+		else if (array_key_exists('max', $maxRet)) // Postgre
+		{ 
+		    $num=$maxRet['max'];
+		}
+		else 
+		{
+		    $this->traplog('Returned code : ' . print_r($maxRet,true),2,'');
+		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,1,'');
+		}
 		//echo $sql."\n";print_r($num);echo"\n";
 		for ($i=0;$i<$num;$i++)
 		{
@@ -1510,7 +1554,20 @@ class Trap
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,1,'');
 		}
-		$num=$ret_code->fetch()['MAX(textual_convention)'];
+		
+		$maxRet=$ret_code->fetch();
+		if (array_key_exists('MAX(textual_convention)', $maxRet)) //Mysql
+		{ 
+		    $num=$maxRet['MAX(type)'];
+		}
+		else if (array_key_exists('max', $maxRet)) // Postgre
+		{
+		    $num=$maxRet['max'];
+		}
+		else
+		{
+		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,1,'');
+		}
 		//echo $sql."\n";print_r($num);echo"\n";
 		for ($i=0;$i<$num;$i++)
 		{
