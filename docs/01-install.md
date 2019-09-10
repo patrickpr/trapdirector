@@ -7,7 +7,7 @@ Requirements
 * Icingaweb2 and php7
 * net-snmp for snmptrapd
 * net-snmp-utils for snmptranslate
-* mysql/mariadb database
+* mysql/mariadb or postgresql database 
 
 Better with
 ---------------
@@ -38,6 +38,8 @@ $icingaweb2_etc="/etc/icingaweb2";
 Create Database
 -----------------
 
+* mysql / mariadb
+
 Set up a new (or use existing) database in icingaweb 2 :
 Note : following commands must be run as root or database admin.
 
@@ -51,6 +53,28 @@ Create user and assign rights :
 mysql -u root -e "grant usage on *.* to <user>@localhost identified by '<password>';"
 mysql -u root -e "grant all privileges on <database name>.* to <user>@localhost ;"
 ```
+
+* postgresql
+
+Create user if needed : 
+
+````
+su - postgres
+createuser --interactive --pwprompt
+````
+
+or 
+
+````
+createuser -U <admin login> -W <new user> -P 
+````
+
+Create database if needed : 
+
+````
+createdb -O <database user> <database name>
+````
+
 
 Create database on Icingaweb2 in /icingaweb2/config/resource (direct link on trapdirector configuration page).
 
