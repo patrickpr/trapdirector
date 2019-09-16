@@ -6,14 +6,15 @@ Migration path : from version > 1.0.0
 
 BUGS
 ====
-
-<none>
+1) Bug in handler editing (OK status for actions was no displayed and could be overwritten)
+2) Mib trap syntax was not correctly imported in database
+3) Bug in API test
 
 ENHANCEMENTS
 ============
 
-1) Added ido database test in settings and redirects to settings when pages tries an access to ido that fails.
-
+1) Added ido database test in settings and redirects to settings when pages tries an access to ido that fails. (ref issue#5)
+2) Added PotgreSQL Support (ref issue#9)
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.0

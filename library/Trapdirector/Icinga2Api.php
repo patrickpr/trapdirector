@@ -71,7 +71,13 @@ class Icinga2API
 
     public function test(array $permissions)
     {
-        $result=$this->request("get", "", NULL, NULL);
+       try
+        {
+            $result=$this->request('GET', "", NULL, NULL);
+        } catch (Exception $e)
+        {
+            return array(true, 'Error with API : '.$e->getMessage());
+        }
         //var_dump($result);
         $permOk=1;
         $permMissing='';
