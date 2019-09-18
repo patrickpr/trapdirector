@@ -140,7 +140,7 @@ Reload the configuration page, it should now complain about the schema :
 
 So click on create schema : 
 
-![install-5](img/install-auto-5.jpg)
+![install-7](img/install-auto-7.jpg)
 
 Back to settings page : SAVE the configuration.
 
