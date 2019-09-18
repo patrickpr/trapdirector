@@ -35,6 +35,13 @@ $icingaweb2_etc="/etc/icingaweb2";
 [....]
 ```
 
+Automatic installation
+-----------------
+
+There is an install script which can help you if not familiar with database creation etc... : ![Auto install](30-install-auto.md)
+
+It will execute the manual tasks described below.
+
 Create Database
 -----------------
 
@@ -101,7 +108,7 @@ The options are
 Create schema
 ---------------
 
-After setting the database (1) and ido database (2), refresh the config page : 
+After setting the database (1) and ido database (2), save the config page : 
 
 ![install-2](img/install-2.jpg)
 
@@ -126,7 +133,7 @@ object ApiUser "trapdirector" {
   permissions = [ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
 }
 ```
-Note (BETA VERSION) : Permissions will maybe change in near future (but the module will check for this, see below).
+Note : Permissions will maybe change in near future (but the module will check for this, see below).
 
 Then reload icinga2 (systemctl reload icinga2)
 
