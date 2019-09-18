@@ -134,7 +134,7 @@ Done setting permissions
 Back to Icingaweb2 GUI
 ---------------
 
-Reload the configuration page, it should now complain about the schema : 
+Reload the configuration page (do NOT click "save changes" as it will overwrite what the script has done, it should now complain about the schema : 
 
 ![install-5](img/install-auto-5.jpg)
 
@@ -142,7 +142,7 @@ So click on create schema :
 
 ![install-7](img/install-auto-7.jpg)
 
-Back to settings page : SAVE the configuration.
+Back to settings page : SAVE the configuration (for IDO database).
 
 If there is no more errors, you are ready to go !
 

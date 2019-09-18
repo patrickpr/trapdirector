@@ -104,6 +104,7 @@ The options are
 * snmptranslate binary : default should be OK, test in in mib&status page.
 * Path for mibs : local mibs (default /usr/share/icingaweb2/modules/trapdirector/mibs). You can add directories with ':' separators : the mib upload will then be in the first one 
 * icingacmd path : default should be OK
+* API server/port/user : see the API section.
 
 Create schema
 ---------------
