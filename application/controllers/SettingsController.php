@@ -33,9 +33,6 @@ class SettingsController extends TrapsController
     $dberrorMsg=$this->params->get('idodberror');
     if ($dberrorMsg != '')
         $this->view->errorDetected=$dberrorMsg;
-	        
-    // ******************* TODO : set this as default for ido database *******************
-    //echo $this->Config()->module('monitoring','backends')->get('icinga','resource');
     
     // Test if configuration exists, if not create for installer script
     if ($this->Config()->isEmpty() == true)
@@ -116,13 +113,10 @@ class SettingsController extends TrapsController
 
     $this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
 
-	$this->view->form = $form = new TrapsConfigForm();
-	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
-
 	// Check standard Icingaweb2 path
 	$this->view->icingaEtcWarn=0;
 	$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	if ($icingaweb2_etc != "/etc/icingaweb2/")
+	if ($icingaweb2_etc != "/etc/icingaweb2/" && $icingaweb2_etc != '')
 	{
 	    $output=array();
 	    
@@ -134,9 +128,20 @@ class SettingsController extends TrapsController
 	        $this->view->icingaweb2_etc=$icingaweb2_etc;
 	    }
 	}
-	    
+
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
+	
+	
+	// ******************* configuration form setup*******************
+	$this->view->form = $form = new TrapsConfigForm();
+	
+	// set default paths;
+	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
+	
+	// set default ido database
+	$this->view->form->setDefaultIDODB($this->Config()->module('monitoring','backends')->get('icinga','resource'));
+	
 	// Make form handle request.
 	$form->setIniConfig($this->Config())
 		->setDBList($resources)
