@@ -11,7 +11,6 @@ use RunTimeException;
 
 
 use Icinga\Module\Trapdirector\TrapsController;
-use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
 use Icinga\Module\Trapdirector\Icinga2Api;
 
@@ -19,9 +18,10 @@ use Trap;
 
 class SettingsController extends TrapsController
 {
+    
   public function indexAction()
   {
-
+      
     // CHeck permissions : display tests in any case, but no configuration.
 	$this->view->configPermission=$this->checkModuleConfigPermission(1);
 	// But check read permission
@@ -89,7 +89,7 @@ class SettingsController extends TrapsController
 	    $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
     	$apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
     	try {
-    	    list($this->view->apimessageError,$this->view->apimessage)=$apitest->test(TrapModuleConfig::getapiUserPermissions());
+    	    list($this->view->apimessageError,$this->view->apimessage)=$apitest->test($this->getModuleConfig()::getapiUserPermissions());
     	    //$this->view->apimessageError=false;
     	} catch (RuntimeException $e) {
     	    $this->view->apimessage='API config : ' . $e->getMessage();
@@ -107,7 +107,7 @@ class SettingsController extends TrapsController
 
 	// List DB in $ressources
 	$resources = array();
-	$allowed = array('mysql', 'pgsql'); // TODO : support other DB ?
+	$allowed = array('mysql', 'pgsql');
 	foreach (ResourceFactory::getResourceConfigs() as $name => $resource) {
 		if ($resource->get('type') === 'db' && in_array($resource->get('db'), $allowed)) {
 			$resources[$name] = $name;
