@@ -8,7 +8,7 @@ use Icinga\Application\Icinga;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Exception\ConfigurationError;
 use RunTimeException;
-
+use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
@@ -34,10 +34,22 @@ class SettingsController extends TrapsController
     if ($dberrorMsg != '')
         $this->view->errorDetected=$dberrorMsg;
     
+    $this->view->configErrorDetected == NULL; // Displayed error on various conifugration errors.
+    
     // Test if configuration exists, if not create for installer script
     if ($this->Config()->isEmpty() == true)
     {
-        // TODO
+        $this->Config()->setSection('config'); // Set base config section.
+        try 
+        { 
+            $this->Config()->saveIni();
+            $this->view->configErrorDetected='Configuration is empty : you can run install script with parameters (see Automatic installation below)';
+        }
+        catch (Exception $e)
+        {
+            $this->view->configErrorDetected=$e->getMessage();
+        }
+        
     }
 	// Test Database
 	$db_message=array( // index => ( message OK, message NOK, optional link if NOK ) 
@@ -132,7 +144,13 @@ class SettingsController extends TrapsController
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
 	
-	
+	$this->view->installer= $this->Module()->getBaseDir() . '/bin/installer.sh '
+	    . ' -c all ' 
+	    . ' -d ' . $this->Module()->getBaseDir()
+	    . ' -p ' . PHP_BINARY
+	    . ' -a ' . exec('whoami')
+	    . ' -w ' . Icinga::app()->getConfigDir();
+	        
 	// ******************* configuration form setup*******************
 	$this->view->form = $form = new TrapsConfigForm();
 	
@@ -163,7 +181,7 @@ class SettingsController extends TrapsController
 	
 	if ($dberror[0] == 0)
 	{
-		echo 'Schema already exists <br>';
+		echo 'Schema already exists';
 	}
 	else
 	{
@@ -206,6 +224,7 @@ class SettingsController extends TrapsController
 		$Trap->create_schema($schema,$prefix);
 		echo '</pre>';
 	}
+	echo '<br><br>Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a>';
   }
 
   public function updateschemaAction()
@@ -219,6 +238,8 @@ class SettingsController extends TrapsController
 	  // check if needed
 	  
 	  $dberror=$this->getDb(true); // Get DB in test mode
+	  
+	  echo 'Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a><br><br>';
 	  
 	  if ($dberror[0] == 0)
 	  {

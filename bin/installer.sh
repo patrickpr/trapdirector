@@ -295,6 +295,8 @@ function add_schema_mysql(){
   echo -e "\n==================================";
   echo "Adding trap schema in database";
   echo
+					   
+   
   unset dbName dbFrom;
   dbAuto=0;
   if [ ! -z "$Psqlconn" ]; then
@@ -381,6 +383,7 @@ function add_schema_mysql(){
   else
 	dbPass2=$PsqlPass;
   fi 
+				
   
   if [ $dbAuto -eq 0 ]; then 
 	  echo -n "Allow new user to connect only from [localhost] : "
