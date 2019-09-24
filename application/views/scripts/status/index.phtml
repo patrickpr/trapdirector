@@ -67,8 +67,11 @@
 </div>
 
 <script type='text/javascript'>
-dbHelper='/icingaweb2/trapdirector/helper/dbmaintenance';
-logHelper='/icingaweb2/trapdirector/helper/logdestination';
+<?php 
+		use Icinga\Web\Url;
+?>
+dbHelper='<?= Url::fromPath("trapdirector/") ?>helper/dbmaintenance';
+logHelper='<?= Url::fromPath("trapdirector/") ?>helper/logdestination';
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
 {

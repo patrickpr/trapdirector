@@ -12,7 +12,7 @@ use Icinga\Web\Url;
 
 <div class="content">
 
-<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="/icingaweb2/trapdirector/handler/add_form" method="post">
+<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="<?= Url::fromPath("trapdirector/") ?>handler/add_form" method="post">
 	
 	<input type="hidden" name="db_rule" id="id_Hidden_db_rule"
 		value="<?= $this->ruleid ?>" >
@@ -206,7 +206,7 @@ use Icinga\Web\Url;
 
 	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>
 	<div class="control-group" data-base-target="_next">
-		<a href="/icingaweb2/trapdirector/handler/testrule" class="link-button icon-wrench">Open rule tester</a>
+		<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
     	<div class="control-label-group">
     		<span id="id_rules_label">
     			<label for="id_rules" class="control-label optional">Rule (an empty rule will always return true)</label>
@@ -282,16 +282,16 @@ use Icinga\Web\Url;
     <script type='text/javascript' src='<?= Url::fromPath("trapdirector/") ?>public/js/module.js'> </script>
  -->
 <script type='text/javascript'>
-
-hostHelper='/icingaweb2/trapdirector/helper/gethosts';
-hostgroupHelper='/icingaweb2/trapdirector/helper/gethostgroups';
-serviceHelper='/icingaweb2/trapdirector/helper/getservices';
-hostgroupserviceHelper='/icingaweb2/trapdirector/helper/gethostgroupservices';
-trapfrommmibHelper='/icingaweb2/trapdirector/helper/gettraps';
-translateoidHelper='/icingaweb2/trapdirector/helper/translateoid';
-getobjectsHelper='/icingaweb2/trapdirector/helper/gettrapobjects';
-form_submit='/icingaweb2/trapdirector/handler/handlerform';
-testHelper='/icingaweb2/trapdirector/helper/testrule';
+webPath='<?= Url::fromPath("trapdirector/") ?>'
+hostHelper=webPath + 'helper/gethosts';
+hostgroupHelper=webPath + 'helper/gethostgroups';
+serviceHelper= webPath + 'helper/getservices';
+hostgroupserviceHelper= webPath + 'helper/gethostgroupservices';
+trapfrommmibHelper= webPath + 'helper/gettraps';
+translateoidHelper= webPath + 'helper/translateoid';
+getobjectsHelper= webPath + 'helper/gettrapobjects';
+form_submit= webPath + 'handler/handlerform';
+testHelper= webPath + 'helper/testrule';
 
 objectsList=[
 	//{1:[1,'.1.3.6.1.2.1.1.2.5','IF-MIB','ifindex','1','Integer (1...32222)]}

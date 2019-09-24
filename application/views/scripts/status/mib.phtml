@@ -2,7 +2,7 @@
   <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
   <h1>Mib Management</h1>
 </div>
-
+<?php use Icinga\Web\Url; ?>
 <div class="content">
 	<h2>MIB Database</h2>
 	<ul>
@@ -64,8 +64,8 @@
 </div>
 
 <script type='text/javascript'>
-mibfileHelper='/icingaweb2/trapdirector/status/mib';
-mibfileUploadHelper='/icingaweb2/trapdirector/status/mibfile';
+mibfileHelper='<?= Url::fromPath("trapdirector/") ?>status/mib';
+mibfileUploadHelper='<?= Url::fromPath("trapdirector/") ?>status/mibfile';
 
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)

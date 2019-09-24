@@ -62,8 +62,8 @@
 </div>
 
 <script type='text/javascript'>
-
-var testHelper='/icingaweb2/trapdirector/helper/testrule';
+<?php use Icinga\Web\Url; ?>
+var testHelper='<?= Url::fromPath("trapdirector/") ?>helper/testrule';
 var varList=[
 	// name (number), value, type : string, number, empty
 	//{1:[1,"value", 1]}

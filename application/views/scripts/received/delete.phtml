@@ -2,9 +2,9 @@
   <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
 <h2> Delete selected traps from database </h2>
 </div>
-
+<?php use Icinga\Web\Url; ?>
 <div class="content">
-<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="/icingaweb2/trapdirector/received/delete_form" method="post">
+<form id="mainForm" name="mainForm" enctype="application/x-www-form-urlencoded" action="<?= Url::fromPath("trapdirector/") ?>received/delete_form" method="post">
 	<div> If left empty, IP or OID will not be part of filter </div>
 	<div class="control-group">
 		<div class="control-label-group">
@@ -43,7 +43,7 @@
 
 <script type='text/javascript'>
 
-getLinesHelper='/icingaweb2/trapdirector/received/deletelines';
+getLinesHelper='<?= Url::fromPath("trapdirector/") ?>received/deletelines';
 
 function onclickDeleteAction(action)
 {
