@@ -1307,7 +1307,7 @@ class Trap
 		$services=$services_db->fetchAll();
 		
 		// Get all rules
-		$sql_query="SELECT host_name, service_name, revert_ok FROM traps_rules where revert_ok != 0;";
+		$sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->db_prefix."rules where revert_ok != 0;";
 		$db_conn2=$this->db_connect_trap();
 		if (($rules_db=$db_conn2->query($sql_query)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql_query,1,''); 

@@ -216,7 +216,7 @@ class TrapTableList extends TrapTable
 			{
 				if ($first==0) $sql.=' OR ';
 				$first=0;
-				$sql.=" ".$column." LIKE  '%".$this->filter_query."%' ";
+				$sql.=" CAST(".$column." AS  char(100))  LIKE  '%".$this->filter_query."%' ";
 			}
 			$sql.=')';			
 		}

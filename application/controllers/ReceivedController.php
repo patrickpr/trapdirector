@@ -38,8 +38,8 @@ class ReceivedController extends TrapsController
 
 	}
 
-	/** TODO : put SQL code in trapsController,
-	*	use the getTrapDetail / getTrapObject functions
+	/** 
+	*	Trap detail page
 	*/	
 	public function trapdetailAction() 
 	{

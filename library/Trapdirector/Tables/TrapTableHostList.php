@@ -178,12 +178,11 @@ class TrapTableHostList extends TrapTable
     public function getBaseQuery()
     {
 		$db=$this->db();
-		
 		$query = $db->select()->from(
             $this->moduleConfig->getTrapTableName(),
 		    $this->moduleConfig->getTrapHostListDisplayColumns()
-		    )->group(array('t.source_ip','t.trap_oid')
-		    )->order('t.source_ip');
+		    )->group(array('t.source_ip','t.source_name','t.trap_oid'))
+		    ->order('t.source_ip');
 
         return $query;
     }	 

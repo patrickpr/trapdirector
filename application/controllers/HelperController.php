@@ -329,7 +329,6 @@ class HelperController extends TrapsController
 	*/
 	public function logdestinationAction()
 	{
-		
 		$postData=$this->getRequest()->getPost();
 		if (isset($postData['destination']))
 		{
