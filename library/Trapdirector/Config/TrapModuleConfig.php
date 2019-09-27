@@ -123,6 +123,7 @@ class TrapModuleConfig
 	        'last_sent'    =>  'UNIX_TIMESTAMP(max(t.date_received))'
 	    );
 	}
+
 	public function getTrapHostListSearchColumns()
 	{
 	    return array(); // No search needed on this table
