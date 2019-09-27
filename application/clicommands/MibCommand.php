@@ -29,10 +29,13 @@ class MibCommand extends Command
 	*	OPTIONS
 	*	
 	*	--pid <file> : run in background with pid in <file>
+	*	--verb    : Set output log to verbose
+	*
 	*/
 	public function updateAction()
 	{
 	    $background = $this->params->get('pid', null);
+	    $logLevel= $this->params->has('verb') ? 4 : 2;
 	    $pid=1;
 	    if ($background != null)
 	    {
@@ -54,7 +57,7 @@ class MibCommand extends Command
 		$trap = new Trap($icingaweb2_etc);
 		if ($pid == 1)
 		{
-		    $trap->setLogging(2,'display');
+		    $trap->setLogging($logLevel,'display');
 		}
 		else
 		{  // use default display TODO : if default is 'display' son process will be killed at first output....

@@ -241,10 +241,22 @@ class Trap
 	*/
 	public function db_connect_trap() 
 	{
-		if ($this->trapDB != null) { return $this->trapDB; }
+		if ($this->trapDB != null) {
+		    // Check if connection is still alive
+		    try {
+		        $this->trapDB->query('select 1')->fetchColumn();
+		        return $this->trapDB;
+		    } catch (Exception $e) {
+		        // select 1 failed, try to reconnect.
+		        $this->trapDB=null;
+		        $this->trapLog('Databse connection lost, reconnecting',2,'');
+		    }
+		     
+		}
 		$this->trapDB=$this->db_connect('traps');
 		return $this->trapDB;
 	}
+	
 
 	/** Connects to idodb 
 	*	@return PDO connection
@@ -1383,13 +1395,14 @@ class Trap
 				" , type_enum = ". (($type_enum==null)?'null':"'".$type_enum."'").
 				" WHERE id='".
 				$this->dbOidAll[$this->dbOidIndex[$oid]]['id'] ."' ;";
-				//$this->trapLog('SQL query : '.$sql,4,'');
+				$this->trapLog('SQL query : '.$sql,4,'');
 				if ($db_conn->query($sql) == FALSE) {
 					$this->trapLog('Error in query : ' . $sql,1,'');
 				}			
 			}
 			else
 			{
+			    $this->trapLog('Trap unchanged : '.$name . ' / OID : '.$oid,4,'');
 				//echo "found oid : ".$oid."\n";
 			}
 		}
@@ -1398,8 +1411,9 @@ class Trap
 			// First get mib :
 			$return=$match2=array();
 			$retVal=0;
-			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-			' '.$oid,$return,$retVal);
+			$snmptransCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid;
+			$this->trapLog('New trapd, executing : '.$snmptransCommand,4,'');
+			exec($snmptransCommand,$return,$retVal);
 			if ($retVal!=0)
 			{
 				$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid,1,'');
@@ -1431,6 +1445,7 @@ class Trap
 			}					
 			$sql='INSERT INTO '.$this->db_prefix.'mib_cache '.
 			'('.$sqlT.') VALUES ('.$sqlV.');';
+			$this->trapLog('SQL query : '.$sql,4,'');
 			if ($db_conn->query($sql) == FALSE) {
 				$this->trapLog('Error in query : ' . $sql,1,'');
 			}					
@@ -1444,6 +1459,7 @@ class Trap
 		/**********  Create all (or just trap) objetcs  *****/
 		// Get all traps
 		$sql='SELECT id,oid FROM '.$this->db_prefix.'mib_cache WHERE type=21;';
+		$this->trapLog('SQL query get all traps: '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
 			$this->trapLog('No result in query : ' . $sql,1,'');
 		}
@@ -1457,8 +1473,9 @@ class Trap
 			$match=array();
 			// get OBJECTS for this trap OID
 			$snmptrans=null;
-			exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-					' -Td '.$trapOID,$snmptrans,$retVal);
+			$snmptransCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -Td '.$trapOID;
+			$this->trapLog('Getting obj for trap : '.$snmptransCommand,4,'');
+			exec($snmptransCommand,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
 				$this->trapLog('error executing snmptranslate',1,'');
@@ -1473,10 +1490,10 @@ class Trap
 			}
 			if ($synt == null) 
 			{
-				//echo "No objects for $trapOID\n";
+			    $this->trapLog('No object found.',4,'');
 				continue;
 			}
-			//echo "$synt \n";
+			$this->trapLog('Object found : ' . $synt,4,'');
 			$trapObjects=array();
 			while (preg_match('/ *([^ ,]+) *,* */',$synt,$match))
 			{
@@ -1486,6 +1503,7 @@ class Trap
 			//print_r($trapObjects);
 			// Delete all trap objects for this trap_id
 			$sql='DELETE FROM '.$this->db_prefix.'mib_cache_trap_object where trap_id='.$trapID.';';
+			$this->trapLog('SQL query delete objects for trap : '.$sql,4,'');
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
 				$this->trapLog('No result in query : ' . $sql,1,'');
 			}
@@ -1494,6 +1512,7 @@ class Trap
 			{
 				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_trap_object '.
 				'(trap_id,object_name) VALUES ('.$trapID.' , \''.$trapObject.'\');';
+				$this->trapLog('SQL query add objects : '.$sql,4,'');
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
 					$this->trapLog('No result in query : ' . $sql,1,'');
 				}
@@ -1664,8 +1683,10 @@ class Trap
 		$timeTaken = microtime(true);
 		$retVal=0;
 		// Get all mib objects from all mibs
-		exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-				' -On -Tto 2>/dev/null',$this->objectsAll,$retVal);
+		$snmpCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -On -Tto 2>/dev/null';
+		$this->trapLog('Getting all traps : '.$snmpCommand,4,'');
+
+		exec($snmpCommand,$this->objectsAll,$retVal);		
 		if ($retVal!=0)
 		{
 			$this->trapLog('error executing snmptranslate',1,'');
@@ -1690,9 +1711,11 @@ class Trap
 		
 		// Count elements to show progress
 		$numElements=count($this->objectsAll);
+		$this->trapLog('Total snmp objects returned by snmptranslate : '.$numElements,3,'');
 		$step=$basestep=$numElements/10;
 		$num_step=0;
 		$timeFiveSec = microtime(true);
+		
 		// Create index for trap objects
 		$this->trapObjectsIndex=array();
 		for ($curElement=0;$curElement < $numElements;$curElement++)
@@ -1742,6 +1765,7 @@ class Trap
 				continue;
 			}
 			
+			$this->trapLog('Found trap : '.$match[1] . ' / OID : '.$oid,3,'');
 			if ($display_progress) echo '#'; // echo a # when trap found
 			
 			$name=$match[1];
@@ -1762,10 +1786,10 @@ class Trap
 			$synt=null;
 			foreach ($snmptrans as $line)
 			{	
-			if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
-				{
-					$synt=$match[1];
-				}
+    			if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
+    				{
+    					$synt=$match[1];
+    				}
 			}
 			if ($synt == null) 
 			{
@@ -1786,6 +1810,8 @@ class Trap
 				array_push($this->trapObjectsIndex,$OIDObj);
 			}						
 		}
+		
+		
 		for ($curElement=0;$curElement < $numElements;$curElement++)
 		{
 			if (!in_array($this->objectsAll[$curElement],$this->trapObjectsIndex))
