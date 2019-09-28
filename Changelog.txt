@@ -1,4 +1,21 @@
 -------------------------------------------------------------------------------------------------
+Version 1.0.2
+Date : No released
+Database update : No
+Migration path : from version > 1.0.0
+
+UPGRADE NOTES : 
+
+BUGS
+====
+1) 
+
+ENHANCEMENTS
+============
+
+1) 
+
+-------------------------------------------------------------------------------------------------
 Version 1.0.1
 Date : 28 Sept 2019
 Database update : No
