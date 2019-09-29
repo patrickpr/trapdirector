@@ -1,5 +1,5 @@
 #!/bin/bash
 
-echo "Installing dependencies";
+echo "Installing dependencies for $DB";
 
 exit 0;
