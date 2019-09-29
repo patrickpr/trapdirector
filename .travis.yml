@@ -9,5 +9,9 @@ services:
 before_script:
   - ./test/install_dep.sh
 
+env:
+  - DB=mysql
+  - DB=pgsql
+  
 script:
   - ./test/launch_test.sh
