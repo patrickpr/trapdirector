@@ -1,5 +1,5 @@
 #!/bin/bash
 
-echo "Launching tests";
+echo "Launching tests for $DB";
 
 exit 0;
