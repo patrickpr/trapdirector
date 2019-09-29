@@ -1,0 +1,13 @@
+language: php
+php:
+  - '7.1'
+
+services:
+  - mysql
+  - postgresql
+  
+before_script:
+  - ./test/install_dep.sh
+
+script:
+  - ./test/launch_test.sh
