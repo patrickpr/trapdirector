@@ -243,11 +243,11 @@ Set up mibs :
 
 The system mibs should be set by net-snmp package. Check the defaults mibs are set by testing `snmptranslate 1.3.6.1.2.1.1.1` -> `SNMPv2-MIB::sysDescr` 
 
-Mib you can upload will be in (default) `/usr/share/icingaweb2/module/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
+Mib you can upload will be in (default) `/usr/share/icingaweb2/modules/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
 For example (as root) : 
 ```
-chown apache:apache /usr/share/icingaweb2/module/trapdirector/mibs
-chmod 755 /usr/share/icingaweb2/module/trapdirector/mibs
+chown apache:apache /usr/share/icingaweb2/modules/trapdirector/mibs
+chmod 755 /usr/share/icingaweb2/modules/trapdirector/mibs
 ```
 
 After this, you can create the first mib database (from system mibs) with the following command line : 
