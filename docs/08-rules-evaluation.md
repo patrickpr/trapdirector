@@ -81,5 +81,5 @@ There is also a rule tester page : click "open rule tester"
 
 
 
-Go back to user guide : ![Traps](02-userguide.md)
+Go back to user guide : [Traps](02-userguide.md)
 
