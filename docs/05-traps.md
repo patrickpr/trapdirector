@@ -112,7 +112,7 @@ Here, the display will be for example : "Trap linkUP received for 3"
 
 * 2 : Rule
 
-Have a look ![here](08-rules-evaluation.md) for how to make rules.
+Have a look [here](08-rules-evaluation.md) for how to make rules.
 
 * 3 : actions depending on rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore trap (e.g. no database record)
 
@@ -131,5 +131,5 @@ Testing a rule
 Not currently implemented
 
 
-Go back to user guide : ![Traps](02-userguide.md)
+Go back to user guide : [Traps](02-userguide.md)
 
