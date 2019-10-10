@@ -258,5 +258,5 @@ icingacli trapdirector mib update
 
 Ready to go !
 
-Now have a look at the doc : ![Traps](02-userguide.md)
+Now have a look at the doc : [Traps](02-userguide.md)
  
