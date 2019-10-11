@@ -1,13 +1,13 @@
 <div class="controls">
   <?= /** @var \Icinga\Module\Trapdirector\Controllers\ $this */ $this->tabs ?>
-  <h1>Mib Management</h1>
+  <h1>MIB Management</h1>
 </div>
 <?php use Icinga\Web\Url; ?>
 <div class="content">
-	<h2>MIB Database</h2>
+	<h2>MIB database</h2>
 	<ul>
-	<li>Traps in database : <?= $this->mibDbCountTrap ?></li>
-	<li>Objects in database : <?= $this->mibDbCount ?></li> 
+	<li>Traps in database: <?= $this->mibDbCountTrap ?></li>
+	<li>Objects in database: <?= $this->mibDbCount ?></li> 
 	
 	</ul>
 	<br>
@@ -16,9 +16,9 @@
 		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" >
 		Update MIB Database
 	</button>  
-	Note : Command takes time to execute and is launched in background. Refresh the page to see objects count rising.<br>
-	If you don't see any updates ater several minutes, run in command line : 'icingacli trapdirector mib update' to have output<br>
-	Note : you can leave this page safely an come back later.
+	Note: Command takes time to execute and is launched in background. Refresh the page to see objects count rising.<br>
+	If you don't see any updates after several minutes, run in command line : 'icingacli trapdirector mib update' to have output<br>
+	Note: You can leave this page safely and come back later.
    <br>
    
    <h2>snmptranslate</h2>
@@ -30,8 +30,8 @@
 	?>; font-weight:bold;"> 
 		<?= $this->snmptranslate ?> </span>
 		
-  <h2>Mib directories</h2>
-  Directories where mibs are searched (configured in module configuration) : 
+  <h2>MIB directories</h2>
+  Directories where mibs are searched (configured in module configuration): 
   <ul>
 <?php 
 	//print_r($this->dirArray);
@@ -42,7 +42,7 @@
 	} 
 ?>  
   </ul>
-  Files added in MIB directory : 
+  Files added in MIB directory: 
   <ul>
  <?php
 	foreach ($this->fileList as $file)
