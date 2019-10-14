@@ -141,7 +141,6 @@ use Icinga\Web\Url;
 				
 			</select>			
 		</div>
-
 		<div class="control-group">
 			<div class="control-label-group">
 				<span id="id_mainoid_span_label">
@@ -155,7 +154,9 @@ use Icinga\Web\Url;
 				Add objects
 			</button>
 		</div>
-
+		<div>
+		Description : <span id="trap_description"></span>
+		</div>
 		<!-- Revert OK timeout selection -->
 		<div class="control-group">
 			<div class="control-label-group">
@@ -495,7 +496,8 @@ function onclickAddObjects()
 							trapObjectsList[key]['name'],
 							'',  // Value
 							trapObjectsList[key]['type'],
-							trapObjectsList[key]['type_enum']
+							trapObjectsList[key]['type_enum'],
+							trapObjectsList[key]['description']
 						);
 						count_id++;
 						  
@@ -524,7 +526,7 @@ function click_button_oid_add()
 	}
 }
 
-function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum)
+function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum,description=null)
 {
 	ido=objectsList_id;
 	addarray=[count_id,oid,mib,name,''];
@@ -541,7 +543,10 @@ function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum)
 	htm +=	"	<td>"+name+"</td>\n";
 	htm +=	"	<td>\n";
 	htm +=	"		<input type='text' id='obj_table_oid_"+ido+"_value' placeholder='No value' size=20 value='"+value+"'/></td>\n";	
-	htm +=	"	<td class='traphover'>"+type+" <span class='tohover'>"+type_enum+"</span></td>\n";
+	htm +=	"	<td class='traphover'>"+type+" <span class='tohover'>"
+	if (type_enum != 'null') { htm += 'Values : ' + type_enum; } else { htm += 'No enum values'; }
+	if (description != null) { htm += '<br>Description : ' +description; }
+	htm +=  "</span></td>\n";
 	htm +=	"	<td><button type='button' onclick='click_button_table_del("+ido+")'>";
 	htm +=	"		Del.</button></td>\n";
 	htm +=	"</tr>\n";
@@ -622,6 +627,36 @@ function selectTrapName(update=1) // On trap select update textual details and m
 	name=$("#id_mainMibs_Trap option:selected" ).text();
 	$("#id_mainoid_trapname").html(" "+mib+"::"+name+" ");
 	$("#id_mainoid_add_objects").prop( "disabled", false );
+
+	// Set trap description
+	$.ajax({
+		url: translateoidHelper,
+		async: true,
+		dataType: "json",
+		type: "POST",
+		data: 
+		{
+			"oid": trapInput,
+		},
+        success: function (data) 
+		{
+			//alert(data.status);
+			if (data.status == "OK") 
+			{
+				//alert(data.type_enum);
+				$("#trap_description").html(data.description);
+			} 
+			else 
+			{
+				$("#trap_description").html('');	
+			}
+		},
+		error: function (data)
+		{
+			displayWarning ("error" + data);
+		}
+	});	
+	
 }
 
 function TrapNameGet(selectMib,selectUpdate)

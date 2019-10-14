@@ -32,10 +32,15 @@ icingawebResources="resources.ini";
 function usage()
 {
    echo "$0 -c <command> [ -w <icingaweb2 etc dir> -p <php binary> -d <trapdirector directory>";
+			
    echo -e "\t -a <apache user>"
    echo -e "\t -b <mysql|pgsql> -u <SQL_user> [ -s <SQL Password> ] ]";
    echo -e "\t [ -t <DBName:SQL IP:SQL port:SQL admin:SQL admin password> ] ";
    echo -e "\t -i";
+	   
+									
+																		   
+							  
    echo "command (you can have multiple -c ): 
    api      : setup api & user
    snmpconf : setup snmptrapd.conf
@@ -694,9 +699,13 @@ function set_perms(){
   echo -e "\n==================================";
 }
 
+			
 
 unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
 unset Psqlconn
+	   
+																					
+							  
 commands='';
 Pinter=1;
 
@@ -726,12 +735,15 @@ while getopts ":c:w:p:d:u:s:a:b:t:i" o; do
 		b)
 			Pdbtype=${OPTARG}
 			;;
+			
 		t)
 			Psqlconn=${OPTARG}
 			;;
 		i)
 			Pinter=0;
 			;;
+	   
+							  
 		*)
 			echo "unknown option ${OPTARG}"
 			usage
@@ -767,6 +779,7 @@ if [[ $commands =~ snmprun ]] || [[ $commands =~ all ]]; then
 fi
 
 if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
+			
 	if [[ -z "$Pdbtype" ]] || [[ $Pdbtype =~ mysql ]]; then
 		add_schema_mysql 
 	else if [[ $Pdbtype =~ pgsql ]]; then
@@ -775,6 +788,12 @@ if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
 		echo "Unknown database type : $Pdbtype"
 		usage
 	fi
+	   
+													   
+				  
+	 
+				  
+							  
 	fi
 fi
 

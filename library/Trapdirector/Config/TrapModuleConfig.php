@@ -63,8 +63,6 @@ class TrapModuleConfig
 	// Mib cache tables
 	public function getMIBCacheTableName() { return $this->table_prefix . 'mib_cache'; }
 	public function getMIBCacheTableTrapObjName() { return $this->table_prefix . 'mib_cache_trap_object'; }
-	public function getMIBCacheTableSyntax() { return $this->table_prefix . 'mib_cache_syntax'; }
-	public function getMIBCacheTableTC() { return array('t' => $this->table_prefix . 'mib_cache_tc'); }
 	
 	
 	/****************** Database queries *******************/

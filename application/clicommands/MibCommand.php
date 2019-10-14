@@ -29,13 +29,17 @@ class MibCommand extends Command
 	*	OPTIONS
 	*	
 	*	--pid <file> : run in background with pid in <file>
+	*
 	*	--verb    : Set output log to verbose
 	*
+	*   --force-check : force check of all traps & objects for change. (NOT IMPLEMENTED)
 	*/
 	public function updateAction()
 	{
 	    $background = $this->params->get('pid', null);
 	    $logLevel= $this->params->has('verb') ? 4 : 2;
+	    if ($this->params->has('force-check')) { echo "Not implemented"; return;}
+	    $forceCheck=$this->params->has('force-check')?True:False;
 	    $pid=1;
 	    if ($background != null)
 	    {
@@ -78,8 +82,7 @@ class MibCommand extends Command
                 fclose(STDERR);
                 try
                 {
-                    $trap->update_mib_database(false);
-                    $trap->update_mibs_options();
+                    $trap->update_mib_database(false,$forceCheck);
                 }
                 catch (Exception $e)
                 {
@@ -94,10 +97,9 @@ class MibCommand extends Command
 		try
 		{
 			echo "Update main mib database : \n";
-			$trap->update_mib_database(true);
-			echo "Updating options : \n";
-			$trap->update_mibs_options();
-			echo "Done : \n";
+			echo "# (trap found) C (trap already processed) . (every 2 seconds) : \n";
+			$trap->update_mib_database(true,$forceCheck);
+			echo "Done\n";
 			
 		}
 		catch (Exception $e)
