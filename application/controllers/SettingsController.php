@@ -251,19 +251,39 @@ class SettingsController extends TrapsController
 	      echo 'Database does not exists or is not setup correctly<br>';
 	      return;
 	  }
-	  $target_version=$dberror[2];
-	  echo 'Updating schema to '. $target_version . ': <br>';
-	  echo '<pre>';
+      // setup
 	  require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
-	  
 	  $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 	  $debug_level=4;
 	  $Trap = new Trap($icingaweb2_etc);
-	  $Trap->setLogging($debug_level,'display');
+	  
 	  
 	  $prefix=$this->Config()->get('config', 'database_prefix');
-	  $updateSchema=$this->Module()->getBaseDir() . '/SQL/update_schema_v';
+	  $updateSchema=$this->Module()->getBaseDir() . '/SQL/';
 	  
+	  $target_version=$dberror[2];
+	  
+	  if ($this->params->get('msgok') == null) {
+	      // Check for messages and display if any
+	      $Trap->setLogging(2,'syslog');
+	      $message = $Trap->update_schema($updateSchema,$target_version,$prefix,true);
+	      if ($message != '')
+	      {
+	          echo 'Note :<br><pre>';
+	          echo $message;
+	          echo '</pre>';
+	          echo '<br>';
+	          echo '<a  class="link-button" style="font-size:large;font-weight:bold" href="' . Url::fromPath('trapdirector/settings/updateschema') .'?msgok=1">Click here to update</a>';
+	          echo '<br>';
+	          return;
+	      }
+	  }
+	  
+	  $Trap->setLogging($debug_level,'display');
+	  
+	  echo 'Updating schema to '. $target_version . ': <br>';
+	  echo '<pre>';
+	  	  
 	  $Trap->update_schema($updateSchema,$target_version,$prefix);
 	  echo '</pre>';
   }  

@@ -168,7 +168,8 @@ class MIBLoader
 			$retArray['type']=$translate;
 			$retArray['type_enum']='';			
 		}
-		/* TODO : put in DB but only if 
+		$retArray['description']=null;
+		/* TODO : put in DB (but mybe only in trap_class).
 		$query=$db->getConnection()->insert(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$array(

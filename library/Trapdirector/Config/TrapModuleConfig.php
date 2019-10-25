@@ -16,9 +16,9 @@ class TrapModuleConfig
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
 	// Minimum DB version
-	static public function getDbMinVersion() { return 1;}	
+	static public function getDbMinVersion() { return 2;}	
 	// Current DB version
-	static public function getDbCurVersion() { return 1;}
+	static public function getDbCurVersion() { return 2;}
 
 	/************ Module configuration **********************/
 	// Module base path

@@ -1698,6 +1698,7 @@ class Trap
 	        if ($check_existing == true) 
 	        {
 	            // TODO : check link trap - objects exists, mark them.
+	        }
 	        // Associate in object table
 	        $sql='INSERT INTO '.$this->db_prefix.'mib_cache_trap_object (trap_id,object_id) '.
 	   	        'values (:trap_id, :object_id)';	        
@@ -1714,6 +1715,7 @@ class Trap
 	    if ($check_existing == true)
 	    {
 	        // TODO : remove link trap - objects that wasn't marked.
+	    }
 	    
 	}
 	
@@ -1723,7 +1725,7 @@ class Trap
 	 * @param boolean $check_change : Force check of trap params & objects
 	 * @param boolean $onlyTraps : only cache traps and objects (true) or all (false)
 	 * @param string $startOID : only cache under startOID (NOT IMPLEMENTED)
-	*/
+	*/	
 	public function update_mib_database($display_progress=false,$check_change=false,$onlyTraps=true,$startOID='.1')
 	{
 		// Timing 
@@ -1867,7 +1869,7 @@ class Trap
 			if (isset($snmptrans[$numLine]))
 			{
 			    $snmptrans[$numLine] = preg_replace('/^[\t ]+DESCRIPTION[\t ]+"/','',$snmptrans[$numLine]);
-				  
+
 			    while (isset($snmptrans[$numLine]) && !preg_match('/"/',$snmptrans[$numLine]))
 			    {
 			        $trapDesc.=preg_replace('/[\t ]+/',' ',$snmptrans[$numLine]);
@@ -1877,6 +1879,7 @@ class Trap
 			        $trapDesc.=preg_replace('/".*/','',$snmptrans[$numLine]);
 			        $trapDesc=preg_replace('/[\t ]+/',' ',$trapDesc);
 			    }
+
 			}
 			$update=$this->update_oid($oid,$trapMib,$name,$type,NULL,NULL,NULL,NULL,$trapDesc);
 			$time_update += microtime(true) - $time_1; $time_1= microtime(true);
