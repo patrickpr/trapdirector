@@ -690,7 +690,7 @@ function serviceGet(serviceSet=null)
 					$("#id_Hidden_hostid").val(hostid);
 					html='';
 					serviceList.forEach(function (service){
-						html+='<option value='+service[0]+'>'+service[1]+'</option>';
+						html+='<option value="'+service[0]+'">'+service[1]+'</option>';
 					});
 					$("#id_service").html(html);
 					if (serviceSet != null)
@@ -737,7 +737,7 @@ function hostGroupServiceGet(serviceSet=null)
 					$("#id_Hidden_hostgroup").val(hostid);
 					html='';
 					serviceList.forEach(function (service){
-						html+='<option value='+service[0]+'>'+service[1]+'</option>';
+						html+='<option value="'+service[0]+'">'+service[1]+'</option>';
 					});
 					$("#id_service_hostgroup").html(html);
 					if (serviceSet != null)

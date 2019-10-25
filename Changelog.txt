@@ -8,7 +8,8 @@ UPGRADE NOTES :
 
 BUGS
 ====
-1) 
+1) When editing/adding handler, service is reset when changing action. Also problems with services with spaces (issue#17)
+
 
 ENHANCEMENTS
 ============
