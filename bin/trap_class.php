@@ -1034,13 +1034,23 @@ class Trap
 			return true;
 		}
 		$matches=array();
-		while (preg_match('/_OID\(([0-9\.]+)\)/',$rule,$matches) == 1)
+		while (preg_match('/_OID\(([0-9\.\*]+)\)/',$rule,$matches) == 1)
 		{
 			$oid=$matches[1];
 			$found=0;
+			// ** replaced by .*
+			$oidR=preg_replace('/\*\*/', '.*', $oid);
+			// * replaced by [^.]*  
+			$oidR=preg_replace('/\*/', '[0-9]+', $oidR);
+			
+			// replace * with \* in oid for preg_replace
+			$oid=preg_replace('/\*/', '\*', $oid);
+			
+			$this->trapLog('OID in rule : '.$oid.' / '.$oidR,4,'');
+			
 			foreach($this->trap_data_ext as $val)
 			{
-				if ($oid == $val->oid)
+				if (preg_match("/^$oidR$/",$val->oid) == 1)
 				{
 					if (!preg_match('/^[0-9]*\.?[0-9]+$/',$val->value))
 					{ // If not a number, change " to ' and put " around it
