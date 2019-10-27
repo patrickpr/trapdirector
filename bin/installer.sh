@@ -27,7 +27,7 @@ apacheUser='apache'
 icingawebEtc='/etc/icingaweb2';
 icingawebModule="/usr/share/icingaweb2/modules/${trapDirName}";
 
-icingawebResources="${icingawebEtc}/resources.ini";
+icingawebResources="resources.ini";
 
 function usage()
 {
@@ -63,7 +63,7 @@ function add_to_config()
   param=$1;val=$2;
   if [ ! -z "$PicingawbEtc" ] ; then etcDir=$PicingawbEtc ;
   else etcDir=$icingawebEtc; fi
-  iniFile="$etcDir/modules/${trapDirName}/config.ini";
+  iniFile="${etcDir}/modules/${trapDirName}/config.ini";
   if [ ! -f $iniFile ]; then
       # No config.ini file, must not create as permissions can be specific
       echo "config.ini file not  found";
@@ -98,7 +98,7 @@ function check_api() {
 	icingaEtc=$(get_icinga_etc);
 	if [ $? -ne 0 ]; then echo ": NOT FOUND"; return 1; fi
 	 
-	echo -n "($icingaEtc)"
+	echo -n "(${icingaEtc})"
 	echo -n " , api ";
 	api=$(icinga2 feature list  2>&1 | grep -E "Enabled features:.* api ");
 	if [ $? -ne 0 ]; then 
@@ -132,7 +132,7 @@ function check_api() {
 	
 	echo "Adding API user in trapdirector configuration"
 	if [ -z  "$PicingawbEtc" ]; then
-	  echo -n "IcingaWeb2 etc dir [$icingawebEtc] : ";
+	  echo -n "IcingaWeb2 etc dir [${icingawebEtc}] : ";
 	  read inputEtc;
 	  if [ "$inputEtc" = "" ] ; then 
 		inputEtc=$icingawebEtc; 
@@ -145,8 +145,8 @@ function check_api() {
 
 	add_to_config "icingaAPI_host" "127.0.0.1"
 	add_to_config "icingaAPI_port" "5665"
-	add_to_config "icingaAPI_user" "$apiUser"
-	add_to_config "icingaAPI_password" "$apiPass"
+	add_to_config "icingaAPI_user" "${apiUser}"
+	add_to_config "icingaAPI_password" "${apiPass}"
 	
 	return 0;
 
@@ -165,7 +165,7 @@ function check_snmptrapd() {
 	echo
 	
 	while [ ! -f $trapdConfig ]; do 
-	   echo "Config file not found ($trapdConfig)"
+	   echo "Config file not found (${trapdConfig})"
 	   echo 'snmptrapd.conf files found in /etc : '
 	   find /etc -name "snmptrapd.conf"
 	   
@@ -403,9 +403,9 @@ function add_schema_mysql(){
 	question "Do you want to add this database as a resource in IcingaWeb2"
 	if [ $? -eq 0 ]; then return 0; fi
   fi
- 
-  if [ ! -f $icingawebResources ]; then 
-     echo "Cannot find  icingaWeb2 resource file : $icingawebResources";
+
+  if [ ! -f ${icingawebEtc}/${icingawebResources} ]; then 
+     echo "Cannot find  icingaWeb2 resource file : ${icingawebEtc}/${icingawebResources}";
 	 return 1;
   fi
   echo "
@@ -418,7 +418,7 @@ dbname = \"${dbName}\"
 username = \"${dbUser2}\"
 password = \"${dbPass2}\"
 use_ssl = \"0\"
-" >> $icingawebResources;
+" >> ${icingawebEtc}/${icingawebResources};
   
   echo "Added ${dbName}_db as icinga resource !";
   echo "Adding this to module configuration";
@@ -565,8 +565,8 @@ function add_schema_pgsql(){
 	if [ $? -eq 0 ]; then return 0; fi
   fi
  
-  if [ ! -f $icingawebResources ]; then 
-     echo "Cannot find  icingaWeb2 resource file : $icingawebResources";
+  if [ ! -f ${icingawebEtc}/${icingawebResources} ]; then 
+     echo "Cannot find  icingaWeb2 resource file : ${icingawebEtc}/${icingawebResources}";
 	 return 1;
   fi
   echo "
@@ -579,7 +579,7 @@ dbname = \"${dbName}\"
 username = \"${dbUser2}\"
 password = \"${dbPass2}\"
 use_ssl = \"0\"
-" >> $icingawebResources;
+" >> ${icingawebEtc}/${icingawebResources};
   
   echo "Added ${dbName}_db as icinga resource !";
   echo "Adding this to module configuration";
@@ -655,46 +655,50 @@ function set_perms(){
   echo -e "\n==================================";
 }
 
-unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
-unset Psqlconn
-commands='';
+function get_options() {
+	unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
+	unset Psqlconn
+	commands='';
 
-while getopts ":c:w:p:d:u:s:a:b:t:" o; do
-    case "${o}" in
-        c)
-            commands="$commands ${OPTARG}"
-            ;;
-        w)
-            PicingawbEtc=${OPTARG}
-            ;;
-        p)
-            PphpBin=${OPTARG}
-            ;;
-        d)
-            PmoduleDir=${OPTARG}
-            ;;
-        u)
-            PsqlUser=${OPTARG}
-            ;;
-        s)
-            PsqlPass=${OPTARG}
-            ;;
-		a)
-			PApacheUser=${OPTARG}
-			;;
-		b)
-			Pdbtype=${OPTARG}
-			;;
-		t)
-			Psqlconn=${OPTARG}
-			;;
-		*)
-            echo "unknown option ${OPTARG}"
-			usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
+	while getopts ":c:w:p:d:u:s:a:b:t:" o; do
+		case "${o}" in
+			c)
+				commands="$commands ${OPTARG}"
+				;;
+			w)
+				PicingawbEtc=${OPTARG}
+				;;
+			p)
+				PphpBin=${OPTARG}
+				;;
+			d)
+				PmoduleDir=${OPTARG}
+				;;
+			u)
+				PsqlUser=${OPTARG}
+				;;
+			s)
+				PsqlPass=${OPTARG}
+				;;
+			a)
+				PApacheUser=${OPTARG}
+				;;
+			b)
+				Pdbtype=${OPTARG}
+				;;
+			t)
+				Psqlconn=${OPTARG}
+				;;
+			*)
+				echo "unknown option ${OPTARG}"
+				usage
+				;;
+		esac
+	done
+	shift $((OPTIND-1))
+}
+
+get_options
 
 if [ -z "${commands}" ] ; then
 	echo "Must set a least one command"
@@ -704,6 +708,7 @@ fi
 if [ ! -z "$PicingawbEtc" ] ; then # if icingaweb2 etc set then write it to config.ini
 	echo "Adding to icingaweb2_etc";
 	add_to_config "icingaweb2_etc" "${PicingawbEtc}"
+	icingawebEtc=${PicingawbEtc};
 fi
 
 if [[ $commands =~ api ]] || [[ $commands =~ all ]]; then
