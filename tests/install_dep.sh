@@ -2,6 +2,8 @@
 
 echo "Installing dependencies for $DB";
 
+set -ex
+
 ################### Setup fake icingaweb2 /etc director for config & db setup
 
 cd "${MODULE_HOME}"
@@ -37,7 +39,7 @@ bin/installer.sh -c perm -d ${MODULE_HOME} -a apache
 
 
 ############## IcingaWeb2 installation, copied from director module
-set -ex
+
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
 PHP_VERSION="$(php -r 'echo phpversion();')"
