@@ -655,50 +655,50 @@ function set_perms(){
   echo -e "\n==================================";
 }
 
-function get_options() {
-	unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
-	unset Psqlconn
-	commands='';
 
-	while getopts ":c:w:p:d:u:s:a:b:t:" o; do
-		case "${o}" in
-			c)
-				commands="$commands ${OPTARG}"
-				;;
-			w)
-				PicingawbEtc=${OPTARG}
-				;;
-			p)
-				PphpBin=${OPTARG}
-				;;
-			d)
-				PmoduleDir=${OPTARG}
-				;;
-			u)
-				PsqlUser=${OPTARG}
-				;;
-			s)
-				PsqlPass=${OPTARG}
-				;;
-			a)
-				PApacheUser=${OPTARG}
-				;;
-			b)
-				Pdbtype=${OPTARG}
-				;;
-			t)
-				Psqlconn=${OPTARG}
-				;;
-			*)
-				echo "unknown option ${OPTARG}"
-				usage
-				;;
-		esac
-	done
-	shift $((OPTIND-1))
-}
+unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
+unset Psqlconn
+commands='';
 
-get_options
+while getopts ":c:w:p:d:u:s:a:b:t:" o; do
+	case "${o}" in
+		c)
+			commands="$commands ${OPTARG}"
+			;;
+		w)
+			PicingawbEtc=${OPTARG}
+			;;
+		p)
+			PphpBin=${OPTARG}
+			;;
+		d)
+			PmoduleDir=${OPTARG}
+			;;
+		u)
+			PsqlUser=${OPTARG}
+			;;
+		s)
+			PsqlPass=${OPTARG}
+			;;
+		a)
+			PApacheUser=${OPTARG}
+			;;
+		b)
+			Pdbtype=${OPTARG}
+			;;
+		t)
+			Psqlconn=${OPTARG}
+			;;
+		*)
+			echo "unknown option ${OPTARG}"
+			usage
+			;;
+	esac
+done
+shift $((OPTIND-1))
+
+
+
 
 if [ -z "${commands}" ] ; then
 	echo "Must set a least one command"
