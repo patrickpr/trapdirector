@@ -20,30 +20,27 @@ mkdir -p vendor/icinga_etc/modules/trapdirector
 echo -e "[config]\n" >  vendor/icinga_etc/modules/trapdirector/config.ini
 touch vendor/icinga_etc/resources.ini
 
-# install permissions
+# seting icinga_etc in files : 
 
-bin/installer.sh -c perm -d ${MODULE_HOME} -a apache -w ${MODULE_HOME}/vendor/icinga_etc
+sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" trap_in.php
+
+#bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody 
 
 # install database
 
 if [ "$DB" = mysql ]; then
 
-	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass
+	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
 	
 elif [ "$DB" = pgsql ]; then
 
-	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass
+	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
 	
 else
     echo "Unknown database set in environment!" >&2
     env
     exit 1
 fi
-
-################### run installer 
-
-cd "${MODULE_HOME}"
-bin/installer.sh -c perm -d ${MODULE_HOME} -a apache
 
 
 ############## IcingaWeb2 installation, copied from director module
