@@ -2,7 +2,41 @@
 
 echo "Installing dependencies for $DB";
 
-## IcingaWeb2 installation, copied from director module
+################### Setup fake icingaweb2 /etc director for config & db setup
+
+cd "${MODULE_HOME}"
+
+mkdir -p vendor/icinga_etc/modules/trapdirector
+echo -e "[config]\n" >  vendor/icinga_etc/modules/trapdirector/config.ini
+touch vendor/icinga_etc/resources.ini
+
+# install permissions
+
+bin/installer.sh -c perm -d ${MODULE_HOME} -a apache -w ${MODULE_HOME}/vendor/icinga_etc
+
+# install database
+
+if [ "$DB" = mysql ]; then
+
+	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass
+	
+elif [ "$DB" = pgsql ]; then
+
+	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass
+	
+else
+    echo "Unknown database set in environment!" >&2
+    env
+    exit 1
+fi
+
+################### run installer 
+
+cd "${MODULE_HOME}"
+bin/installer.sh -c perm -d ${MODULE_HOME} -a apache
+
+
+############## IcingaWeb2 installation, copied from director module
 set -ex
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
@@ -47,5 +81,6 @@ else
 fi
 ln -svf "${icingaweb_path}"/library/Icinga Icinga
 ln -svf "${icingaweb_path}"/library/vendor/Zend Zend
+
 
 exit 0;
