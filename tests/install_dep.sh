@@ -42,6 +42,17 @@ else
     exit 1
 fi
 
+# Install fake icinga db
+
+if [ "$DB" = mysql ]; then
+
+	mysql -u root -e "create database icinga"
+	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
+
+elif [ "$DB" = pgsql ]; then
+
+fi
+
 
 ############## IcingaWeb2 installation, copied from director module
 
