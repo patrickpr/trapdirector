@@ -42,7 +42,7 @@ else
     exit 1
 fi
 
-# Install fake icinga db
+# Install fake icinga db (TODO : only mysql for now).
 
 if [ "$DB" = mysql ]; then
 
@@ -50,7 +50,8 @@ if [ "$DB" = mysql ]; then
 	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
 
 elif [ "$DB" = pgsql ]; then
-
+	mysql -u root -e "create database icinga"
+	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
 fi
 
 
