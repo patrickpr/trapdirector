@@ -4,6 +4,14 @@ echo "Installing dependencies for $DB";
 
 set -ex
 
+MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
+PHP_VERSION="$(php -r 'echo phpversion();')"
+
+ICINGAWEB_VERSION=${ICINGAWEB_VERSION:=2.7.1}
+ICINGAWEB_GITREF=${ICINGAWEB_GITREF:=}
+
+PHPCS_VERSION=${PHPCS_VERSION:=3.3.2}
+
 ################### Setup fake icingaweb2 /etc director for config & db setup
 
 cd "${MODULE_HOME}"
@@ -39,15 +47,6 @@ bin/installer.sh -c perm -d ${MODULE_HOME} -a apache
 
 
 ############## IcingaWeb2 installation, copied from director module
-
-
-MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
-PHP_VERSION="$(php -r 'echo phpversion();')"
-
-ICINGAWEB_VERSION=${ICINGAWEB_VERSION:=2.7.1}
-ICINGAWEB_GITREF=${ICINGAWEB_GITREF:=}
-
-PHPCS_VERSION=${PHPCS_VERSION:=3.3.2}
 
 cd "${MODULE_HOME}"
 
