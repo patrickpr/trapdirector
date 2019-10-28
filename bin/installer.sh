@@ -676,7 +676,7 @@ unset Psqlconn
 commands='';
 Pinter=1;
 
-while getopts ":c:w:p:d:u:s:a:b:t:i:" o; do
+while getopts ":c:w:p:d:u:s:a:b:t:i" o; do
 	case "${o}" in
 		c)
 			commands="$commands ${OPTARG}"
