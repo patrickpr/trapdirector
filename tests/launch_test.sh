@@ -7,7 +7,7 @@ PHP_BIN=$(which php);
 
 cd $MODULE_HOME
 
-sed -i -e 's/.*For debug.*/$Trap->setLogging(4,"display");' bin/trap_in.php
+sed -i -e 's/.*For debug.*/$Trap->setLogging(4,"display");/' bin/trap_in.php
 
 echo "UDP: [127.0.0.1]:56748->[127.0.0.1]:162
 UDP: [127.0.0.1]:56748->[127.0.0.1]:162
