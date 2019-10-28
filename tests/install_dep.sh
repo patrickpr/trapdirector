@@ -30,13 +30,19 @@ sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" bin/trap_in.php
 if [ "$DB" = mysql ]; then
 
 	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
-	
+
+	sed -i -e 's/#PREFIX#/traps_/g' ${MODULE_HOME}/SQL/schema_v${DBVER}.sql	
 	mysql -u root travistest < SQL/schema_v${DBVER}.sql
+	echo -e "database_prefix = \"traps_\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini	
+	
 	
 elif [ "$DB" = pgsql ]; then
 
 	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
-	# TODO psql create schema
+	
+	sed -i -e 's/#PREFIX#/traps_/g' ${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql
+	psql -U postgres travistest < ${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql
+	echo -e "database_prefix = \"traps_\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
 	
 else
     echo "Unknown database set in environment!" >&2
@@ -48,7 +54,7 @@ fi
 
 if [ "$DB" = mysql ]; then
 
-	mysql -u root -e "create database icinga"
+	mysql -u root -e "create database icinga"	
 	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
 
 elif [ "$DB" = pgsql ]; then
