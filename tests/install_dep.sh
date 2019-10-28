@@ -22,9 +22,9 @@ touch vendor/icinga_etc/resources.ini
 
 # seting icinga_etc in files : 
 
-sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" bin/trap_in.php
+sudo bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody 
 
-#bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody 
+sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" bin/trap_in.php 
 
 # install database
 
