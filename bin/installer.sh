@@ -707,6 +707,7 @@ while getopts ":c:w:p:d:u:s:a:b:t:i:" o; do
 			;;
 		i)
 			Pinter=0;
+			;;
 		*)
 			echo "unknown option ${OPTARG}"
 			usage
