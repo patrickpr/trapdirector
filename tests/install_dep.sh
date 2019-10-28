@@ -53,7 +53,27 @@ elif [ "$DB" = pgsql ]; then
 	mysql -u root -e "create database icinga"
 	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
 fi
+echo -e "IDOdatabase = \"icinga_ido\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+echo '
+[icinga_ido]
+type = "db"
+db = "mysql"
+host = "localhost"
+dbname = "icinga"
+username = "root"
+password = ""
+use_ssl = "0"
+' >> ${MODULE_HOME}/vendor/icinga_etc/resources.ini
 
+# Fake icingacmd as files
+
+echo -e "icingacmd = \"${MODULE_HOME}/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+
+# snmptranslate
+
+snmpt=$(which snmptranslate);
+if [ $? -ne 0 ] ; then echo "No snmp translate"; exit 1; fi
+echo -e "snmptranslate = \"${snmpt}\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
 
 ############## IcingaWeb2 installation, copied from director module
 
