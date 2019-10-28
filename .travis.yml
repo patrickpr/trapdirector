@@ -10,6 +10,7 @@ before_script:
   - sudo apt-get -y install snmpd
   - sudo apt-get -y install snmp
   - sudo apt-get -y install snmp-mibs-downloader
+  - sudo apt-get -y install snmptrapd
   - ./tests/install_dep.sh
 
 env:
