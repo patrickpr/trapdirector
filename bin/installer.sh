@@ -186,6 +186,7 @@ function check_snmptrapd() {
 		echo "traphandle default $phpBinary $moduleDir/bin/trap_in.php" >> $trapdConfig;
 		echo "authCommunity   log,execute,net public" >> $trapdConfig;
 		systemctl restart snmptrapd.service
+		echo "Handler added with community, service restarted";
 		return 0;
 	fi
 	question "Add a traphandle"
@@ -228,11 +229,14 @@ function check_snmptrapd_run() {
 	port=$(netstat -apn |grep -E "^udp.*:162" 2>&1)
 	if [ $? -ne 0 ]; then
 		echo 'No process is listening on port 162, trying to start it.'
-		systemctl start snmptrapd
+		ret=$(systemctl start snmptrapd)
 		if [ $? -ne 0 ]; then
 			echo 'cannot start : maybe you need to install snmptrapd'
 			return 0;
 		fi
+		echo "Returned : $ret"
+		echo "Waiting 5 sec to come up"
+		sleep 5
 		port=$(netstat -apn |grep -E "^udp.*:162" 2>&1)
 		if [ $? -ne 0 ]; then
 			echo 'snmptrapd started but not listening to udp/162.... Exiting...'

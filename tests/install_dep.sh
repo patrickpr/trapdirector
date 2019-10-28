@@ -87,6 +87,9 @@ echo -e "snmptranslate = \"${snmpt}\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/mod
 
 sudo bin/installer.sh -c snmpconf -i -p $PHP_BIN -d ${MODULE_HOME}
 
+cat /etc/snmp/snmptrapd.conf
+sleep 1
+
 sudo bin/installer.sh -c snmprun -i
 
 
