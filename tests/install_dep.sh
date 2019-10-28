@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "Installing dependencies for $DB";
+echo "Installing dependencies for $DB / db version $DBVER";
 
 set -ex
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
 PHP_VERSION="$(php -r 'echo phpversion();')"
-
+PHP_BIN=$(which php);
 ICINGAWEB_VERSION=${ICINGAWEB_VERSION:=2.7.1}
 ICINGAWEB_GITREF=${ICINGAWEB_GITREF:=}
 
@@ -22,8 +22,7 @@ touch vendor/icinga_etc/resources.ini
 
 # seting icinga_etc in files : 
 
-sudo bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody -w ${MODULE_HOME}/vendor/icinga_etc
-
+#sudo bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody -w ${MODULE_HOME}/vendor/icinga_etc
 sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" bin/trap_in.php 
 
 # install database
@@ -32,9 +31,12 @@ if [ "$DB" = mysql ]; then
 
 	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
 	
+	mysql -u root travistest < SQL/schema_v${DBVER}.sql
+	
 elif [ "$DB" = pgsql ]; then
 
 	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
+	# TODO psql create schema
 	
 else
     echo "Unknown database set in environment!" >&2
@@ -67,13 +69,21 @@ use_ssl = "0"
 
 # Fake icingacmd as files
 
-echo -e "icingacmd = \"${MODULE_HOME}/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
 
 # snmptranslate
 
 snmpt=$(which snmptranslate);
 if [ $? -ne 0 ] ; then echo "No snmp translate"; exit 1; fi
 echo -e "snmptranslate = \"${snmpt}\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+
+# snmptrapd configuration
+
+sudo bin/installer.sh -c snmpconf -i -p $PHP_BIN -d ${MODULE_HOME}
+
+sudo bin/installer.sh -c snmprun -i
+
+
 
 ############## IcingaWeb2 installation, copied from director module
 

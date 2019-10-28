@@ -13,8 +13,8 @@ before_script:
   - ./tests/install_dep.sh
 
 env:
-  - DB=mysql
-  - DB=pgsql
+  - DB=mysql DBVER=1
+  - DB=pgsql DBVER=1
   
 script:
   - ./tests/launch_test.sh

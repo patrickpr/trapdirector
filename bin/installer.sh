@@ -35,6 +35,7 @@ function usage()
    echo -e "\t -a <apache user>"
    echo -e "\t -b <mysql|pgsql> -u <SQL_user> [ -s <SQL Password> ] ]";
    echo -e "\t [ -t <DBName:SQL IP:SQL port:SQL admin:SQL admin password> ] ";
+   echo -e "\t -i";
    echo "command (you can have multiple -c ): 
    api      : setup api & user
    snmpconf : setup snmptrapd.conf
@@ -42,6 +43,8 @@ function usage()
    database : create database & db user
    perm     : set directory/file permissions and paths in files
    all      : all commands in sequence
+   
+   -i : disable interactive mode.
    "
    exit 0;
 }
@@ -169,6 +172,7 @@ function check_snmptrapd() {
 	   echo 'snmptrapd.conf files found in /etc : '
 	   find /etc -name "snmptrapd.conf"
 	   
+	   if [ $Pinter -eq 0 ]; then exit 1; fi
 	   echo -n -e  "\nEnter snmptrapd.conf file with path or press Enter\nto skip this :"
 	   read trapdConfig;
 	   if [ "$trapdConfig" == "" ]; then return 0; fi;
@@ -178,6 +182,12 @@ function check_snmptrapd() {
 	echo "Searching for traphandles in $trapdConfig";
 	grep -E "^ *traphandle *default" /etc/snmp/snmptrapd.conf | sed -r 's/^ *traphandle *default *//'
 	echo
+	if [ $Pinter -eq 0 ]; then
+		echo "traphandle default $phpBinary $moduleDir/bin/trap_in.php" >> $trapdConfig;
+		echo "authCommunity   log,execute,net public" >> $trapdConfig;
+		systemctl restart snmptrapd.service
+		return 0;
+	fi
 	question "Add a traphandle"
 	if [ $? -eq 1 ]; then
 		if [ ! -z "$phpBinary" ] && [ ! -z "$moduleDir" ]; then 
@@ -249,9 +259,11 @@ function check_snmptrapd_run() {
 	
 	if [ $optionErr -eq 0 ]; then return 0; fi
 	
-	# Change options
-	question "update snmptrapd startup options"
-	if [ $? -eq 0 ] ; then return 0; fi
+	if [ $Pinter -eq 1 ]; then
+		# Change options
+		question "update snmptrapd startup options"
+		if [ $? -eq 0 ] ; then return 0; fi
+	fi
 	
 	snmpstart='/etc/default/snmptrapd'
 	if [ ! -f $snmpstart ] ; then
@@ -264,8 +276,11 @@ function check_snmptrapd_run() {
 	
 	sed -r -i "s/^ *(OPTIONS *= *\")(.*)/\1${optionAdd} \2/" $snmpstart
 	
-	question "Restart snmptrapd (need systemctl)";
-	if [ $? -eq 0 ]; then return 0; fi
+	if [ $Pinter -eq 1 ]; then
+		question "Restart snmptrapd (need systemctl)";
+		if [ $? -eq 0 ]; then return 0; fi
+	fi
+	
 	systemctl restart snmptrapd
 	
 	return 0;
@@ -286,7 +301,7 @@ function add_schema_mysql(){
 	dbFrom='%';
 	dbAuto=1;
 	if [ ${#arr[*]} -eq 5 ]; then 
-		sql_conn=" -h ${arr[1]} -P ${arr[2]} -u ${arr[3]} -p ${arr[4]} ";
+		sql_conn=" -h ${arr[1]} -P ${arr[2]} -u ${arr[3]} -p${arr[4]} ";
 	else if [ ${#arr[*]} -eq 4 ]; then
 			sql_conn=" -h ${arr[1]} -P ${arr[2]} -u ${arr[3]} ";
 		else
@@ -314,7 +329,7 @@ function add_schema_mysql(){
 	  
 	  echo -n "Enter password (or press enter if no password is required) : ";
 	  read -s dbPass;
-	  if [ ! "$dbPass" == "" ]; then dbPass=" -p=\"$dbPass\" " ;fi;
+	  if [ ! "$dbPass" == "" ]; then dbPass=" -p${dbPass} " ;fi;
 	  sql_conn = " -h $dbHost -P $dbPort -u $dbUser $dbPass "
   fi
   
@@ -616,7 +631,7 @@ function set_perms(){
   
   listFiles=$(find $inputDir);
   
-  for modFile in $listFiles; do
+  for modFile in $listFiles; do  
 	if [ -f $modFile ] ; then 
 		chmod 644 $modFile
 		chown root:root $modFile
@@ -659,8 +674,9 @@ function set_perms(){
 unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
 unset Psqlconn
 commands='';
+Pinter=1;
 
-while getopts ":c:w:p:d:u:s:a:b:t:" o; do
+while getopts ":c:w:p:d:u:s:a:b:t:i:" o; do
 	case "${o}" in
 		c)
 			commands="$commands ${OPTARG}"
@@ -689,6 +705,8 @@ while getopts ":c:w:p:d:u:s:a:b:t:" o; do
 		t)
 			Psqlconn=${OPTARG}
 			;;
+		i)
+			Pinter=0;
 		*)
 			echo "unknown option ${OPTARG}"
 			usage
