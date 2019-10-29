@@ -11,7 +11,7 @@ $icingaweb2_etc="/etc/icingaweb2";
 
 $Trap = new Trap($icingaweb2_etc);
 
-$Trap->setLogging(5,'display'); // For debug
+//$Trap->setLogging(5,'display'); // For debug
 
 // TODO : tranfer this to reset_trap cli command
 $Trap->eraseOldTraps();
