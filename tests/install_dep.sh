@@ -73,10 +73,6 @@ password = ""
 use_ssl = "0"
 ' >> ${MODULE_HOME}/vendor/icinga_etc/resources.ini
 
-# Fake icingacmd as files
-
-echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
-
 # snmptranslate
 
 snmpt=$(which snmptranslate);
