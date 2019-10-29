@@ -278,6 +278,7 @@ class Trap
 		$dsn= $confarray[0].':dbname='.$confarray[2].';host='.$confarray[1];
 		$user = $confarray[3];
 		$password = $confarray[4];
+		$this->trapLog('DSN : '.$dsn,3);
 		try {
 			$dbh = new PDO($dsn, $user, $password);
 		} catch (PDOException $e) {
