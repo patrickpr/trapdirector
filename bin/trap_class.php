@@ -36,8 +36,8 @@ class Trap
 	
 	//protected $debug_file="php://stdout";	
 	// Databases
-	protected $trapDB; //< trap database
-	protected $idoDB; //< ido database
+	protected $trapDB=null; //< trap database
+	protected $idoDB=null; //< ido database
 	protected $trapDBType; //< Type of database for traps (mysql, pgsql)
 	protected $idoDBType; //< Type of database for ido (mysql, pgsql)
 	
