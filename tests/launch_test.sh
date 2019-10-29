@@ -19,7 +19,7 @@ function fake_trap()
 	display=$4
 	trapoid=$5
 	trap="UDP: [${ip}]:56748->[127.0.0.1]:162\nUDP: [${ip}]:56748->[127.0.0.1]:162\n"
-	trap="${trap}.1.3.6.1.6.3.1.1.4.1 : ${trapoid}\n";
+	trap="${trap}.1.3.6.1.6.3.1.1.4.1 ${trapoid}\n";
 	shift 5
 	while [ ! -z "$1" ]; do
 	  trap="${trap}$1\n";
@@ -29,7 +29,7 @@ function fake_trap()
 	echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
 	
 	#RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
-	sqlExec "select * from traps_rules;";
+	#sqlExec "select * from traps_rules;";
 	RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}';");
 	if [ -z "$RET" ]; then
 		echo "FAILED : no DB entry";
@@ -72,7 +72,7 @@ echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/v
 
 #			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
 
-fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3'
+fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
 
 #( 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3' )
 #( 127.0.0.1 "status='error'" 'OK 1' .1.3.6.31.3 '.1.3.6.33.2 : 3' )
