@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -ex
 function sqlExec()
 {
    if [ "$DB" = mysql ]; then
@@ -53,15 +54,17 @@ PHP_BIN=$(which php);
 cd $MODULE_HOME
 
 #### Set output to display and full log level
+echo "Setting logging to max"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_destination','display');"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
 
 # Setup rules
+echo -n "Adding rules : "
 RULES=$(cat ${MODULE_HOME}/tests/rules.sql)
-sqlExec "${RULES}"
+echo $(sqlExec "${RULES}")
 
 # Fake icingacmd as files
-
+echo "Adding fake icingacmd"
 echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
 
 
