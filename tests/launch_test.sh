@@ -10,7 +10,7 @@ function sqlExec()
    return $RET;
 }
 
-function trap()
+function fake_trap()
 {
 	message=$1
 	ip=$2
@@ -57,7 +57,7 @@ sqlExec "insert into traps_db_config (name,value) VALUES ('log_destination','dis
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
 
 # Setup rules
-$RULES=$(cat ${MODULE_HOME}/tests/rules.sql)
+RULES=$(cat ${MODULE_HOME}/tests/rules.sql)
 sqlExec "${RULES}"
 
 # Fake icingacmd as files
@@ -67,7 +67,7 @@ echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/v
 
 #			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
 
-test_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3'
+fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3'
 
 #( 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3' )
 #( 127.0.0.1 "status='error'" 'OK 1' .1.3.6.31.3 '.1.3.6.33.2 : 3' )
