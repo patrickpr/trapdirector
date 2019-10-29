@@ -8,7 +8,7 @@ function sqlExec()
    elif [ "$DB" = pgsql ]; then
      RET=$(psql -U postgres travistest -q -t -c "$1")
    fi
-   return "$RET";
+   echo "$RET";
 }
 
 function fake_trap()
