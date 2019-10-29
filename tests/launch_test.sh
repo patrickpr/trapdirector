@@ -36,7 +36,7 @@ function fake_trap()
 		exit 1;
 	fi
 	echo -n "DB OK,";
-	grep "$display" ${MODULE_HOME}/tests/icinga2.cmd >/dev/null
+	grep "$display" ${MODULE_HOME}/tests/icinga2.cmd 
 	if [ $? -ne 0 ]; then
 	   echo "FAILED finding $4 in command";
 	   exit 1;
@@ -60,6 +60,8 @@ echo "Setting logging to max"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_destination','display');"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
 
+sqlExec "select * from traps_db_config;";
+
 # Setup rules
 echo -n "Adding rules : "
 RULES=$(cat ${MODULE_HOME}/tests/rules.sql)
@@ -73,6 +75,9 @@ echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/v
 #			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
 
 fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
+echo "back to normal logging"
+sqlExec "UPDATE traps_db_config set value=3 where name='log_level';"
+
 
 #( 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3' )
 #( 127.0.0.1 "status='error'" 'OK 1' .1.3.6.31.3 '.1.3.6.33.2 : 3' )
