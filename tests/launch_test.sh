@@ -36,7 +36,7 @@ function fake_trap()
 		exit 1;
 	fi
 	echo -n "DB OK,";
-	grep $display ${MODULE_HOME}/tests/icinga2.cmd
+	grep "$display" ${MODULE_HOME}/tests/icinga2.cmd >/dev/null
 	if [ $? -ne 0 ]; then
 	   echo "FAILED finding $4 in command";
 	   exit 1;
