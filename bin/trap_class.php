@@ -333,9 +333,9 @@ class Trap
 		$db_user=$db_config[$db_name]['username'];
 		$db_pass=$db_config[$db_name]['password'];
 		if ($database == 'traps') $this->trapDBType = $db_type;
-		if ($database == 'traps') $this->idoDBType = $db_type;
+		if ($database == 'ido') $this->idoDBType = $db_type;
 		
-		$this->trapLog( "$db_type $db_host $db_sql_name $db_user $db_pass",3,''); 
+		$this->trapLog( "DB selected : $db_type $db_host $db_sql_name $db_user",3,''); 
 		return array($db_type,$db_host,$db_sql_name,$db_user,$db_pass);
 	}	
 	
