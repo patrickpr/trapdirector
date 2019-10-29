@@ -28,7 +28,9 @@ function fake_trap()
 	echo -n "$message : ";
 	echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
 	
-	RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
+	#RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
+	sqlExec "select * from traps_rules;";
+	RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}';");
 	if [ -z "$RET" ]; then
 		echo "FAILED : no DB entry";
 		exit 1;
