@@ -174,7 +174,7 @@ class Trap
 		if ($this->debug_level >= $level) 
 		{
 			$message = '['.  date("Y/m/d H:i:s") . '] ' .
-				'['. basename(__FILE__) . '] : ' .$message . "\n";
+				'['. basename(__FILE__) . '] ['.$level.']: ' .$message . "\n";
 			
 			if ( $destination != '' ) $output=$destination;
 			else $output=$this->alert_output;

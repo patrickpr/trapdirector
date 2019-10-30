@@ -49,14 +49,14 @@ function fake_trap()
 	if [ ! -z "$display" ]; then 
 		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd 
 		if [ $? -ne 0 ]; then
-		   echo "FAILED finding $4 in command";
+		   echo " FAILED finding $4 in command";
 		   GLOBAL_ERROR=1;
 		   return;
 		fi
 		
-		echo "display OK";
+		echo " display OK";
 	else
-	   echo "Display not tested";
+	   echo " display not tested";
 	fi
 	# Clean
 	sqlExec "delete from traps_received where id > 0;";
@@ -97,14 +97,15 @@ echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/v
 
 #			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
 
-fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 1 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
+fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 1 '0;OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
 echo "back to normal logging"
-sqlExec "UPDATE traps_db_config set value=3 where name='log_level';"
+sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"
+sqlExec "select * from traps_db_config;";
 
 fake_trap 'Error in rule' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.3 '.1.3.6.32.1 3'
 fake_trap 'Missing oid' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.2 '.1.3.6.33.1 3'
-fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 'KO 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
-fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 'KO Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
+fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 '1;OK 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
+fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
 
 exit $GLOBAL_ERROR;
 
