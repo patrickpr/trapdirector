@@ -17,11 +17,12 @@ function fake_trap()
 	message=$1
 	ip=$2
 	sqlfilter=$3
-	display=$4
-	trapoid=$5
+	sqlexists=$4;
+	display=$5
+	trapoid=$6
 	trap="UDP: [${ip}]:56748->[127.0.0.1]:162\nUDP: [${ip}]:56748->[127.0.0.1]:162\n"
 	trap="${trap}.1.3.6.1.6.3.1.1.4.1 ${trapoid}\n";
-	shift 5
+	shift 6
 	while [ ! -z "$1" ]; do
 	  trap="${trap}$1\n";
 	  shift
@@ -32,19 +33,31 @@ function fake_trap()
 	RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
 	#sqlExec "select * from traps_rules;";
 	#RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}';");
-	if [ -z "$RET" ]; then
+	if [ -z "$RET" ] && [ $sqlexists -eq 1 ]; then
 		echo "FAILED : no DB entry";
-		exit 1;
+		GLOBAL_ERROR=1;
+		return;
 	fi
+	if [ ! -z "$RET" ] && [ $sqlexists -eq 0 ]; then
+		echo "FAILED : found entry : $RET";
+		GLOBAL_ERROR=1;
+		return;
+	fi
+
 	echo -n "DB OK,";
-	cat ${MODULE_HOME}/tests/icinga2.cmd 
-	grep "$display" ${MODULE_HOME}/tests/icinga2.cmd 
-	if [ $? -ne 0 ]; then
-	   echo "FAILED finding $4 in command";
-	   #exit 1;
+	#cat ${MODULE_HOME}/tests/icinga2.cmd 
+	if [ ! -z "$display" ]; then 
+		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd 
+		if [ $? -ne 0 ]; then
+		   echo "FAILED finding $4 in command";
+		   GLOBAL_ERROR=1;
+		   return;
+		fi
+		
+		echo "display OK";
+	else
+	   echo "Display not tested";
 	fi
-	
-	echo "display OK";
 	# Clean
 	sqlExec "delete from traps_received where id > 0;";
 	rm -f ${MODULE_HOME}/tests/icinga2.cmd;   
@@ -54,6 +67,8 @@ echo "Launching tests for $DB";
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
 PHP_BIN=$(which php);
+
+GLOBAL_ERROR=0;
 
 cd $MODULE_HOME
 
@@ -82,24 +97,21 @@ echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/v
 
 #			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
 
-fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
+fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 1 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
 echo "back to normal logging"
 sqlExec "UPDATE traps_db_config set value=3 where name='log_level';"
 
-fake_trap 'Error in rule' 127.0.0.1 "status='error'" '' .1.3.6.31.3 '.1.3.6.33.2 : 3'
+fake_trap 'Error in rule' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.3 '.1.3.6.32.1 3'
+fake_trap 'Missing oid' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.2 '.1.3.6.33.1 3'
+fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 'KO 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
+fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 'KO Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
 
+exit $GLOBAL_ERROR;
 
-exit 0;
-
-
-
-
-
-
-
-
-
-
-
-
+#( ip4 , 		trap_oid , 		host_name , 	host_group_name , 	action_match , action_nomatch ,	service_name ,		rule ,   display_nok , display)
+#VALUES 
+#( '127.0.0.1' ,	'.1.3.6.31.1',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	''	,	'KO 1', 			'OK 1'), 
+#( '127.0.0.1' ,	'.1.3.6.31.2',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) = 3'	,	'KO _OID(.1.3.6.32.2)', 'OK _OID(.1.3.6.32.2)'), 
+#( '127.0.0.1' ,	'.1.3.6.31.3',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) >< "test"'	,	'KO 1', 			'OK 1'), 
+#( '127.0.0.1' ,	'.1.3.6.31.4',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.2) = 3'	,	'KO _OID(.1.3.6.*.2)', 'OK _OID(.1.3.6.**)'); 
 
