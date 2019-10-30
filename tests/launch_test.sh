@@ -65,7 +65,8 @@ sqlExec "select * from traps_db_config;";
 
 if [ "$DB" = pgsql ]; then
     PGPASSWORD="travistestpass"
-	psql -U travistestuser travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';" 
+	psql -U travistestuser travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';"
+	psql -U travistestuser travistest -c "INSERT INTO traps_received (source_ip,source_port,destination_ip,destination_port,trap_oid,trap_name,trap_name_mib,status,source_name,date_received) VALUES ('127.0.0.1','56748','127.0.0.1','162','.1.3.6.31.1','dod.31.1','SNMPv2-SMI','done','Icinga host','2019-10-30 08:30:39') RETURNING id;";
 fi
 
 # Setup rules
