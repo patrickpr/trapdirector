@@ -77,6 +77,39 @@ function fake_trap()
 	rm -f ${MODULE_HOME}/tests/icinga2.cmd;   
 }
 
+function expr_eval()
+{
+  rule=$1;
+  error=$2;
+  evalrule=$3;
+  
+  RET=$($PHP_BIN ${MODULE_HOME}/tests/expr_test.php -r "$rule" -d "${MODULE_HOME}/vendor/icinga_etc")
+  CODE=$?
+  
+  echo -n "Rule : $rule : "
+  if [ $CODE -eq 1 ]; then 
+	if [ $error -eq 0 ]; then
+	    echo "ERR : Error returned and output : $RET";
+	   GLOBAL_ERROR=1;
+	else
+		echo "Returned expected error (OK)";
+	fi
+  else
+    if [ $error -ne 0 ]; then
+	   echo "ERR : no error returned and output : $RET";
+	   GLOBAL_ERROR=1;
+	   return
+	fi
+	if [ "$evalrule" = "$RET" ]; then
+		echo $RET;
+    else
+	   echo "ERR : should be $evalrule , returned $RET";
+	   GLOBAL_ERROR=1;
+    fi
+  fi
+  
+}
+
 echo "Launching tests for $DB";
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
@@ -116,14 +149,12 @@ echo "back to normal logging"
 sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"
 #sqlExec "select * from traps_db_config;";
 
-fake_trap 'Error in rule' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.3 '.1.3.6.32.1 3'
-fake_trap 'Missing oid' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.2 '.1.3.6.33.1 3'
-fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 '1;OK 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
-fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
-fake_trap 'Regexp rule' 127.0.0.1 "status='done'" 1 '0;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"'
-fake_trap 'Groupe' 127.0.0.1 "status='done'" 1 '0;OK Test'.1.3.6.31.6 '.1.3.6.32.1 "test"'
-
-exit $GLOBAL_ERROR;
+fake_trap 'Error in rule' 		127.0.0.1 "status='error'" 	1 	'' 			.1.3.6.31.3 '.1.3.6.32.1 3'
+fake_trap 'Missing oid' 		127.0.0.1 "status='error'" 	1 	'' 			.1.3.6.31.2 '.1.3.6.33.1 3'
+fake_trap 'Simple display' 		127.0.0.1 "status='done'" 	1 	'1;OK 123' 	.1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
+fake_trap 'Simple text display' 127.0.0.1 "status='done'" 	1 	'1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
+fake_trap 'Regexp rule' 		127.0.0.1 "status='done'" 	1 	'0;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"'
+fake_trap 'Groupe' 				127.0.0.1 "status='done'" 	1 	'0;OK Test' .1.3.6.31.6 '.1.3.6.32.1 "test"'
 
 #( ip4 , 		trap_oid , 		host_name , 	host_group_name , 	action_match , action_nomatch ,	service_name ,		rule ,   display_nok , display)
 #VALUES 
@@ -132,3 +163,15 @@ exit $GLOBAL_ERROR;
 #( '127.0.0.1' ,	'.1.3.6.31.3',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) >< "test"'	,	'KO 1', 			'OK 1'), 
 #( '127.0.0.1' ,	'.1.3.6.31.4',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.1) = "test"'	,	 'OK _OID(.1.3.6.32.1)'),
 #( '127.0.0.1' ,	'.1.3.6.31.5',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.1) = 3'	,	 'OK _OID(.1.3.6.32.1)'); 
+
+
+echo "############# Evaluation tests ##########"
+
+expr_eval "1=1" 0 "true"
+expr_eval "1=0" 0 "false"
+expr_eval "10>3" 0 "true"
+expr_eval "10>3000" 0 "false"
+
+
+exit $GLOBAL_ERROR;
+
