@@ -1,6 +1,8 @@
 # trapdirector
 Icingaweb2 module for receiving and handling snmp traps
 
+[![Build Status](https://travis-ci.org/patrickpr/trapdirector.svg?branch=master)](https://travis-ci.org/patrickpr/trapdirector)
+
 [![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Projet features : 
