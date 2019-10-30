@@ -7,6 +7,8 @@ include (dirname(__DIR__).'/library/Trapdirector/Icinga2Api.php');
 
 use Icinga\Module\Trapdirector\Icinga2API;
 
+define("ERROR", 1);define("WARN", 2);define("INFO", 3);define("DEBUG", 4);
+
 class Trap
 {
 	// Configuration files a dirs
@@ -33,7 +35,7 @@ class Trap
 	protected $alert_output='display'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
 	protected $debug_text=array("Error","Warning","Info","Debug");
-	define("ERROR", 1);define("WARN", 2);define("INFO", 3);define("DEBUG", 4);
+	
 	//**** End options from database
 	
 	//protected $debug_file="php://stdout";	

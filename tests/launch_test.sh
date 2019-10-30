@@ -47,8 +47,9 @@ function fake_trap()
 	echo -n "DB OK,";
 	#cat ${MODULE_HOME}/tests/icinga2.cmd 
 	if [ ! -z "$display" ]; then 
-		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd 
+		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd  > /dev/null
 		if [ $? -ne 0 ]; then
+		   cat ${MODULE_HOME}/tests/icinga2.cmd
 		   echo " FAILED finding $4 in command";
 		   GLOBAL_ERROR=1;
 		   return;
