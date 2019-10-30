@@ -63,9 +63,10 @@ sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
 
 sqlExec "select * from traps_db_config;";
 
-#if [ "$DB" = pgsql ]; then
-#    psql -U postgres travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';" 
-#fi
+if [ "$DB" = pgsql ]; then
+    PGPASSWORD="travistestpass"
+	psql -U travistestuser travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';" 
+fi
 
 # Setup rules
 echo -n "Adding rules : "
