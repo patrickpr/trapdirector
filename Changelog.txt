@@ -14,7 +14,7 @@ BUGS
 ENHANCEMENTS
 ============
 
-1) 
+1) Added regexp to select oid for rule eval (not implemented in GUI) 
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.1
