@@ -576,7 +576,8 @@ function add_schema_pgsql(){
 	   return 0;
   fi
   echo $dbRet;
-  sqlCommand="GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbUser2};"  
+  #sqlCommand="GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbUser2};"  
+  sqlCommand="ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES ${dbUser2};"  
   echo -n "setting :  $sqlCommand : ";
   dbRet=$(psql $sql_conn -d  ${dbName} -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
