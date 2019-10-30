@@ -560,7 +560,7 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
-  sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"  
+  sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbName};"  
   echo "Adding :  $sqlCommand";
   dbRet=$(psql $sql_conn -d  postgres -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
