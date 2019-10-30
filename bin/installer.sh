@@ -561,7 +561,7 @@ function add_schema_pgsql(){
 	   return 0;
   fi
   sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"
-  echo "setting :  $sqlCommand";
+  echo -n "setting :  $sqlCommand : ";
   dbRet=$(psql $sql_conn -d  postgres -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
 	   # Error is shown with stderr
@@ -575,8 +575,9 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
+  echo $dbRet;
   sqlCommand="GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbUser2};"  
-  echo "setting :  $sqlCommand";
+  echo -n "setting :  $sqlCommand : ";
   dbRet=$(psql $sql_conn -d  ${dbName} -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
 	   # Error is shown with stderr
@@ -589,7 +590,8 @@ function add_schema_pgsql(){
 	   if [ $? -eq 0 ]; then return 1; fi
 	   add_schema
 	   return 0;
-  fi  
+  fi
+  echo $dbRet;  
   echo "Database parameters set"
   echo
   if [ $dbAuto -eq 0 ]; then 
