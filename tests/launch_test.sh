@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -ex
+# set -ex
+
 function sqlExec()
 {
    if [ "$DB" = mysql ]; then
@@ -61,13 +62,13 @@ echo "Setting logging to max"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_destination','display');"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
 
-sqlExec "select * from traps_db_config;";
+#sqlExec "select * from traps_db_config;";
 
-if [ "$DB" = pgsql ]; then
-    PGPASSWORD="travistestpass"
-	psql -U travistestuser travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';"
-	psql -U travistestuser travistest -c "INSERT INTO traps_received (source_ip,source_port,destination_ip,destination_port,trap_oid,trap_name,trap_name_mib,status,source_name,date_received) VALUES ('127.0.0.1','56748','127.0.0.1','162','.1.3.6.31.1','dod.31.1','SNMPv2-SMI','done','Icinga host','2019-10-30 08:30:39') RETURNING id;";
-fi
+#if [ "$DB" = pgsql ]; then
+#    PGPASSWORD="travistestpass"
+#	psql -U travistestuser travistest -c "SELECT mib,name from traps_mib_cache WHERE oid='.1.3.6.31.1';"
+#	psql -U travistestuser travistest -c "INSERT INTO traps_received (source_ip,source_port,destination_ip,destination_port,trap_oid,trap_name,trap_name_mib,status,source_name,date_received) VALUES ('127.0.0.1','56748','127.0.0.1','162','.1.3.6.31.1','dod.31.1','SNMPv2-SMI','done','Icinga host','2019-10-30 08:30:39') RETURNING id;";
+#fi
 
 # Setup rules
 echo -n "Adding rules : "
@@ -85,16 +86,8 @@ fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3
 echo "back to normal logging"
 sqlExec "UPDATE traps_db_config set value=3 where name='log_level';"
 
+fake_trap 'Error in rule' 127.0.0.1 "status='error'" '' .1.3.6.31.3 '.1.3.6.33.2 : 3'
 
-#( 127.0.0.1 "status='done'" 'OK 1' .1.3.6.31.1 '.1.3.6.33.2 : 3' )
-#( 127.0.0.1 "status='error'" 'OK 1' .1.3.6.31.3 '.1.3.6.33.2 : 3' )
-
-#(25,NULL,NULL,'.1.3.6.1.4.1.2620.1.1.0.1',NULL,'test_trap','_OID(.1.3.6.1.4.1.2620.1.1.11) = 3',1,-2,'test_delete_service',0,NULL,'display',NULL,NULL,NULL,10,NULL,NULL,NULL)
-#(27,'127.0.0.1','','.1.3.6.1.6.3.1.1.5.4.0','Icinga host',NULL,'( _OID(.1.3.6.1.2.1.1.6.*) =\"\") & ( _OID(.1.3.6.1.2.1.2.2.1.1) > 3 ) & ( _OID(.1.3.6.1.2.1.2.2.1.1) <6) & ( _OID(.1.3.6.1.2.1.2.2.1.8) != 1 )',2,0,'LinkTrapStatus',0,NULL,'Trap linkUp received','2019-08-26 15:48:52','2019-10-27 07:54:42','admin',11,0,NULL,0),
-#(28,'192.168.56.101','','.1.3.6.1.2.1.17.0.2','trap_test',NULL,'',0,-1,'Ping_host',0,NULL,'','2019-09-24 20:44:46','2019-09-24 20:44:46','admin',0,0,NULL,0)
-#(29,NULL,NULL,'.1.3.6.1.4.1.2620.1.3000.5.1.1',NULL,'test_trap','_OID(.1.3.6.1.4.1.2620.1.6.7.8.1.1.2) = 3',0,1,'NetBotz SNMP Traps',0,NULL,'_OID(.1.3.6.1.4.1.2620.1.6.7.8.1.1.3) is set','2019-10-25 19:39:49','2019-10-25 20:04:20','admin',0,0,NULL,0)
-#(30,'127.0.0.1','','.1.3.6.1.6.3.1.1.5.3','Icinga host',NULL,'',1,0,'LinkTrapStatus2',0,NULL,'Trap linkDown received','2019-10-25 20:11:58','2019-10-25 20:11:58','admin',1,0,NULL,0)
-#(31,'127.0.0.1','','.1.3.6.1.6.3.1.1.5.1','Icinga host',NULL,'( _OID(.1.3.6.1.2.1.1.6.0) = \"Just here\" )',1,0,'Ping_host',0,NULL,'Trap coldStart received','2019-10-26 14:28:11','2019-10-26 14:28:11','admin',8,0,NULL,0);
 
 exit 0;
 
