@@ -30,7 +30,7 @@ class Trap
 	//**** Options from config database
 	// Logs 
 	protected $debug_level=5;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
-	protected $alert_output='syslog'; // alert type : file, syslog, display
+	protected $alert_output='display'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
 	//**** End options from database
 	
