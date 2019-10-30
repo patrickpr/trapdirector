@@ -30,7 +30,7 @@ function fake_trap()
 	echo -n "$message : ";
 	echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
 	
-	RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
+	RET=$(sqlExec "select status_detail from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
 	#sqlExec "select * from traps_rules;";
 	#RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}';");
 	if [ -z "$RET" ] && [ $sqlexists -eq 1 ]; then
@@ -52,7 +52,7 @@ function fake_trap()
 		return;
 	fi
 
-	echo -n "DB OK,";
+	echo -n "DB OK (${RET}),";
 	#cat ${MODULE_HOME}/tests/icinga2.cmd 
 	if [ ! -z "$display" ]; then 
 		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd  > /dev/null
@@ -119,7 +119,7 @@ fake_trap 'Error in rule' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.3 '.1.3.6.32
 fake_trap 'Missing oid' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.2 '.1.3.6.33.1 3'
 fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 '1;OK 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
 fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
-fake_trap 'Regexp oid' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.255.5 '.1.3.6.32.1 3' '.1.3.6.32.1 "Test"' 
+fake_trap 'Regexp rule' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"' 
 
 exit $GLOBAL_ERROR;
 
@@ -128,5 +128,5 @@ exit $GLOBAL_ERROR;
 #( '127.0.0.1' ,	'.1.3.6.31.1',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	''	,	'KO 1', 			'OK 1'), 
 #( '127.0.0.1' ,	'.1.3.6.31.2',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) = 3'	,	'KO _OID(.1.3.6.32.2)', 'OK _OID(.1.3.6.32.2)'), 
 #( '127.0.0.1' ,	'.1.3.6.31.3',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) >< "test"'	,	'KO 1', 			'OK 1'), 
-#( '127.0.0.1' ,	'.1.3.6.31.4',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.2) = 3'	,	'KO _OID(.1.3.6.*.2)', 'OK _OID(.1.3.6.**)'); 
-#( '127.0.0.1' ,	'.1.3.6.*.5',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.32.1) = 3'	,	 'OK _OID(.1.3.6.32.1)');  
+#( '127.0.0.1' ,	'.1.3.6.31.4',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.1) = "test"'	,	 'OK _OID(.1.3.6.32.1)'),
+#( '127.0.0.1' ,	'.1.3.6.31.5',	'Icinga host', 	NULL, 				0 , 			1	, 			'LinkTrapStatus',	'_OID(.1.3.6.*.1) = 3'	,	 'OK _OID(.1.3.6.32.1)'); 
