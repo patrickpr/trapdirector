@@ -120,7 +120,8 @@ fake_trap 'Error in rule' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.3 '.1.3.6.32
 fake_trap 'Missing oid' 127.0.0.1 "status='error'" 1 '' .1.3.6.31.2 '.1.3.6.33.1 3'
 fake_trap 'Simple display' 127.0.0.1 "status='done'" 1 '1;OK 123' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
 fake_trap 'Simple text display' 127.0.0.1 "status='done'" 1 '1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
-fake_trap 'Regexp rule' 127.0.0.1 "status='done'" 1 '0;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"' 
+fake_trap 'Regexp rule' 127.0.0.1 "status='done'" 1 '0;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"'
+fake_trap 'Groupe' 127.0.0.1 "status='done'" 1 '0;OK Test'.1.3.6.31.6 '.1.3.6.32.1 "test"'
 
 exit $GLOBAL_ERROR;
 
