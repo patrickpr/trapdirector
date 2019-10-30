@@ -7,6 +7,8 @@ include (dirname(__DIR__).'/library/Trapdirector/Icinga2Api.php');
 
 use Icinga\Module\Trapdirector\Icinga2API;
 
+define("ERROR", 1);define("WARN", 2);define("INFO", 3);define("DEBUG", 4);
+
 class Trap
 {
 	// Configuration files a dirs
@@ -26,12 +28,14 @@ class Trap
 	protected $api_port='';
 	protected $api_username='';
 	protected $api_password='';
-	
+
 	//**** Options from config database
 	// Logs 
 	protected $debug_level=2;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
-	protected $alert_output='syslog'; // alert type : file, syslog, display
+	protected $alert_output='display'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
+	protected $debug_text=array("","Error","Warning","Info","Debug");
+	
 	//**** End options from database
 	
 	//protected $debug_file="php://stdout";	
@@ -107,7 +111,7 @@ class Trap
 		$trap_config=parse_ini_file($this->trap_module_config,true);
 		if ($trap_config == false) 
 		{
-			$this->trapLog("Error reading ini file : ".$this->trap_module_config,1,'syslog'); 
+			$this->trapLog("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog'); 
 		}
 		// Snmptranslate binary path
 		$this->getOptionIfSet($trap_config,'config','snmptranslate', $this->snmptranslate);
@@ -152,7 +156,7 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		$sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,2,'');
+			$this->trapLog('No result in query : ' . $sql,WARN,'');
 			return null;
 		}
 		$value=$ret_code->fetch();
@@ -174,7 +178,7 @@ class Trap
 		if ($this->debug_level >= $level) 
 		{
 			$message = '['.  date("Y/m/d H:i:s") . '] ' .
-				'['. basename(__FILE__) . '] : ' .$message . "\n";
+				'['. basename(__FILE__) . '] ['.$this->debug_text[$level].']: ' .$message . "\n";
 			
 			if ( $destination != '' ) $output=$destination;
 			else $output=$this->alert_output;
@@ -223,7 +227,7 @@ class Trap
 				$this->alert_output='display';
 				break;
 			default : // syslog should always work....
-				$this->trapLog("Error in log output : ".$output_type,1,'syslog');
+				$this->trapLog("Error in log output : ".$output_type,ERROR,'syslog');
 		}
 	}
 	
@@ -249,7 +253,7 @@ class Trap
 		    } catch (Exception $e) {
 		        // select 1 failed, try to reconnect.
 		        $this->trapDB=null;
-		        $this->trapLog('Databse connection lost, reconnecting',2,'');
+		        $this->trapLog('Databse connection lost, reconnecting',WARN,'');
 		    }
 		     
 		}
@@ -282,7 +286,7 @@ class Trap
 		try {
 			$dbh = new PDO($dsn, $user, $password);
 		} catch (PDOException $e) {
-			$this->trapLog('Connection failed : ' . $e->getMessage(),1,'');
+			$this->trapLog('Connection failed : ' . $e->getMessage(),ERROR,'');
 		}
 		return $dbh;
 	}
@@ -296,13 +300,13 @@ class Trap
 		$trap_config=parse_ini_file($this->trap_module_config,true);
 		if ($trap_config == false) 
 		{
-			$this->trapLog("Error reading ini file : ".$this->trap_module_config,1,''); 
+			$this->trapLog("Error reading ini file : ".$this->trap_module_config,ERROR,''); 
 		}
 		if ($database == 'traps')
 		{
 			if (!isset($trap_config['config']['database'])) 
 			{
-				$this->trapLog("No Config/database in config file: ".$this->trap_module_config,1,''); 
+				$this->trapLog("No Config/database in config file: ".$this->trap_module_config,ERROR,''); 
 			}
 			$db_name=$trap_config['config']['database'];
 		} 
@@ -310,23 +314,23 @@ class Trap
 		{
 			if (!isset($trap_config['config']['IDOdatabase'])) 
 			{
-				$this->trapLog("No Config/IDOdatabase in config file: ".$this->trap_module_config,1,''); 
+				$this->trapLog("No Config/IDOdatabase in config file: ".$this->trap_module_config,ERROR,''); 
 			}
 			$db_name=$trap_config['config']['IDOdatabase'];		
 		}
 		else
 		{
-			$this->trapLog("Unknown database type : ".$database,1,''); 		
+			$this->trapLog("Unknown database type : ".$database,ERROR,''); 		
 		}	
 		$this->trapLog("Found database in config file: ".$db_name,3,''); 
 		$db_config=parse_ini_file($this->icingaweb2_ressources,true);
 		if ($db_config == false) 
 		{
-			$this->trapLog("Error reading ini file : ".$this->icingaweb2_ressources,1,''); 
+			$this->trapLog("Error reading ini file : ".$this->icingaweb2_ressources,ERROR,''); 
 		}
 		if (!isset($db_config[$db_name])) 
 		{
-			$this->trapLog("No Config/database in config file: ".$this->icingaweb2_ressources,1,''); 
+			$this->trapLog("No Config/database in config file: ".$this->icingaweb2_ressources,ERROR,''); 
 		}
 		$db_type=$db_config[$db_name]['db'];
 		$db_host=$db_config[$db_name]['host'];
@@ -352,7 +356,7 @@ class Trap
 		if ($input_stream==FALSE)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Stdin)");
-			$this->trapLog("Error reading stdin !",1,''); 
+			$this->trapLog("Error reading stdin !",ERROR,''); 
 		}
 
 		// line 1 : host
@@ -360,21 +364,21 @@ class Trap
 		if ($this->receivingHost == FALSE)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line Host)");
-			$this->trapLog("Error reading Host !",1,''); 
+			$this->trapLog("Error reading Host !",ERROR,''); 
 		}
 		// line 2 IP:port=>IP:port
 		$IP=chop(fgets($input_stream));
 		if ($IP == FALSE)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line IP)");
-			$this->trapLog("Error reading IP !",1,''); 
+			$this->trapLog("Error reading IP !",ERROR,''); 
 		}
 		$matches=array();
 		$ret_code=preg_match('/.DP: \[(.*)\]:(.*)->\[(.*)\]:(.*)/',$IP,$matches);
 		if ($ret_code==0 || $ret_code==FALSE) 
 		{
 		    $this->writeTrapErrorToDB("Error parsing trap (code 2/IP)");
-			$this->trapLog('Error parsing IP : '.$IP,1,'');
+			$this->trapLog('Error parsing IP : '.$IP,ERROR,'');
 		} 
 		else 
 		{		
@@ -389,7 +393,7 @@ class Trap
 			$ret_code=preg_match('/^([^ ]+) (.*)$/',$vars,$matches);
 			if ($ret_code==0 || $ret_code==FALSE) 
 			{
-				$this->trapLog('No match on trap data : '.$vars,2,'');
+				$this->trapLog('No match on trap data : '.$vars,WARN,'');
 			}
 			else 
 			{
@@ -410,7 +414,7 @@ class Trap
 		if ($this->trap_data['trap_oid']=='unknown') 
 		{
 		    $this->writeTrapErrorToDB("No trap oid found : check snmptrapd configuration (code 3/OID)",$this->trap_data['source_ip']);
-			$this->trapLog('no trap oid found',1,'');
+			$this->trapLog('no trap oid found',ERROR,'');
 		} 
 
 		// Translate oids.
@@ -449,7 +453,7 @@ class Trap
 		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid.'\';';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$name=$ret_code->fetch();
 		if ($name['name'] != null)
@@ -463,7 +467,7 @@ class Trap
 		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid_instance.'\';';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$name=$ret_code->fetch();
 		if ($name['name'] != null)
@@ -479,7 +483,7 @@ class Trap
 		if ($ret_code==0 || $ret_code==FALSE) {
 			return NULL;
 		} else {
-			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,2,'');
+			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,INFO,'');
 			return array('trap_name_mib'=>$matches[1],'trap_name'=>$matches[2]);
 		}	
 	}
@@ -495,7 +499,7 @@ class Trap
 		{
 			if (($days=$this->getDBConfig('db_remove_days')) == null)
 			{
-				$this->trapLog('No days specified & no db value : no tap erase' ,2,'');
+				$this->trapLog('No days specified & no db value : no tap erase' ,WARN,'');
 				return;
 			}
 		}
@@ -503,7 +507,7 @@ class Trap
 		$daysago = strtotime("-".$days." day");
 		$sql= 'delete from '.$this->db_prefix.'received where date_received < \''.date("Y-m-d H:i:s",$daysago).'\';';
 		if ($db_conn->query($sql) == FALSE) {
-			$this->trapLog('Error erasing traps : '.$sql,1,'');
+			$this->trapLog('Error erasing traps : '.$sql,ERROR,'');
 		}
 		$this->trapLog('Erased traps older than '.$days.' day(s) : '.$sql,3);
 	}
@@ -538,7 +542,7 @@ class Trap
 	    
 	    $this->trapLog('sql : '.$sql,3,'');
 	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
-	        $this->trapLog('Error SQL insert : '.$sql,1,'');
+	        $this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 	    }
 	    
 	    $this->trapLog('SQL insertion OK',3,'');
@@ -546,7 +550,7 @@ class Trap
 	    // Get last id to insert oid/values in secondary table
 	    $sql='SELECT LAST_INSERT_ID();';
 	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
-	        $this->trapLog('Erreur recuperation id',1,'');
+	        $this->trapLog('Erreur recuperation id',ERROR,'');
 	    }
 	    
 	    $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
@@ -592,16 +596,16 @@ class Trap
 				$sql .= ' RETURNING id;';
 				$this->trapLog('sql : '.$sql,3,'');
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error SQL insert : '.$sql,1,'');
+					$this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 				}
 				$this->trapLog('SQL insertion OK',3,'');
 				// Get last id to insert oid/values in secondary table
 				if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
 														   
-					$this->trapLog('Erreur recuperation id',1,'');
+					$this->trapLog('Erreur recuperation id',ERROR,'');
 				}
 				if (! isset($inserted_id_ret['id'])) {
-					$this->trapLog('Error getting id',1,'');
+					$this->trapLog('Error getting id',ERROR,'');
 				}
 				$this->trap_id=$inserted_id_ret['id'];
 			break;
@@ -609,13 +613,13 @@ class Trap
 				$sql .= ';';
 				$this->trapLog('sql : '.$sql,3,'');
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error SQL insert : '.$sql,1,'');
+					$this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 				}
 				$this->trapLog('SQL insertion OK',3,'');
 				// Get last id to insert oid/values in secondary table
 				$sql='SELECT LAST_INSERT_ID();';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Erreur recuperation id',1,'');
+					$this->trapLog('Erreur recuperation id',ERROR,'');
 				}
 
 				$inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
@@ -623,7 +627,7 @@ class Trap
 				$this->trap_id=$inserted_id;
 			break;
 			default: 
-				$this->trapLog('Error SQL type  : '.$this->trapDBType,1,'');
+				$this->trapLog('Error SQL type  : '.$this->trapDBType,ERROR,'');
 		}
 		$this->trapLog('id found: '.$this->trap_id,3,'');
 		
@@ -649,7 +653,7 @@ class Trap
 			$sql= 'INSERT INTO '.$this->db_prefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';			
 
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('Erreur insertion data : ' . $sql,2,'');
+				$this->trapLog('Erreur insertion data : ' . $sql,WARN,'');
 			}	
 		}	
 	}
@@ -666,7 +670,7 @@ class Trap
 		$sql='SELECT * from '.$this->db_prefix.'rules WHERE trap_oid=\''.$oid.'\' ';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,2,'');
+			$this->trapLog('No result in query : ' . $sql,WARN,'');
 			return false;
 		}
 		$rules_all=$ret_code->fetchAll();
@@ -694,7 +698,7 @@ class Trap
 						LEFT JOIN icinga_objects as b ON b.object_id = a.host_object_id
 						WHERE o.name1='".$rule['host_group_name']."';";
 				if (($ret_code2=$db_conn2->query($sql)) == FALSE) {
-					$this->trapLog('No result in query : ' . $sql,2,'');
+					$this->trapLog('No result in query : ' . $sql,WARN,'');
 					continue;
 				}
 				$grouphosts=$ret_code2->fetchAll();
@@ -724,7 +728,7 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		$sql="UPDATE ".$this->db_prefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
 		if ($db_conn->query($sql) == FALSE) {
-			$this->trapLog('Error in update query : ' . $sql,2,'');
+			$this->trapLog('Error in update query : ' . $sql,WARN,'');
 		}
 	}
 	
@@ -755,7 +759,7 @@ class Trap
 	        list($retcode,$retmessage)=$api->serviceCheckResult($host,$service,$state,$display);
 	        if ($retcode == false)
 	        {
-	            $this->trapLog( "Error sending result : " .$retmessage,2,'');
+	            $this->trapLog( "Error sending result : " .$retmessage,WARN,'');
 	            return false;
 	        }
 	        else 
@@ -794,7 +798,7 @@ class Trap
 					$display=preg_replace('/_OID\('.$oid.'\)/',$val->value,$display,-1,$rep);
 					if ($rep==0)
 					{
-						$this->trapLog("Error in display",2,'');
+						$this->trapLog("Error in display",WARN,'');
 						return $display;
 					}
 					$found=1;
@@ -806,7 +810,7 @@ class Trap
 				$display=preg_replace('/_OID\('.$oid.'\)/','<not in trap>',$display,-1,$rep);
 				if ($rep==0)
 				{
-					$this->trapLog("Error in display",2,'');
+					$this->trapLog("Error in display",WARN,'');
 					return $display;
 				}				
 			}
@@ -1062,7 +1066,7 @@ class Trap
 					$rule=preg_replace('/_OID\('.$oid.'\)/',$val->value,$rule,-1,$rep);
 					if ($rep==0)
 					{
-						$this->trapLog("Error in rule_eval",2,'');
+						$this->trapLog("Error in rule_eval",WARN,'');
 						return false;
 					}
 					$found=1;
@@ -1172,7 +1176,7 @@ class Trap
 			}
 			catch (Exception $e) 
 			{ 
-			    $this->trapLog('Error in rule eval : '.$e->getMessage(),2,'');
+			    $this->trapLog('Error in rule eval : '.$e->getMessage(),WARN,'');
 			    $this->trap_action.=' ERR : '.$e->getMessage();
 			    $this->trap_data['status']='error';
 			}
@@ -1200,7 +1204,7 @@ class Trap
 		}
 		$sql="UPDATE ".$this->db_prefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
 		if ($db_conn->query($sql) == FALSE) {
-			$this->trapLog('Error in update query : ' . $sql,2,'');
+			$this->trapLog('Error in update query : ' . $sql,WARN,'');
 		}
 	}
 	
@@ -1217,7 +1221,7 @@ class Trap
 
 		if ($input_stream==FALSE)
 		{
-			$this->trapLog("Error reading schema !",1,''); 
+			$this->trapLog("Error reading schema !",ERROR,''); 
 		}
 		$newline='';
 		$cur_table='';
@@ -1231,7 +1235,7 @@ class Trap
             {
                 $sql= $newline;
                 if ($db_conn->query($sql) == FALSE) {
-                    $this->trapLog('Error create schema : '.$sql,1,'');
+                    $this->trapLog('Error create schema : '.$sql,ERROR,'');
                 }
                 if (preg_match('/^ *CREATE TABLE ([^ ]+)/',$newline,$cur_table_array))
                 {
@@ -1250,7 +1254,7 @@ class Trap
 		if ($sql != '')
 		{
     		if ($db_conn->query($sql) == FALSE) {
-    			$this->trapLog('Error create schema : '.$sql,1,'');
+    			$this->trapLog('Error create schema : '.$sql,ERROR,'');
     		}
 		}
 		$this->trapLog('Schema created',3);		
@@ -1268,7 +1272,7 @@ class Trap
 	    $sql='SELECT id,value from '.$this->db_prefix.'db_config WHERE name=\'db_version\' ';
 	    $this->trapLog('SQL query : '.$sql,4,'');
 	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
-	        $this->trapLog('Cannot get db version. Query : ' . $sql,2,'');
+	        $this->trapLog('Cannot get db version. Query : ' . $sql,WARN,'');
 	        return;
 	    }
 	    $version=$ret_code->fetchAll();
@@ -1284,7 +1288,7 @@ class Trap
 	       $input_stream=fopen($updateFile, 'r');
 	       if ($input_stream==FALSE)
 	       {
-	           $this->trapLog("Error reading update file ". $updateFile,2,'');
+	           $this->trapLog("Error reading update file ". $updateFile,WARN,'');
 	           return;
 	       }
 	       $newline='';
@@ -1295,12 +1299,12 @@ class Trap
 	       $db_conn=$this->db_connect_trap();
 	       $sql= $newline;
 	       if ($db_conn->query($sql) == FALSE) {
-	           $this->trapLog('Error updating schema : '.$sql,1,'');
+	           $this->trapLog('Error updating schema : '.$sql,ERROR,'');
 	       }
 	       $sql='UPDATE '.$this->db_prefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
 	       $this->trapLog('SQL query : '.$sql,4,'');
 	       if (($ret_code=$db_conn->query($sql)) == FALSE) {
-	           $this->trapLog('Cannot update db version. Query : ' . $sql,2,'');
+	           $this->trapLog('Cannot update db version. Query : ' . $sql,WARN,'');
 	           return;
 	       }
 	       
@@ -1325,7 +1329,7 @@ class Trap
     WHERE s.current_state != 0;";
 		$db_conn=$this->db_connect_ido();
 		if (($services_db=$db_conn->query($sql_query)) == FALSE) { // set err to 1 to throw exception.
-			$this->trapLog('No result in query : ' . $sql_query,1,'');
+			$this->trapLog('No result in query : ' . $sql_query,ERROR,'');
 		}
 		$services=$services_db->fetchAll();
 		
@@ -1333,7 +1337,7 @@ class Trap
 		$sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->db_prefix."rules where revert_ok != 0;";
 		$db_conn2=$this->db_connect_trap();
 		if (($rules_db=$db_conn2->query($sql_query)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql_query,1,''); 
+			$this->trapLog('No result in query : ' . $sql_query,ERROR,''); 
 		}
 		$rules=$rules_db->fetchAll();
 		
@@ -1408,7 +1412,7 @@ class Trap
 				$this->dbOidAll[$this->dbOidIndex[$oid]]['id'] ."' ;";
 				$this->trapLog('SQL query : '.$sql,4,'');
 				if ($db_conn->query($sql) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
+					$this->trapLog('Error in query : ' . $sql,ERROR,'');
 				}			
 			}
 			else
@@ -1427,11 +1431,11 @@ class Trap
 			exec($snmptransCommand,$return,$retVal);
 			if ($retVal!=0)
 			{
-				$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid,1,'');
+				$this->trapLog('error executing snmptranslate '.$return .':'.$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' '.$oid,ERROR,'');
 			}
 			if (!preg_match('/^(.*)::/',$return[0],$match2))
 			{
-			    $this->trapLog('error finding mib '.$return[0],2,'');
+			    $this->trapLog('error finding mib '.$return[0],WARN,'');
 				return;
 			}
 			$mib=$match2[1];
@@ -1458,7 +1462,7 @@ class Trap
 			'('.$sqlT.') VALUES ('.$sqlV.');';
 			$this->trapLog('SQL query : '.$sql,4,'');
 			if ($db_conn->query($sql) == FALSE) {
-				$this->trapLog('Error in query : ' . $sql,1,'');
+				$this->trapLog('Error in query : ' . $sql,ERROR,'');
 			}					
 		}		
 	}
@@ -1472,7 +1476,7 @@ class Trap
 		$sql='SELECT id,oid FROM '.$this->db_prefix.'mib_cache WHERE type=21;';
 		$this->trapLog('SQL query get all traps: '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$traps=$ret_code->fetchAll();
 		
@@ -1489,7 +1493,7 @@ class Trap
 			exec($snmptransCommand,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
-				$this->trapLog('error executing snmptranslate',1,'');
+				$this->trapLog('error executing snmptranslate',ERROR,'');
 			}
 			$synt=null;
 			foreach ($snmptrans as $line)
@@ -1516,7 +1520,7 @@ class Trap
 			$sql='DELETE FROM '.$this->db_prefix.'mib_cache_trap_object where trap_id='.$trapID.';';
 			$this->trapLog('SQL query delete objects for trap : '.$sql,4,'');
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('No result in query : ' . $sql,1,'');
+				$this->trapLog('No result in query : ' . $sql,ERROR,'');
 			}
 			// create them again
 			foreach ($trapObjects as $trapObject)
@@ -1525,7 +1529,7 @@ class Trap
 				'(trap_id,object_name) VALUES ('.$trapID.' , \''.$trapObject.'\');';
 				$this->trapLog('SQL query add objects : '.$sql,4,'');
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('No result in query : ' . $sql,1,'');
+					$this->trapLog('No result in query : ' . $sql,ERROR,'');
 				}
 			}
 		}		
@@ -1534,7 +1538,7 @@ class Trap
 		// Get max number
 		$sql='SELECT MAX(type) FROM '.$this->db_prefix.'mib_cache;';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$maxRet=$ret_code->fetch();
 		if (array_key_exists('MAX(type)', $maxRet)) //Mysql
@@ -1547,8 +1551,8 @@ class Trap
 		}
 		else 
 		{
-		    $this->traplog('Returned code : ' . print_r($maxRet,true),2,'');
-		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,1,'');
+		    $this->traplog('Returned code : ' . print_r($maxRet,true),WARN,'');
+		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,ERROR,'');
 		}
 		//echo $sql."\n";print_r($num);echo"\n";
 		for ($i=0;$i<$num;$i++)
@@ -1556,7 +1560,7 @@ class Trap
 			// get an oid for type=$i
 			$sql='SELECT oid FROM '.$this->db_prefix.'mib_cache WHERE type=\''.$i.'\' LIMIT 1;';
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('No result in query : ' . $sql,1,'');
+				$this->trapLog('No result in query : ' . $sql,ERROR,'');
 			}
 			$oid=$ret_code->fetch()['oid'];
 			if ($oid == null) 
@@ -1569,7 +1573,7 @@ class Trap
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
-				$this->trapLog('error executing snmptranslate',1,'');
+				$this->trapLog('error executing snmptranslate',ERROR,'');
 			}
 			$synt=null;
 			foreach ($snmptrans as $line)
@@ -1586,7 +1590,7 @@ class Trap
 			// check if type exists -> update or insert
 			$sql='SELECT num FROM '.$this->db_prefix.'mib_cache_syntax WHERE num=\''.$i.'\';';
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('No result in query : ' . $sql,1,'');
+				$this->trapLog('No result in query : ' . $sql,ERROR,'');
 			}
 			$numDB=$ret_code->fetch()['num'];
 			if ($numDB==null)
@@ -1594,7 +1598,7 @@ class Trap
 				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_syntax '.
 				'(num,value) VALUES ('.$i.',\''.$synt.'\');';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
+					$this->trapLog('Error in query : ' . $sql,ERROR,'');
 				}					
 			}
 			else
@@ -1602,7 +1606,7 @@ class Trap
 				$sql='UPDATE '.$this->db_prefix.'mib_cache_syntax '.
 				'SET value=\''.$synt.'\' WHERE num='.$i.';';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
+					$this->trapLog('Error in query : ' . $sql,ERROR,'');
 				}					
 			}
 		}
@@ -1611,7 +1615,7 @@ class Trap
 		// Get max number
 		$sql='SELECT MAX(textual_convention) FROM '.$this->db_prefix.'mib_cache;';
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		
 		$maxRet=$ret_code->fetch();
@@ -1625,7 +1629,7 @@ class Trap
 		}
 		else
 		{
-		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,1,'');
+		    $this->trapLog('Error fetching max(type) of mib_cache : ' . $sql,ERROR,'');
 		}
 		//echo $sql."\n";print_r($num);echo"\n";
 		for ($i=0;$i<$num;$i++)
@@ -1633,7 +1637,7 @@ class Trap
 			// get an oid for textual_convention=$i
 			$sql='SELECT oid FROM '.$this->db_prefix.'mib_cache WHERE textual_convention=\''.$i.'\' LIMIT 1;';
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('No result in query : ' . $sql,1,'');
+				$this->trapLog('No result in query : ' . $sql,ERROR,'');
 			}
 			$oid=$ret_code->fetch()['oid'];
 			if ($oid == null) 
@@ -1646,7 +1650,7 @@ class Trap
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
-				$this->trapLog('error executing snmptranslate',1,'');
+				$this->trapLog('error executing snmptranslate',ERROR,'');
 			}
 			$synt=null;
 			foreach ($snmptrans as $line)
@@ -1663,7 +1667,7 @@ class Trap
 			// check if tc exists -> update or insert
 			$sql='SELECT num FROM '.$this->db_prefix.'mib_cache_tc WHERE num=\''.$i.'\';';
 			if (($ret_code=$db_conn->query($sql)) == FALSE) {
-				$this->trapLog('No result in query : ' . $sql,1,'');
+				$this->trapLog('No result in query : ' . $sql,ERROR,'');
 			}
 			$numDB=$ret_code->fetch()['num'];
 			if ($numDB==null)
@@ -1671,7 +1675,7 @@ class Trap
 				$sql='INSERT INTO '.$this->db_prefix.'mib_cache_tc '.
 				'(num,value) VALUES ('.$i.',\''.$synt.'\');';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
+					$this->trapLog('Error in query : ' . $sql,ERROR,'');
 				}					
 			}
 			else
@@ -1679,7 +1683,7 @@ class Trap
 				$sql='UPDATE '.$this->db_prefix.'mib_cache_tc '.
 				'SET value=\''.$synt.'\' WHERE num='.$i.';';
 				if (($ret_code=$db_conn->query($sql)) == FALSE) {
-					$this->trapLog('Error in query : ' . $sql,1,'');
+					$this->trapLog('Error in query : ' . $sql,ERROR,'');
 				}					
 			}
 		}	
@@ -1700,7 +1704,7 @@ class Trap
 		exec($snmpCommand,$this->objectsAll,$retVal);		
 		if ($retVal!=0)
 		{
-			$this->trapLog('error executing snmptranslate',1,'');
+			$this->trapLog('error executing snmptranslate',ERROR,'');
 		}
 		
 		// Get all mibs from databse to have a memory index
@@ -1710,7 +1714,7 @@ class Trap
 		$sql='SELECT * from '.$this->db_prefix.'mib_cache;';
 		$this->trapLog('SQL query : '.$sql,4,'');
 		if (($ret_code=$db_conn->query($sql)) == FALSE) {
-			$this->trapLog('No result in query : ' . $sql,1,'');
+			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$this->dbOidAll=$ret_code->fetchAll();
 		$this->dbOidIndex=array();
@@ -1792,7 +1796,7 @@ class Trap
 					' -Td '.$oid,$snmptrans,$retVal);
 			if ($retVal!=0)
 			{
-				$this->trapLog('error executing snmptranslate',1,'');
+				$this->trapLog('error executing snmptranslate',ERROR,'');
 			}
 			$synt=null;
 			foreach ($snmptrans as $line)
