@@ -154,7 +154,7 @@ fake_trap 'Missing oid' 		127.0.0.1 "status='error'" 	1 	'' 			.1.3.6.31.2 '.1.3
 fake_trap 'Simple display' 		127.0.0.1 "status='done'" 	1 	'1;OK 123' 	.1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 123' 
 fake_trap 'Simple text display' 127.0.0.1 "status='done'" 	1 	'1;OK Test' .1.3.6.31.2 '.1.3.6.32.1 4' '.1.3.6.32.2 "Test"' 
 fake_trap 'Regexp rule' 		127.0.0.1 "status='done'" 	1 	'0;OK Test' .1.3.6.31.5 '.1.3.6.255.1 3' '.1.3.6.32.1 "Test"'
-fake_trap 'Groupe' 				127.0.0.1 "status='done'" 	1 	'0;OK Test' .1.3.6.31.6 '.1.3.6.32.1 "test"'
+#fake_trap 'Groupe' 				127.0.0.1 "status='done'" 	1 	'0;OK Test' .1.3.6.31.6 '.1.3.6.32.1 "test"'
 
 #( ip4 , 		trap_oid , 		host_name , 	host_group_name , 	action_match , action_nomatch ,	service_name ,		rule ,   display_nok , display)
 #VALUES 
@@ -169,8 +169,32 @@ echo "############# Evaluation tests ##########"
 
 expr_eval "1=1" 0 "true"
 expr_eval "1=0" 0 "false"
+expr_eval "1!=0" 0 "true"
+expr_eval "1!=1" 0 "false"
 expr_eval "10>3" 0 "true"
 expr_eval "10>3000" 0 "false"
+expr_eval "11>=11" 0 "true"
+expr_eval "20>=1000" 0 "false"
+expr_eval "12>=2" 0 "true"
+expr_eval "13>=20" 0 "false"
+expr_eval "1<=1" 0 "true"
+expr_eval "1<=0" 0 "false"
+expr_eval '1 <= "test"' 1 "false"
+expr_eval '1 = "test"' 1 "false"
+expr_eval '1 >= "test"' 1 "false"
+expr_eval '1 != "test"' 1 "false"
+expr_eval '"test" = "test"' 0 "true"
+expr_eval '"test" = "tests"' 0 "false"
+expr_eval '"test" ~ "test"' 0 "true"
+expr_eval '"test" ~ "te"' 0 "true"
+expr_eval '"test" ~ "te.t"' 0 "true"
+expr_eval '"test" ~ "k"' 0 "false"
+expr_eval '"test" ~ 3' 1 "false"
+
+expr_eval '("test")' 0 "true"
+expr_eval '(1=1) & (2>3)' 0 "false"
+
+
 
 
 exit $GLOBAL_ERROR;
