@@ -28,13 +28,13 @@ class Trap
 	protected $api_port='';
 	protected $api_username='';
 	protected $api_password='';
-	
+
 	//**** Options from config database
 	// Logs 
 	protected $debug_level=2;  // 0=No output 1=critical 2=warning 3=trace 4=ALL
 	protected $alert_output='display'; // alert type : file, syslog, display
 	protected $debug_file="/tmp/trapdebug.txt";
-	protected $debug_text=array("Error","Warning","Info","Debug");
+	protected $debug_text=array("","Error","Warning","Info","Debug");
 	
 	//**** End options from database
 	
