@@ -36,11 +36,19 @@ function fake_trap()
 	if [ -z "$RET" ] && [ $sqlexists -eq 1 ]; then
 		echo "FAILED : no DB entry";
 		GLOBAL_ERROR=1;
+		# Do it again with log_level to 4
+		sqlExec "UPDATE traps_db_config set value=4 where name='log_level';"
+		echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
+		sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"
 		return;
 	fi
 	if [ ! -z "$RET" ] && [ $sqlexists -eq 0 ]; then
 		echo "FAILED : found entry : $RET";
 		GLOBAL_ERROR=1;
+		# Do it again with log_level to 4
+		sqlExec "UPDATE traps_db_config set value=4 where name='log_level';"
+		echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
+		sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"
 		return;
 	fi
 
@@ -52,6 +60,10 @@ function fake_trap()
 		   cat ${MODULE_HOME}/tests/icinga2.cmd
 		   echo " FAILED finding $4 in command";
 		   GLOBAL_ERROR=1;
+		   # Do it again with log_level to 4
+		   sqlExec "UPDATE traps_db_config set value=4 where name='log_level';"
+		   echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
+		   sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"		   
 		   return;
 		fi
 		
@@ -77,7 +89,7 @@ cd $MODULE_HOME
 echo "Setting logging to max"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_destination','display');"
 sqlExec "insert into traps_db_config (name,value) VALUES ('log_level','5');"
-sqlExec "insert into traps_db_config (name,value) VALUES ('db_remove_days ,50);"
+sqlExec "insert into traps_db_config (name,value) VALUES ('db_remove_days' ,50);"
 #sqlExec "select * from traps_db_config;";
 
 #if [ "$DB" = pgsql ]; then
@@ -96,7 +108,7 @@ echo "Adding fake icingacmd"
 echo -e "icingacmd = \"${MODULE_HOME}/tests/icinga2.cmd\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
 
 
-#			MessageIP	: IP : SQL filter : regexp display : trap oid : additionnal OIDs
+#			MessageIP : IP : SQL filter : check SQL :  regexp display : trap oid : additionnal OIDs
 
 fake_trap 'Simple rule match' 127.0.0.1 "status='done'" 1 '0;OK 1' .1.3.6.31.1 '.1.3.6.33.2 3'
 echo "back to normal logging"
