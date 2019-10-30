@@ -562,7 +562,7 @@ function add_schema_pgsql(){
   fi
   sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"
   echo -n "setting :  $sqlCommand : ";
-  dbRet=$(psql $sql_conn -d  postgres -c "$sqlCommand");
+  dbRet=$(psql $sql_conn -d ${dbName} -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
 	   # Error is shown with stderr
 	   echo "Errors in setting user, deleting database $dbName";
