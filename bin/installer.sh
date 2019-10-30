@@ -560,8 +560,8 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
-  sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbName};"  
-  echo "Adding :  $sqlCommand";
+  sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"
+  echo "setting :  $sqlCommand";
   dbRet=$(psql $sql_conn -d  postgres -c "$sqlCommand");
   if [ $? -ne 0 ]; then 
 	   # Error is shown with stderr
@@ -575,8 +575,21 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
-
-  
+  sqlCommand="GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO  ${dbUser2};"  
+  echo "setting :  $sqlCommand";
+  dbRet=$(psql $sql_conn -d  ${dbName} -c "$sqlCommand");
+  if [ $? -ne 0 ]; then 
+	   # Error is shown with stderr
+	   echo "Errors in setting user, deleting database $dbName";
+	   psql $sql_conn -d  postgres -c "REVOKE ALL ON DATABASE ${dbName} FROM ${dbUser2};"
+	   psql $sql_conn -d  postgres -c "DROP user ${dbUser2};";
+	   psql $sql_conn -d  postgres -c "drop database ${dbName};"
+	   if [ $dbAuto -eq 1 ]; then exit 1; fi
+	   question "Change parameters and start again"
+	   if [ $? -eq 0 ]; then return 1; fi
+	   add_schema
+	   return 0;
+  fi  
   echo "Database parameters set"
   echo
   if [ $dbAuto -eq 0 ]; then 
