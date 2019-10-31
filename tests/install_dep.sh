@@ -24,6 +24,7 @@ touch vendor/icinga_etc/resources.ini
 
 #sudo bin/installer.sh -c perm -d ${MODULE_HOME} -a nobody -w ${MODULE_HOME}/vendor/icinga_etc
 sed -i -r "s#/etc/icingaweb2#${MODULE_HOME}/vendor/icinga_etc#" bin/trap_in.php 
+chmod 755 bin/*.sh
 
 # install database
 
