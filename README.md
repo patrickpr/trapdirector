@@ -1,9 +1,9 @@
 # trapdirector
 Icingaweb2 module for receiving and handling snmp traps
 
-[![Build Status](https://travis-ci.org/patrickpr/trapdirector.svg?branch=master)](https://travis-ci.org/patrickpr/trapdirector)
+[![Build Status](https://travis-ci.org/patrickpr/trapdirector.svg?branch=master)](https://travis-ci.org/patrickpr/trapdirector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/cc87e39440bc434bb5724bece6b5fcbc)](https://www.codacy.com/manual/patrick_34/trapdirector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=patrickpr/trapdirector&amp;utm_campaign=Badge_Grade)
 
-[![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 
 Projet features : 
 
