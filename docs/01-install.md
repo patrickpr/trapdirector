@@ -22,6 +22,12 @@ Install files
 2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory (or modules directory if not standard installation)
 3. trapdirector/mibs/ must be writable by icinga web user to upload mibs from web GUI
 
+Automatic installation
+-----------------
+
+There is an install script which can help you if not familiar with database creation etc... : ![Auto install](30-install-auto.md)
+
+It will execute the manual tasks described below.
 
 Non standard IcingaWeb2 installation
 ------------------------------------
@@ -34,13 +40,6 @@ If IcingaWeb2 configuration directory is not "/etc/icingaweb2", you must set up 
 $icingaweb2_etc="/etc/icingaweb2";
 [....]
 ```
-
-Automatic installation
------------------
-
-There is an install script which can help you if not familiar with database creation etc... : ![Auto install](30-install-auto.md)
-
-It will execute the manual tasks described below.
 
 Create Database
 -----------------

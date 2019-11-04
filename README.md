@@ -12,7 +12,7 @@ Projet features :
 - Update icinga services based on rules : host or hostgroups and traps data updates service status.
 - OID decode to human readable name, possible to add mib files via web.
 
-Project status : Stable release 1.0.1
+Project status : Stable release 1.0.2
 
 - Module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
 - All project feature are working on those systems.	 

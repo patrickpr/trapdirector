@@ -6,7 +6,7 @@ Requirements
 
 * You must have root access on the Icinga server
 * Icinga, IcingaWeb2, trap receiver (snmptrapd) must be on the server
-* mysql database only for now, but can be on remote server
+* mysql and postgreSQL database - can be on remote server
 * Server with systemctl (CentOS and RH 7 ...)
 
 
@@ -37,7 +37,11 @@ Now have a look after the configuration form, there is the full command line you
 
 ![install-3](img/install-auto-3.jpg)
 
+First, click on "Save Config" to save default parameters the setting page has discovered : IDO database, snmptranslate, etc...
+
 Enter this a a super user (like root) :
+
+Note : if you use postgreSQL, add "-b pgsql" to the script.
 
 ```
 [root@icinga trapdirector]# /usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /opt/rh/rh-php71/root/usr/sbin/php-fpm -a apache -w /etc/icingaweb2
