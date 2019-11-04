@@ -59,7 +59,7 @@ function fake_trap()
 		if [ $? -ne 0 ]; then
 		   echo
 		   cat ${MODULE_HOME}/tests/icinga2.cmd
-		   echo " FAILED finding "$display" in command";
+		   echo " FAILED finding '$display' in command";
 		   GLOBAL_ERROR=1;
 		   # Do it again with log_level to 4
 		   sqlExec "UPDATE traps_db_config set value=4 where name='log_level';"

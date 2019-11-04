@@ -5,7 +5,7 @@ echo "Installing dependencies for $DB / db version $DBVER";
 set -ex
 
 MODULE_HOME=${MODULE_HOME:="$(dirname "$(readlink -f "$(dirname "$0")")")"}
-PHP_VERSION="$(php -r 'echo phpversion();')"
+#PHP_VERSION="$(php -r 'echo phpversion();')"
 PHP_BIN=$(which php);
 ICINGAWEB_VERSION=${ICINGAWEB_VERSION:=2.7.1}
 ICINGAWEB_GITREF=${ICINGAWEB_GITREF:=}
