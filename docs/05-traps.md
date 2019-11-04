@@ -128,7 +128,7 @@ On the Handler page, click on a rule to edit it.
 Testing a rule
 ---------------
 
-Not currently implemented
+See "Rule testing" in : [Rules evaluation](08-rules-evaluation.md)
 
 
 Go back to user guide : [Traps](02-userguide.md)
