@@ -32,15 +32,10 @@ icingawebResources="resources.ini";
 function usage()
 {
    echo "$0 -c <command> [ -w <icingaweb2 etc dir> -p <php binary> -d <trapdirector directory>";
-			
    echo -e "\t -a <apache user>"
    echo -e "\t -b <mysql|pgsql> -u <SQL_user> [ -s <SQL Password> ] ]";
    echo -e "\t [ -t <DBName:SQL IP:SQL port:SQL admin:SQL admin password> ] ";
    echo -e "\t -i";
-	   
-									
-																		   
-							  
    echo "command (you can have multiple -c ): 
    api      : setup api & user
    snmpconf : setup snmptrapd.conf
@@ -155,7 +150,7 @@ function check_api() {
 	add_to_config "icingaAPI_port" "5665"
 	add_to_config "icingaAPI_user" "${apiUser}"
 	add_to_config "icingaAPI_password" "${apiPass}"
-
+	
 	return 0;
 
 }
@@ -300,8 +295,6 @@ function add_schema_mysql(){
   echo -e "\n==================================";
   echo "Adding trap schema in database";
   echo
-					   
-   
   unset dbName dbFrom;
   dbAuto=0;
   if [ ! -z "$Psqlconn" ]; then
@@ -388,7 +381,6 @@ function add_schema_mysql(){
   else
 	dbPass2=$PsqlPass;
   fi 
-				
   
   if [ $dbAuto -eq 0 ]; then 
 	  echo -n "Allow new user to connect only from [localhost] : "
@@ -472,6 +464,7 @@ function add_schema_pgsql(){
 	dbAuto=1;
 	if [ ${#arr[*]} -eq 5 ]; then
 		PGPASSWORD="${arr[4]}";
+		export PGPASSWORD;
 		sql_conn="-h ${arr[1]} -p ${arr[2]} -U ${arr[3]} -w "
 	else if [ ${#arr[*]} -eq 4 ]; then
 			sql_conn="-h ${arr[1]} -p ${arr[2]} -U ${arr[3]} -w ";
@@ -501,8 +494,8 @@ function add_schema_pgsql(){
 	  echo -n "Enter password (or press enter if no password is required) : ";
 	  read -s dbPass;
 	  sql_conn="";
-	  if [ ! "$dbPass" == "" ]; then PGPASSWORD="$dbPass" ;fi;
-	  sql_conn = "-h $dbHost -p $dbPort -U $dbUser"
+	  if [ ! "$dbPass" == "" ]; then PGPASSWORD="$dbPass" ; export PGPASSWORD ; fi;
+	  sql_conn="-h $dbHost -p $dbPort -U $dbUser"
   fi
   
   echo
@@ -524,15 +517,6 @@ function add_schema_pgsql(){
 	  echo -n "Enter new database name (or enter to exit): ";
 	  read dbName;
 	  if [ "$dbName" == "" ] ; then return 1; fi;
-  fi
-  dbRet=$(psql $sql_conn -d  postgres -c "CREATE DATABASE ${dbName} WITH ENCODING 'UTF8';");
-  if [ $? -ne 0 ]; then 
-	   # Error is shown with stderr
-	   if [ $dbAuto -eq 1 ]; then exit 1; fi
-	   question "Change parameters"
-	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
-	   return 0;
   fi
 
   if [ -z "$PsqlUser" ]; then 
@@ -568,6 +552,17 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
+  
+  dbRet=$(psql $sql_conn -d  postgres -c "CREATE DATABASE ${dbName} WITH ENCODING 'UTF8' OWNER ${dbUser2};");
+  if [ $? -ne 0 ]; then 
+	   # Error is shown with stderr
+	   if [ $dbAuto -eq 1 ]; then exit 1; fi
+	   question "Change parameters"
+	   if [ $? -eq 0 ]; then return 1; fi
+	   add_schema
+	   return 0;
+  fi  
+  
   sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"
   echo -n "setting :  $sqlCommand : ";
   dbRet=$(psql $sql_conn -d ${dbName} -c "$sqlCommand");
@@ -699,13 +694,9 @@ function set_perms(){
   echo -e "\n==================================";
 }
 
-			
 
 unset commands PicingawbEtc PphpBin PmoduleDir PsqlUser PsqlPass PApacheUser Pdbtype
 unset Psqlconn
-	   
-																					
-							  
 commands='';
 Pinter=1;
 
@@ -735,15 +726,12 @@ while getopts ":c:w:p:d:u:s:a:b:t:i" o; do
 		b)
 			Pdbtype=${OPTARG}
 			;;
-			
 		t)
 			Psqlconn=${OPTARG}
 			;;
 		i)
 			Pinter=0;
 			;;
-	   
-							  
 		*)
 			echo "unknown option ${OPTARG}"
 			usage
@@ -779,7 +767,6 @@ if [[ $commands =~ snmprun ]] || [[ $commands =~ all ]]; then
 fi
 
 if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
-			
 	if [[ -z "$Pdbtype" ]] || [[ $Pdbtype =~ mysql ]]; then
 		add_schema_mysql 
 	else if [[ $Pdbtype =~ pgsql ]]; then
@@ -788,12 +775,6 @@ if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
 		echo "Unknown database type : $Pdbtype"
 		usage
 	fi
-	   
-													   
-				  
-	 
-				  
-							  
 	fi
 fi
 

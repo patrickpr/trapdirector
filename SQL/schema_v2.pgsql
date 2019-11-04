@@ -5,7 +5,7 @@ CREATE TABLE #PREFIX#db_config (
     PRIMARY KEY (id)
 );
 
-INSERT INTO #PREFIX#db_config (name,value) VALUES ('db_version',1);
+INSERT INTO #PREFIX#db_config (name,value) VALUES ('db_version',2);
 
 CREATE OR REPLACE FUNCTION unix_timestamp(timestamp with time zone) RETURNS bigint AS '
         SELECT EXTRACT(EPOCH FROM $1)::bigint AS result

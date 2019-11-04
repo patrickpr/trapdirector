@@ -40,7 +40,7 @@ class MIBLoader
 				->from(
 					$this->config->getMIBCacheTableName(),
 					array('mib' => 'mib'))
-				->where("type = 21")
+				->where("type = '21'")
 				->order('mib ASC');				;
 		$names=$dbconn->fetchAll($query);
 		$mib=array();
@@ -65,7 +65,7 @@ class MIBLoader
 				->from(
 					$this->config->getMIBCacheTableName(),
 				    array('name' => 'name', 'oid' => 'oid', 'description' => 'description'))
-				->where("mib = '".$mib."' AND type=21") ;
+				->where("mib = '".$mib."' AND type='21'") ;
 		$names=$dbconn->fetchAll($query);
 		foreach ($names as $val)
 		{
