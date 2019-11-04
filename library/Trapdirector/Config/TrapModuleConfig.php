@@ -16,9 +16,9 @@ class TrapModuleConfig
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
 	// Minimum DB version
-	static public function getDbMinVersion() { return 1;}	
+	static public function getDbMinVersion() { return 2;}	
 	// Current DB version
-	static public function getDbCurVersion() { return 1;}
+	static public function getDbCurVersion() { return 2;}
 
 	/************ Module configuration **********************/
 	// Module base path
@@ -63,8 +63,6 @@ class TrapModuleConfig
 	// Mib cache tables
 	public function getMIBCacheTableName() { return $this->table_prefix . 'mib_cache'; }
 	public function getMIBCacheTableTrapObjName() { return $this->table_prefix . 'mib_cache_trap_object'; }
-	public function getMIBCacheTableSyntax() { return $this->table_prefix . 'mib_cache_syntax'; }
-	public function getMIBCacheTableTC() { return array('t' => $this->table_prefix . 'mib_cache_tc'); }
 	
 	
 	/****************** Database queries *******************/
@@ -123,6 +121,7 @@ class TrapModuleConfig
 	        'last_sent'    =>  'UNIX_TIMESTAMP(max(t.date_received))'
 	    );
 	}
+
 	public function getTrapHostListSearchColumns()
 	{
 	    return array(); // No search needed on this table

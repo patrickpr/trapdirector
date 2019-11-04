@@ -243,7 +243,8 @@ class HelperController extends TrapsController
 					'mib' => $object['mib'], 
 					'name' => $object['name'],
 					'type' => $object['type'],
-					'type_enum' => $object['type_enum']
+					'type_enum' => $object['type_enum'],
+				    'description' => $object['description']
 				)
 			);
 		}

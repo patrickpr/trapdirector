@@ -4,7 +4,7 @@
 
 namespace Icinga\Module\TrapDirector\Config;
 
-// TODO : create a cache of some kind.
+
 class MIBLoader
 {
 	protected $snmptranslate; // < snmp translate binary
@@ -14,6 +14,13 @@ class MIBLoader
 	protected $db; //< traps database
 	protected $config; //<TrapModuleConfig
 	
+	/**
+	 * 
+	 * @param string $snmptranslate snmptranslate binary
+	 * @param string $snmptranslate_dirs dirs to add to snmptranslate
+	 * @param string $db current database
+	 * @param TrapModuleConfig $config TrapModuleConfig class instance
+	 */
 	public function __construct($snmptranslate,$snmptranslate_dirs,$db,$config)
 	{
 		$this->snmptranslate=$snmptranslate;
@@ -33,7 +40,7 @@ class MIBLoader
 				->from(
 					$this->config->getMIBCacheTableName(),
 					array('mib' => 'mib'))
-				->where("type = 21")
+				->where("type = '21'")
 				->order('mib ASC');				;
 		$names=$dbconn->fetchAll($query);
 		$mib=array();
@@ -57,8 +64,8 @@ class MIBLoader
 		$query=$dbconn->select()
 				->from(
 					$this->config->getMIBCacheTableName(),
-					array('name' => 'name', 'oid' => 'oid'))
-				->where("mib = '".$mib."' AND type=21") ;
+				    array('name' => 'name', 'oid' => 'oid', 'description' => 'description'))
+				->where("mib = '".$mib."' AND type='21'") ;
 		$names=$dbconn->fetchAll($query);
 		foreach ($names as $val)
 		{
@@ -73,7 +80,6 @@ class MIBLoader
 	*/
 	public function getObjectList($trap)
 	{
-		// TODO : add leading '.' if missing
 		$objects=array();
 		
 		// Get trap id in DB
@@ -87,18 +93,15 @@ class MIBLoader
 		if ( ($id == null) || ! property_exists($id,'id') ) return null;
 		
 		$query=$dbconn->select()
-				->from(
-					array('o' => $this->config->getMIBCacheTableTrapObjName()),
-					array('name' => 'o.object_name'))
-				->join(
-					array('c' => $this->config->getMIBCacheTableName()),
-					'o.object_name=c.name',
-					array('mib' => 'c.mib','oid' => 'c.oid','type_enum'=>'c.type_enum'))
-				->join(
-					array('s' => $this->config->getMIBCacheTableSyntax()),
-					's.num=c.type',
-					array('type' => 's.value')	)			
-				->where("o.trap_id = ".$id->id);
+		        ->from(
+		            array('c' => $this->config->getMIBCacheTableName()),
+		            array('name' => 'c.name','mib' => 'c.mib','oid' => 'c.oid','type_enum'=>'c.type_enum',
+		                'type' => 'c.syntax', 'text_conv' => 'c.textual_convention', 'disp' => 'display_hint',
+		                'description' => 'c.description'))
+		        ->join(
+		            array('o' => $this->config->getMIBCacheTableTrapObjName()),
+		            'o.trap_id='.$id->id )
+		        ->where("o.object_id = c.id");
 		$listObjects=$dbconn->fetchAll($query);
 		if ( count($listObjects)==0 ) return null;
 		
@@ -108,6 +111,9 @@ class MIBLoader
 			$objects[$val->oid]['mib']=$val->mib;
 			$objects[$val->oid]['type']=$val->type;
 			$objects[$val->oid]['type_enum']=$val->type_enum;
+			$objects[$val->oid]['text_conv']=$val->text_conv;
+			$objects[$val->oid]['disp']=$val->disp;
+			$objects[$val->oid]['description']=$val->description;
 		}
 		return $objects;
 	}
@@ -118,14 +124,15 @@ class MIBLoader
 	*/
 	public function translateOID($oid)
 	{
-		// TODO : put a first . if missing
+	    if (!preg_match('/^\./',$oid)) $oid = '.' . $oid; // Add a leading '.'
 		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
 		$dbconn = $this->db->getConnection();
 
 		$query=$dbconn->select()
 				->from(
 					array('o' => $this->config->getMIBCacheTableName()),
-					array('mib'=>'o.mib','name' => 'o.name','type'=>'o.type','type_enum'=>'o.type_enum'))
+					array('mib'=>'o.mib','name' => 'o.name','type'=>'o.syntax',
+					    'type_enum'=>'o.type_enum', 'description'=>'o.description'))
 				->where('o.oid=\''.$oid.'\'');
 		$object=$dbconn->fetchRow($query);
 		if ($object != null) 
@@ -133,17 +140,8 @@ class MIBLoader
 			$retArray['name']=$object->name;
 			$retArray['mib']=$object->mib;
 			$retArray['type_enum']=$object->type_enum;
-			$query=$dbconn->select()
-					->from(
-						array('o' => $this->config->getMIBCacheTableSyntax()),
-						array('type'=>'o.value'))
-					->where('o.num=\''.$object->type.'\'');
-			$object=$dbconn->fetchRow($query);
-			if ($object != null) 
-			{
-				$retArray['type']=$object->type;
-			}
-			
+			$retArray['type']=$object->type;
+			$retArray['description']=$object->description;
 			return $retArray;
 		}
 		
@@ -170,7 +168,8 @@ class MIBLoader
 			$retArray['type']=$translate;
 			$retArray['type_enum']='';			
 		}
-		/* TODO : put in DB but only if 
+		$retArray['description']=null;
+		/* TODO : put in DB (but mybe only in trap_class).
 		$query=$db->getConnection()->insert(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$array(
@@ -188,6 +187,12 @@ class MIBLoader
 						
 	}
 
+	/**
+	 * Get number of objects in db
+	 * @param string $mib filter by MIB
+	 * @param string $type filter by type (21=trap)
+	 * @return number number of entries in db.
+	 */
 	public function countObjects($mib=null,$type=null)
 	{
 		$dbconn = $this->db->getConnection();
@@ -210,6 +215,35 @@ class MIBLoader
 			$query->where($where);
 		}		
 		return $dbconn->fetchOne($query);			
+	}
+	
+	/**
+	 * Get trap by oid, or if null, by id
+	 * @param string $oid
+	 * @param number $id
+	 * @return array trap details
+	 */
+	public function getTrapDetails($oid=null,$id=null)
+	{	    
+	    // Get trap id in DB
+	    if ($oid==null)
+	    {
+	        $where="c.id = '$id'";
+	    }
+	    else
+	    {
+	        $where="c.oid = '$oid'";
+	    }
+	    $query=$this->db->getConnection()->select()
+           ->from(
+            array('c' => $this->config->getMIBCacheTableName()),
+            array('name' => 'c.name','mib' => 'c.mib','oid' => 'c.oid','type_enum'=>'c.type_enum',
+                'type' => 'c.syntax', 'text_conv' => 'c.textual_convention', 'disp' => 'display_hint',
+                'description' => 'c.description'))
+            ->where($where);
+        $trap=$this->db->getConnection()->fetchRow($query);
+        
+        return $trap;
 	}
 	
 }

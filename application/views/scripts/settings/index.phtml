@@ -19,6 +19,9 @@
 		if (  $this->errorDetected != null) {
 			printwarn( 'DB error detected in app ');
 		}
+		if ( $this->configErrorDetected != null) {
+		    printwarn( 'Error detected : ' .  $this->configErrorDetected );
+		}
 		if ($this->db_error == 0 && $this->ido_db_error == 0 && $this->apimessageError == false && $this->icingaEtcWarn==0 && $this->snmptrapdError ==0)
 		{
 		    printok('All tests OK : DB, IdoDB, API, snmptrapd');
@@ -80,7 +83,15 @@
     <?= /** @var \Icinga\Module\Trapdirector\Forms\TrapsConfigForm $form */ $form ?>
 	<hr>
 	
-	<h2> Installation instructions </h2>
+	<h2> Automatic installation</h2>
+	
+	As user root, execute this script : <br>
+	<em>
+	<?= $this->installer ?>
+	</em>
+	<br>
+	If you use postgreSQL, add "-b pgsql"
+	<h2> Manuel installation instructions </h2>
 	<ul>
 	<li>
 	<p> Create database (skip if using existing one): <br><br>

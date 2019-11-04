@@ -1,10 +1,12 @@
 -------------------------------------------------------------------------------------------------
 Version 1.0.2
-Date : No released
-Database update : No
+Date : 04 Nov 2019
+Database update : Yes
 Migration path : from version > 1.0.0
 
 UPGRADE NOTES : 
+The main changes are the way mib updates are handled.
+First update is now twice as fast, and incremental updates don't re-create the database.
 
 BUGS
 ====
@@ -13,8 +15,9 @@ BUGS
 
 ENHANCEMENTS
 ============
-
-1) Added regexp to select oid for rule eval (not implemented in GUI) 
+1) Added regexp to select oid for rule eval (not implemented in GUI)
+2) Mib database update is now much faster.
+3) Automatic bash script installer (see documentation).
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.1

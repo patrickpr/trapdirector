@@ -464,6 +464,7 @@ function add_schema_pgsql(){
 	dbAuto=1;
 	if [ ${#arr[*]} -eq 5 ]; then
 		PGPASSWORD="${arr[4]}";
+		export PGPASSWORD;
 		sql_conn="-h ${arr[1]} -p ${arr[2]} -U ${arr[3]} -w "
 	else if [ ${#arr[*]} -eq 4 ]; then
 			sql_conn="-h ${arr[1]} -p ${arr[2]} -U ${arr[3]} -w ";
@@ -493,8 +494,8 @@ function add_schema_pgsql(){
 	  echo -n "Enter password (or press enter if no password is required) : ";
 	  read -s dbPass;
 	  sql_conn="";
-	  if [ ! "$dbPass" == "" ]; then PGPASSWORD="$dbPass" ;fi;
-	  sql_conn = "-h $dbHost -p $dbPort -U $dbUser"
+	  if [ ! "$dbPass" == "" ]; then PGPASSWORD="$dbPass" ; export PGPASSWORD ; fi;
+	  sql_conn="-h $dbHost -p $dbPort -U $dbUser"
   fi
   
   echo
@@ -516,15 +517,6 @@ function add_schema_pgsql(){
 	  echo -n "Enter new database name (or enter to exit): ";
 	  read dbName;
 	  if [ "$dbName" == "" ] ; then return 1; fi;
-  fi
-  dbRet=$(psql $sql_conn -d  postgres -c "CREATE DATABASE ${dbName} WITH ENCODING 'UTF8';");
-  if [ $? -ne 0 ]; then 
-	   # Error is shown with stderr
-	   if [ $dbAuto -eq 1 ]; then exit 1; fi
-	   question "Change parameters"
-	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
-	   return 0;
   fi
 
   if [ -z "$PsqlUser" ]; then 
@@ -560,6 +552,17 @@ function add_schema_pgsql(){
 	   add_schema
 	   return 0;
   fi
+  
+  dbRet=$(psql $sql_conn -d  postgres -c "CREATE DATABASE ${dbName} WITH ENCODING 'UTF8' OWNER ${dbUser2};");
+  if [ $? -ne 0 ]; then 
+	   # Error is shown with stderr
+	   if [ $dbAuto -eq 1 ]; then exit 1; fi
+	   question "Change parameters"
+	   if [ $? -eq 0 ]; then return 1; fi
+	   add_schema
+	   return 0;
+  fi  
+  
   sqlCommand="GRANT ALL PRIVILEGES ON DATABASE ${dbName} TO ${dbUser2};"
   echo -n "setting :  $sqlCommand : ";
   dbRet=$(psql $sql_conn -d ${dbName} -c "$sqlCommand");

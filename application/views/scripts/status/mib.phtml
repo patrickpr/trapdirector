@@ -13,10 +13,10 @@
 	<br>
 	<div id="id_animate_apply_mib2" ><i ></i></div>
 	<button id="id_apply_mib" type="button" onclick="updateMIB()">
-		<img id="id_animate_apply_mib" src="../../img/icons/refresh.png" style="display:none" >
+		<img id="id_animate_apply_mib" src="<?= Url::fromPath("img/icons/refresh.png") ?>" style="display:none" >
 		Update MIB Database
 	</button>  
-	Note: Command takes time to execute and is launched in background. Refresh the page to see objects count rising.<br>
+	<br>Note: Command takes time to execute and is launched in background. <strong>Refresh the page to see objects count rising.</strong><br>
 	If you don't see any updates after several minutes, run in command line : 'icingacli trapdirector mib update' to have output<br>
 	Note: You can leave this page safely and come back later.
    <br>

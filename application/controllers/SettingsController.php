@@ -8,7 +8,7 @@ use Icinga\Application\Icinga;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Exception\ConfigurationError;
 use RunTimeException;
-
+use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
@@ -33,14 +33,25 @@ class SettingsController extends TrapsController
     $dberrorMsg=$this->params->get('idodberror');
     if ($dberrorMsg != '')
         $this->view->errorDetected=$dberrorMsg;
-	        
-    // ******************* TODO : set this as default for ido database *******************
-    //echo $this->Config()->module('monitoring','backends')->get('icinga','resource');
+    
+    $this->view->configErrorDetected == NULL; // Displayed error on various conifugration errors.
     
     // Test if configuration exists, if not create for installer script
+	$emptyConfig=0;
     if ($this->Config()->isEmpty() == true)
     {
-        // TODO
+        $this->Config()->setSection('config'); // Set base config section.
+        try 
+        { 
+            $this->Config()->saveIni();
+            $this->view->configErrorDetected='Configuration is empty : you can run install script with parameters (see Automatic installation below)';
+			$emptyConfig=1;
+        }
+        catch (Exception $e)
+        {
+            $this->view->configErrorDetected=$e->getMessage();
+        }
+        
     }
 	// Test Database
 	$db_message=array( // index => ( message OK, message NOK, optional link if NOK ) 
@@ -116,13 +127,10 @@ class SettingsController extends TrapsController
 
     $this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
 
-	$this->view->form = $form = new TrapsConfigForm();
-	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
-
 	// Check standard Icingaweb2 path
 	$this->view->icingaEtcWarn=0;
 	$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	if ($icingaweb2_etc != "/etc/icingaweb2/")
+	if ($icingaweb2_etc != "/etc/icingaweb2/" && $icingaweb2_etc != '')
 	{
 	    $output=array();
 	    
@@ -134,9 +142,26 @@ class SettingsController extends TrapsController
 	        $this->view->icingaweb2_etc=$icingaweb2_etc;
 	    }
 	}
-	    
+
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
+	
+	$this->view->installer= $this->Module()->getBaseDir() . '/bin/installer.sh '
+	    . ' -c all ' 
+	    . ' -d ' . $this->Module()->getBaseDir()
+	    . ' -p ' . PHP_BINARY
+	    . ' -a ' . exec('whoami')
+	    . ' -w ' . Icinga::app()->getConfigDir();
+	        
+	// ******************* configuration form setup*******************
+	$this->view->form = $form = new TrapsConfigForm();
+	
+	// set default paths;
+	$this->view->form->setPaths($this->Module()->getBaseDir(),Icinga::app()->getConfigDir());
+	
+	// set default ido database
+	$this->view->form->setDefaultIDODB($this->Config()->module('monitoring','backends')->get('icinga','resource'));
+	
 	// Make form handle request.
 	$form->setIniConfig($this->Config())
 		->setDBList($resources)
@@ -158,7 +183,7 @@ class SettingsController extends TrapsController
 	
 	if ($dberror[0] == 0)
 	{
-		echo 'Schema already exists <br>';
+		echo 'Schema already exists';
 	}
 	else
 	{
@@ -201,6 +226,7 @@ class SettingsController extends TrapsController
 		$Trap->create_schema($schema,$prefix);
 		echo '</pre>';
 	}
+	echo '<br><br>Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a>';
   }
 
   public function updateschemaAction()
@@ -215,6 +241,8 @@ class SettingsController extends TrapsController
 	  
 	  $dberror=$this->getDb(true); // Get DB in test mode
 	  
+	  echo 'Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a><br><br>';
+	  
 	  if ($dberror[0] == 0)
 	  {
 	      echo 'Schema already exists and is up to date<br>';
@@ -225,19 +253,40 @@ class SettingsController extends TrapsController
 	      echo 'Database does not exists or is not setup correctly<br>';
 	      return;
 	  }
-	  $target_version=$dberror[2];
-	  echo 'Updating schema to '. $target_version . ': <br>';
-	  echo '<pre>';
+      // setup
 	  require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
-	  
 	  $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 	  $debug_level=4;
 	  $Trap = new Trap($icingaweb2_etc);
-	  $Trap->setLogging($debug_level,'display');
+	  
 	  
 	  $prefix=$this->Config()->get('config', 'database_prefix');
-	  $updateSchema=$this->Module()->getBaseDir() . '/SQL/update_schema_v';
+	  $updateSchema=$this->Module()->getBaseDir() . '/SQL/';
 	  
+	  $target_version=$dberror[2];
+	  
+	  if ($this->params->get('msgok') == null) {
+	      // Check for messages and display if any
+              echo "Upgrade databse is going to start.<br>Don't forget to backup your database before update<br>";
+	      $Trap->setLogging(2,'syslog');
+	      $message = $Trap->update_schema($updateSchema,$target_version,$prefix,true);
+	      if ($message != '')
+	      {
+	          echo 'Note :<br><pre>';
+	          echo $message;
+	          echo '</pre>';
+	          echo '<br>';
+	          echo '<a  class="link-button" style="font-size:large;font-weight:bold" href="' . Url::fromPath('trapdirector/settings/updateschema') .'?msgok=1">Click here to update</a>';
+	          echo '<br>';
+	          return;
+	      }
+	  }
+	  
+	  $Trap->setLogging($debug_level,'display');
+	  
+	  echo 'Updating schema to '. $target_version . ': <br>';
+	  echo '<pre>';
+	  	  
 	  $Trap->update_schema($updateSchema,$target_version,$prefix);
 	  echo '</pre>';
   }  

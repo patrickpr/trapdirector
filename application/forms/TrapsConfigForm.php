@@ -10,6 +10,7 @@ class TrapsConfigForm extends ConfigForm
 	private $DBList;
 	private $module_base_path;
 	private $icinga_base_path;
+	private $idoDbName='';
 	
 	
 	public function init()
@@ -27,6 +28,12 @@ class TrapsConfigForm extends ConfigForm
 		$this->DBList=$resources;
 		//print_r($this->DBList);
 		return $this;
+	}
+	
+	public function setDefaultIDODB($idoDbName)
+	{
+	    $this->idoDbName=$idoDbName;
+	    return $this;
 	}
 	
     public function createElements(array $formData)
@@ -61,7 +68,7 @@ class TrapsConfigForm extends ConfigForm
 				'empty_option' => 'Please choose your database',
 				'autosubmit'    => false,
 				'multiOptions'  => $this->DBList,
-				'value'			=> '',
+				'value'			=> $this->idoDbName,
 			 )
 		);		
 		$this->addElement(
