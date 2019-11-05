@@ -6,25 +6,25 @@ labels: ''
 assignees: ''
 
 ---
-**Get debug logs**
+# Get debug logs
 Trapdirector -> Status&Mibs -> Status : set Log level to ALL
 Insert debug logs from syslog or file depending on your log destination
 
-**Describe the bug**
+# Describe the bug
 A clear and concise description of what the bug is.
 
-**To Reproduce**
+# To Reproduce
 Steps to reproduce the behavior:
 
-**Expected behavior**
+# Expected behavior
 A clear and concise description of what you expected to happen.
 
-**Your Environment:**
-* trapdirector version (in icinga web 2 : System - About):
-* Icinga Web 2 version and modules (in icinga web 2 : System - About):
-* Icinga 2 version (`icinga2 --version`):
-* Operating System and version:
-* Webserver, PHP versions:
+# Your Environment:
+*  trapdirector version (in icinga web 2 : System - About):
+*  Icinga Web 2 version and modules (in icinga web 2 : System - About):
+*  Icinga 2 version (`icinga2 --version`):
+*  Operating System and version:
+*  Webserver, PHP versions:
 
-**Additional context**
+# Additional context
 Add any other context about the problem here.
