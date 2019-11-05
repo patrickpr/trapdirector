@@ -33,7 +33,7 @@ function fake_trap()
 	RET=$(sqlExec "select status_detail from traps_received where trap_oid='${trapoid}' and ${sqlfilter};");
 	#sqlExec "select * from traps_rules;";
 	#RET=$(sqlExec "select trap_oid,status from traps_received where trap_oid='${trapoid}';");
-	if [ -z "$RET" ] && [ $sqlexists -eq 1 ]; then
+	if [ -z "$RET" ] && [ "$sqlexists" -eq 1 ]; then
 		echo "FAILED : no DB entry";
 		GLOBAL_ERROR=1;
 		# Do it again with log_level to 4
@@ -42,7 +42,7 @@ function fake_trap()
 		sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"
 		return;
 	fi
-	if [ ! -z "$RET" ] && [ $sqlexists -eq 0 ]; then
+	if [ ! -z "$RET" ] && [ "$sqlexists" -eq 0 ]; then
 		echo "FAILED : found entry : $RET";
 		GLOBAL_ERROR=1;
 		# Do it again with log_level to 4
@@ -55,15 +55,15 @@ function fake_trap()
 	echo -n "DB OK (${RET}),";
 	#cat ${MODULE_HOME}/tests/icinga2.cmd 
 	if [ ! -z "$display" ]; then 
-		grep "$display" ${MODULE_HOME}/tests/icinga2.cmd  > /dev/null
+		grep "$display" "${MODULE_HOME}/tests/icinga2.cmd"  > /dev/null
 		if [ $? -ne 0 ]; then
 		   echo
-		   cat ${MODULE_HOME}/tests/icinga2.cmd
+		   cat "${MODULE_HOME}/tests/icinga2.cmd"
 		   echo " FAILED finding '$display' in command";
 		   GLOBAL_ERROR=1;
 		   # Do it again with log_level to 4
 		   sqlExec "UPDATE traps_db_config set value=4 where name='log_level';"
-		   echo -e "$trap" | $PHP_BIN ${MODULE_HOME}/bin/trap_in.php 2>/dev/null
+		   echo -e "$trap" | "$PHP_BIN" "${MODULE_HOME}/bin/trap_in.php" 2>/dev/null
 		   sqlExec "UPDATE traps_db_config set value=2 where name='log_level';"		   
 		   return;
 		fi
@@ -74,7 +74,7 @@ function fake_trap()
 	fi
 	# Clean
 	sqlExec "delete from traps_received where id > 0;";
-	rm -f ${MODULE_HOME}/tests/icinga2.cmd;   
+	rm -f "${MODULE_HOME}/tests/icinga2.cmd";   
 }
 
 function expr_eval()
@@ -83,25 +83,25 @@ function expr_eval()
   error=$2;
   evalrule=$3;
   
-  RET=$($PHP_BIN ${MODULE_HOME}/tests/expr_test.php -r "$rule" -d "${MODULE_HOME}/vendor/icinga_etc")
+  RET=$("$PHP_BIN" "${MODULE_HOME}/tests/expr_test.php" -r "$rule" -d "${MODULE_HOME}/vendor/icinga_etc")
   CODE=$?
   
   echo -n "Rule : $rule : "
-  if [ $CODE -eq 1 ]; then 
-	if [ $error -eq 0 ]; then
+  if [ "$CODE" -eq 1 ]; then 
+	if [ "$error" -eq 0 ]; then
 	    echo "ERR : Error returned and output : $RET";
 	   GLOBAL_ERROR=1;
 	else
 		echo "Returned expected error (OK)";
 	fi
   else
-    if [ $error -ne 0 ]; then
+    if [ "$error" -ne 0 ]; then
 	   echo "ERR : no error returned and output : $RET";
 	   GLOBAL_ERROR=1;
 	   return
 	fi
 	if [ "$evalrule" = "$RET" ]; then
-		echo $RET;
+		echo "$RET";
     else
 	   echo "ERR : should be $evalrule , returned $RET";
 	   GLOBAL_ERROR=1;
@@ -117,7 +117,7 @@ PHP_BIN=$(which php);
 
 GLOBAL_ERROR=0;
 
-cd $MODULE_HOME
+cd "$MODULE_HOME"
 
 #### Set output to display and full log level
 echo "Setting logging to max"
@@ -134,7 +134,7 @@ sqlExec "insert into traps_db_config (name,value) VALUES ('db_remove_days' ,50);
 
 # Setup rules
 echo -n "Adding rules : "
-RULES=$(cat ${MODULE_HOME}/tests/rules.sql)
+RULES=$(cat "${MODULE_HOME}/tests/rules.sql")
 echo $(sqlExec "${RULES}")
 
 # Fake icingacmd as files

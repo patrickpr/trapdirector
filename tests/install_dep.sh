@@ -30,20 +30,20 @@ chmod 755 bin/*.sh
 
 if [ "$DB" = mysql ]; then
 
-	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
+	bin/installer.sh -c database  -b mysql -t travistest:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 
-	sed -i -e 's/#PREFIX#/traps_/g' ${MODULE_HOME}/SQL/schema_v${DBVER}.sql	
-	mysql -u root travistest < SQL/schema_v${DBVER}.sql
-	echo -e "database_prefix = \"traps_\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini	
+	sed -i -e 's/#PREFIX#/traps_/g' "${MODULE_HOME}/SQL/schema_v${DBVER}.sql"	
+	mysql -u root travistest < "SQL/schema_v${DBVER}.sql"
+	echo -e "database_prefix = \"traps_\"\n" >> "${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini"	
 	
 	
 elif [ "$DB" = pgsql ]; then
 
-	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w ${MODULE_HOME}/vendor/icinga_etc
+	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 	
-	sed -i -e 's/#PREFIX#/traps_/g' ${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql
-	psql -U postgres travistest < ${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql
-	echo -e "database_prefix = \"traps_\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+	sed -i -e 's/#PREFIX#/traps_/g' "${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql"
+	psql -U postgres travistest < "${MODULE_HOME}/SQL/schema_v${DBVER}.pgsql"
+	echo -e "database_prefix = \"traps_\"\n" >> "${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini"
 	
 else
     echo "Unknown database set in environment!" >&2
@@ -56,13 +56,13 @@ fi
 if [ "$DB" = mysql ]; then
 
 	mysql -u root -e "create database icinga"	
-	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
+	mysql -u root icinga < "${MODULE_HOME}/tests/icingaDB.sql"
 
 elif [ "$DB" = pgsql ]; then
 	mysql -u root -e "create database icinga"
-	mysql -u root icinga < ${MODULE_HOME}/tests/icingaDB.sql
+	mysql -u root icinga < "${MODULE_HOME}/tests/icingaDB.sql"
 fi
-echo -e "IDOdatabase = \"icinga_ido\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+echo -e "IDOdatabase = \"icinga_ido\"\n" >> "${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini"
 echo '
 [icinga_ido]
 type = "db"
@@ -72,17 +72,17 @@ dbname = "icinga"
 username = "root"
 password = ""
 use_ssl = "0"
-' >> ${MODULE_HOME}/vendor/icinga_etc/resources.ini
+' >> "${MODULE_HOME}/vendor/icinga_etc/resources.ini"
 
 # snmptranslate
 
 snmpt=$(which snmptranslate);
 if [ $? -ne 0 ] ; then echo "No snmp translate"; exit 1; fi
-echo -e "snmptranslate = \"${snmpt}\"\n" >> ${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini
+echo -e "snmptranslate = \"${snmpt}\"\n" >> "${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini"
 
 # snmptrapd configuration
 
-sudo bin/installer.sh -c snmpconf -i -p $PHP_BIN -d ${MODULE_HOME}
+sudo bin/installer.sh -c snmpconf -i -p $PHP_BIN -d "${MODULE_HOME}"
 
 cat /etc/snmp/snmptrapd.conf
 sleep 1
