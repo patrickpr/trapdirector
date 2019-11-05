@@ -11,7 +11,6 @@
 ####### Constants ###########
 # Icinga
 icinga='icinga2';
-icingaDefault='/etc/icinga2';
 icingaEtc='';
 icinga2APIconf="/conf.d/api-users.conf";
 icinga2APIperms='[ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]'
@@ -87,7 +86,7 @@ function get_icinga_etc()
 	icinga2 -V > /dev/null 2>&1
 	if [ $? -ne 0 ]; then echo ""; return 1; fi
 	icingaEtc=$(icinga2 -V | grep "Config directory:" | cut -d ":" -f 2)
-	echo $icingaEtc;
+	echo "$icingaEtc";
 	return 0;
 }
 
@@ -117,7 +116,7 @@ function check_api() {
 	
 	echo -n 'api users'
 	if [ ! -f ${icingaEtc}${icinga2APIconf} ] ; then echo -e "\n Cannot read api users file ${icingaEtc}${icinga2APIconf}"; return 1; fi;
-	apiusers=$(grep "object ApiUser" ${icingaEtc}${icinga2APIconf} | sed -r 's/.*object +ApiUser +"(.*)".*/\1/');
+	apiusers=$(grep "object ApiUser" "${icingaEtc}${icinga2APIconf}" | sed -r 's/.*object +ApiUser +"(.*)".*/\1/');
 	echo " found : "; 
 	echo -e "$apiusers \n";
 	

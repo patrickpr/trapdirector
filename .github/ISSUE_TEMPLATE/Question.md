@@ -7,17 +7,16 @@ assignees: ''
 
 ---
 
-**Main question**
+# Main question
+To be or not to be ?
 
-**Purpose**
+# Purpose
 What are you trying to achieve
 
-**Your Environment:**
-
+# Your Environment
 If related to the question in any way : 
-
-* trapdirector version (in icinga web 2 : System - About):
-* Icinga Web 2 version and modules (in icinga web 2 : System - About):
-* Icinga 2 version (`icinga2 --version`):
-* Operating System and version:
-* Webserver, PHP versions:
+*  trapdirector version (in icinga web 2 : System - About):
+*  Icinga Web 2 version and modules (in icinga web 2 : System - About):
+*  Icinga 2 version (`icinga2 --version`):
+*  Operating System and version:
+*  Webserver, PHP versions:
