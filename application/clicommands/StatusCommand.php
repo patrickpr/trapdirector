@@ -30,20 +30,20 @@ class StatusCommand extends Command
 		{
 			
 			$dbresource=$this->Config()->get('config', 'database');
-			echo "DB name : $dbresource\n";
-			$db = IcingaDbConnection::fromResourceName($dbresource)->getConnection();
+			printf("DB name : %s\n",$dbresource);
+			$dataBase = IcingaDbConnection::fromResourceName($dbresource)->getConnection();
 			
-			$query = $db->select()->from($Config->getTrapTableName(),array('COUNT(*)'));			
-			echo "Number of traps : " . $db->fetchOne($query) ."\n";
-			$query = $db->select()->from($Config->getTrapDataTableName(),array('COUNT(*)'));			
-			echo "Number of trap objects : " . $db->fetchOne($query) ."\n";
-			$query = $db->select()->from($Config->getTrapRuleName(),array('COUNT(*)'));			
-			echo "Number of rules : " . $db->fetchOne($query) ."\n";		
+			$query = $dataBase->select()->from($Config->getTrapTableName(),array('COUNT(*)'));			
+			printf("Number of traps : %s\n", $dataBase->fetchOne($query) );
+			$query = $dataBase->select()->from($Config->getTrapDataTableName(),array('COUNT(*)'));			
+			printf("Number of trap objects : %s\n", $dataBase->fetchOne($query) );
+			$query = $dataBase->select()->from($Config->getTrapRuleName(),array('COUNT(*)'));			
+			printf("Number of rules : %s\n", $dataBase->fetchOne($query) );
 			
 		}
 		catch (Exception $e)
 		{
-			echo 'Error in DB : ' . $e->getMessage();
+			printf('Error in DB : %s\n', $e->getMessage());
 		}	   
 	}  
 }
