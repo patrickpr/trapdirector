@@ -183,11 +183,11 @@ class SettingsController extends TrapsController
 	
 	if ($dberror[0] == 0)
 	{
-		echo 'Schema already exists';
+		printf('Schema already exists');
 	}
 	else
 	{
-		echo 'Creating schema : <br>';
+		printf('Creating schema : <br>');
 
 		// Get module database name
 		$dbName=$this->Config()->get('config', 'database');
@@ -207,11 +207,11 @@ class SettingsController extends TrapsController
 		  }
 		} catch (ConfigurationError $e )
 		{
-		    echo 'Database configuration error : ' . $e->getMessage();
+		    printf("Database configuration error : %s",$e->getMessage());
 		    return;
 		}
-		echo '<pre>';
-		require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+		printf('<pre>');
+		require_once $this->Module()->getBaseDir() .'/bin/trap_class.php';
 		
 		$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 		$debug_level=4;
