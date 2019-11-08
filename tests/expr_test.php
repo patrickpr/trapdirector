@@ -26,10 +26,10 @@ try
   //echo 'After cleanup : #'.$rule."#\n";
   $item=0;
   $val = $trap->evaluation($rule,$item);
-  if ($val==true) { echo "true"; } else { echo "false";}
-  echo "\n";
+  if ($val==true) { printf( "true"); } else { printf( "false");}
+  printf("\n");
 }
-catch (Exception $e) { echo $e->getMessage() . "\n"; exit(1);}
+catch (Exception $e) { printf("%s\n",$e->getMessage()); exit(1);}
 
 exit(0);
 ?>
