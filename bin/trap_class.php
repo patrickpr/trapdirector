@@ -1392,8 +1392,8 @@ class Trap
 	       
 	       $sql='UPDATE '.$this->db_prefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
 	       $this->trapLog('SQL query : '.$sql,DEBUG );
-	       if (($db_conn->query($sql) === false) {
-	           $this->trapLog('Cannot update db version. Query : ' . $sql,2,'');
+	       if ($db_conn->query($sql) === false) {
+	           $this->trapLog('Cannot update db version. Query : ' . $sql,2);
 	           return;
 	       }
 	       
