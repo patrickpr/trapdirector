@@ -486,7 +486,7 @@ class Trap
 		    ' '.$oid);
 		$matches=array();
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
-		if ($ret_code===0 || $ret_code ==== false) {
+		if ($ret_code===0 || $ret_code === false) {
 			return NULL;
 		} else {
 			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,INFO);
