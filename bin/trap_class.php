@@ -90,7 +90,7 @@ class Trap
 	{
 	    if (!isset($option_array[$option_category][$option_name]))
 	    {
-	        if ($message == null)
+	        if ($message === null)
 	        {
 	            $message='No ' . $option_name . ' in config file: '. $this->trap_module_config;
 	        }
@@ -253,7 +253,9 @@ class Trap
 		    } catch (Exception $e) {
 		        // select 1 failed, try to reconnect.
 		        $this->trapDB=null;
-		        $this->trapLog('Databse connection lost, reconnecting',WARN,'');
+				$this->trapDB=$this->db_connect('traps');
+		        $this->trapLog('Database connection lost, reconnecting',WARN,'');
+				return $this->trapDB;
 		    }
 		     
 		}
@@ -273,7 +275,7 @@ class Trap
 	}	
 	
 	/** connects to database named by parameter
-	*	@param string database : 'traps' for traps database, 'ido' for ido database
+	*	@param string : 'traps' for traps database, 'ido' for ido database
 	*	@return PDO connection
 	**/
 	protected function db_connect($database) {
@@ -361,21 +363,21 @@ class Trap
 
 		// line 1 : host
 		$this->receivingHost=chop(fgets($input_stream));
-		if ($this->receivingHost == FALSE)
+		if ($this->receivingHost === false)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line Host)");
 			$this->trapLog("Error reading Host !",ERROR,''); 
 		}
 		// line 2 IP:port=>IP:port
 		$IP=chop(fgets($input_stream));
-		if ($IP == FALSE)
+		if ($IP === false)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Line IP)");
 			$this->trapLog("Error reading IP !",ERROR,''); 
 		}
 		$matches=array();
 		$ret_code=preg_match('/.DP: \[(.*)\]:(.*)->\[(.*)\]:(.*)/',$IP,$matches);
-		if ($ret_code==0 || $ret_code==FALSE) 
+		if ($ret_code===0 || $ret_code==false) 
 		{
 		    $this->writeTrapErrorToDB("Error parsing trap (code 2/IP)");
 			$this->trapLog('Error parsing IP : '.$IP,ERROR,'');
@@ -388,10 +390,10 @@ class Trap
 			$this->trap_data['destination_port']=$matches[4];
 		}
 
-		while (($vars=chop(fgets($input_stream))) !=FALSE)
+		while (($vars=chop(fgets($input_stream))) !=false)
 		{
 			$ret_code=preg_match('/^([^ ]+) (.*)$/',$vars,$matches);
-			if ($ret_code==0 || $ret_code==FALSE) 
+			if ($ret_code===0 || $ret_code===false) 
 			{
 				$this->trapLog('No match on trap data : '.$vars,WARN,'');
 			}
@@ -443,7 +445,7 @@ class Trap
 
 	/** Translate oid into array(MIB,Name)
 	* @param $oid string oid to translate
-	* @return null if not found or array(MIB,Name)
+	* @return mixed : null if not found or array(MIB,Name)
 	*/
 	public function translateOID($oid)
 	{
@@ -480,7 +482,7 @@ class Trap
 		    ' '.$oid);
 		$matches=array();
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
-		if ($ret_code==0 || $ret_code==FALSE) {
+		if ($ret_code===0 || $ret_code===FALSE) {
 			return NULL;
 		} else {
 			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,INFO,'');
@@ -683,7 +685,7 @@ class Trap
 	/** Get rules from rule database with ip and oid
 	*	@param $ip string ipv4 or ipv6
 	*	@param $oid string oid in numeric
-	*	@return PDO object or false
+	*	@return mixed : PDO object or false
 	*/	
 	protected function getRules($ip,$oid)
 	{
@@ -743,7 +745,8 @@ class Trap
 	}
 
 	/** Add rule match to rule
-	*	@param rule id
+	*	@param id int : rule id
+	*   @param set int : value to set
 	*/
 	protected function add_rule_match($id, $set)
 	{
@@ -1250,7 +1253,7 @@ class Trap
 		$cur_table_array=array();
 		$db_conn=$this->db_connect_trap();
 		
-		while (($line=fgets($input_stream)) != FALSE)
+		while (($line=fgets($input_stream)) !== false)
 		{
 			$newline.=chop(preg_replace('/#PREFIX#/',$table_prefix,$line));
 			if (preg_match('/; *$/', $newline)) 
@@ -1328,8 +1331,8 @@ class Trap
 	                return;
 	            }
 	            do { $line=fgets($input_stream); }
-	            while ($line != false && !preg_match('/#MESSAGE/',$line));
-	            if ($line ==false)
+	            while ($line !== false && !preg_match('/#MESSAGE/',$line));
+	            if ($line === false)
 	            {
 	                $this->trapLog("No message in file ". $updateFile,2,'');
 	                return;
