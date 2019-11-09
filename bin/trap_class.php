@@ -155,7 +155,7 @@ class Trap
 	{
 		$db_conn=$this->db_connect_trap();
 		$sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		if (($ret_code=$db_conn->query($sql)) === false) {
 			$this->trapLog('No result in query : ' . $sql,WARN,'');
 			return null;
 		}
@@ -276,7 +276,7 @@ class Trap
 	}	
 	
 	/** connects to database named by parameter
-	*	@param $database string : 'traps' for traps database, 'ido' for ido database
+	*	@param string $database : 'traps' for traps database, 'ido' for ido database
 	*	@return PDO connection
 	**/
 	protected function db_connect($database) {
@@ -285,7 +285,7 @@ class Trap
 		$dsn= $confarray[0].':dbname='.$confarray[2].';host='.$confarray[1];
 		$user = $confarray[3];
 		$password = $confarray[4];
-		$this->trapLog('DSN : '.$dsn,3);
+		$this->trapLog('DSN : '.$dsn,INFO);
 		try {
 			$dbh = new PDO($dsn, $user, $password);
 		} catch (PDOException $e) {
@@ -326,7 +326,7 @@ class Trap
 			$this->trapLog("Unknown database type : ".$database,ERROR,'');
 			return null;
 		}	
-		$this->trapLog("Found database in config file: ".$db_name,3,''); 
+		$this->trapLog("Found database in config file: ".$db_name,INFO ); 
 		$db_config=parse_ini_file($this->icingaweb2_ressources,true);
 		if ($db_config == false) 
 		{
@@ -344,7 +344,7 @@ class Trap
 		if ($database == 'traps') $this->trapDBType = $db_type;
 		if ($database == 'ido') $this->idoDBType = $db_type;
 		
-		$this->trapLog( "DB selected : $db_type $db_host $db_sql_name $db_user",3,''); 
+		$this->trapLog( "DB selected : $db_type $db_host $db_sql_name $db_user",INFO ); 
 		return array($db_type,$db_host,$db_sql_name,$db_user,$db_pass);
 	}	
 	
@@ -357,7 +357,7 @@ class Trap
 		//Read data from snmptrapd from stdin
 		$input_stream=fopen($stream, 'r');
 
-		if ($input_stream==FALSE)
+		if ($input_stream === false)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Stdin)");
 			$this->trapLog("Error reading stdin !",ERROR,'');
@@ -457,8 +457,8 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		
 		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid.'\';';
-		$this->trapLog('SQL query : '.$sql,4,'');
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		$this->trapLog('SQL query : '.$sql,DEBUG );
+		if (($ret_code=$db_conn->query($sql)) === false) {
 			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$name=$ret_code->fetch();
@@ -471,8 +471,8 @@ class Trap
 		$oid_instance=preg_replace('/\.[0-9]+$/','',$oid);
 		
 		$sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid_instance.'\';';
-		$this->trapLog('SQL query : '.$sql,4,'');
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		$this->trapLog('SQL query : '.$sql,DEBUG );
+		if (($ret_code=$db_conn->query($sql)) === false) {
 			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$name=$ret_code->fetch();
@@ -486,10 +486,10 @@ class Trap
 		    ' '.$oid);
 		$matches=array();
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
-		if ($ret_code===0 || $ret_code===FALSE) {
+		if ($ret_code===0 || $ret_code ==== false) {
 			return NULL;
 		} else {
-			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,INFO,'');
+			$this->trapLog('Found name with snmptrapd and not in DB for oid='.$oid,INFO);
 			return array('trap_name_mib'=>$matches[1],'trap_name'=>$matches[2]);
 		}	
 	}
@@ -511,10 +511,10 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		$daysago = strtotime("-".$days." day");
 		$sql= 'delete from '.$this->db_prefix.'received where date_received < \''.date("Y-m-d H:i:s",$daysago).'\';';
-		if ($db_conn->query($sql) == FALSE) {
+		if ($db_conn->query($sql) === false) {
 			$this->trapLog('Error erasing traps : '.$sql,ERROR,'');
 		}
-		$this->trapLog('Erased traps older than '.$days.' day(s) : '.$sql,3);
+		$this->trapLog('Erased traps older than '.$days.' day(s) : '.$sql,INFO);
 	}
 
 	/** Write error to received trap database
@@ -547,13 +547,13 @@ class Trap
 	    {
 	        case 'pgsql':
 	            $sql .= ' RETURNING id;';
-	            $this->trapLog('sql : '.$sql,3,'');
-	            if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	            $this->trapLog('sql : '.$sql,INFO);
+	            if (($ret_code=$db_conn->query($sql)) === false) {
 	                $this->trapLog('Error SQL insert : '.$sql,1,'');
 	            }
-	            $this->trapLog('SQL insertion OK',3,'');
+	            $this->trapLog('SQL insertion OK',INFO );
 	            // Get last id to insert oid/values in secondary table
-	            if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
+	            if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) === false) {
 	                
 	                $this->trapLog('Erreur recuperation id',1,'');
 	            }
@@ -564,14 +564,14 @@ class Trap
 	            break;
 	        case 'mysql':
 	            $sql .= ';';
-	            $this->trapLog('sql : '.$sql,3,'');
-	            if ($db_conn->query($sql) == FALSE) {
+	            $this->trapLog('sql : '.$sql,INFO );
+	            if ($db_conn->query($sql) === false) {
 	                $this->trapLog('Error SQL insert : '.$sql,1,'');
 	            }
-	            $this->trapLog('SQL insertion OK',3,'');
+	            $this->trapLog('SQL insertion OK',INFO );
 	            // Get last id to insert oid/values in secondary table
 	            $sql='SELECT LAST_INSERT_ID();';
-	            if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	            if (($ret_code=$db_conn->query($sql)) === false) {
 	                $this->trapLog('Erreur recuperation id',1,'');
 	            }
 	            
@@ -583,7 +583,7 @@ class Trap
 	            $this->trapLog('Error SQL type  : '.$this->trapDBType,1,'');
 	    }
 	    
-	    $this->trapLog('id found: '. $this->trap_id,3,'');    
+	    $this->trapLog('id found: '. $this->trap_id,INFO );    
 	}
 	
 	/** Write trap data to trap database
@@ -620,13 +620,13 @@ class Trap
 		{
 			case 'pgsql': 
 				$sql .= ' RETURNING id;';
-				$this->trapLog('sql : '.$sql,3,'');
-				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				$this->trapLog('sql : '.$sql,INFO );
+				if (($ret_code=$db_conn->query($sql)) === false) {
 					$this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 				}
-				$this->trapLog('SQL insertion OK',3,'');
+				$this->trapLog('SQL insertion OK',INFO );
 				// Get last id to insert oid/values in secondary table
-				if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) == FALSE) {
+				if (($inserted_id_ret=$ret_code->fetch(PDO::FETCH_ASSOC)) === false) {
 														   
 					$this->trapLog('Erreur recuperation id',ERROR,'');
 				}
@@ -637,14 +637,14 @@ class Trap
 			break;
 			case 'mysql': 
 				$sql .= ';';
-				$this->trapLog('sql : '.$sql,3,'');
-				if ($db_conn->query($sql) == FALSE) {
+				$this->trapLog('sql : '.$sql,INFO );
+				if ($db_conn->query($sql) === false) {
 					$this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 				}
-				$this->trapLog('SQL insertion OK',3,'');
+				$this->trapLog('SQL insertion OK',INFO );
 				// Get last id to insert oid/values in secondary table
 				$sql='SELECT LAST_INSERT_ID();';
-				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				if (($ret_code=$db_conn->query($sql)) === false) {
 					$this->trapLog('Erreur recuperation id',ERROR,'');
 				}
 
@@ -655,7 +655,7 @@ class Trap
 			default: 
 				$this->trapLog('Error SQL type  : '.$this->trapDBType,ERROR,'');
 		}
-		$this->trapLog('id found: '.$this->trap_id,3,'');
+		$this->trapLog('id found: '.$this->trap_id,INFO );
 		
 		// Fill trap extended data table
 		foreach ($this->trap_data_ext as $value) {			
@@ -678,7 +678,7 @@ class Trap
 
 			$sql= 'INSERT INTO '.$this->db_prefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';			
 
-			if (($ret_code=$db_conn->query($sql)) == FALSE) {
+			if (($ret_code=$db_conn->query($sql)) === false) {
 				$this->trapLog('Erreur insertion data : ' . $sql,WARN,'');
 			}	
 		}	
@@ -694,8 +694,8 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		// fetch rules based on IP in rule and OID
 		$sql='SELECT * from '.$this->db_prefix.'rules WHERE trap_oid=\''.$oid.'\' ';
-		$this->trapLog('SQL query : '.$sql,4,'');
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		$this->trapLog('SQL query : '.$sql,DEBUG );
+		if (($ret_code=$db_conn->query($sql)) === false) {
 			$this->trapLog('No result in query : ' . $sql,WARN,'');
 			return false;
 		}
@@ -723,7 +723,7 @@ class Trap
 						LEFT JOIN icinga_hosts as a ON a.host_object_id = m.host_object_id
 						LEFT JOIN icinga_objects as b ON b.object_id = a.host_object_id
 						WHERE o.name1='".$rule['host_group_name']."';";
-				if (($ret_code2=$db_conn2->query($sql)) == FALSE) {
+				if (($ret_code2=$db_conn2->query($sql)) === false) {
 					$this->trapLog('No result in query : ' . $sql,WARN,'');
 					continue;
 				}
@@ -773,7 +773,7 @@ class Trap
 	    {
     		$send = '[' . date('U') .'] PROCESS_SERVICE_CHECK_RESULT;' .
     			$host.';' .$service .';' . $state . ';'.$display;
-    		$this->trapLog( $send." : to : " .$this->icinga2cmd,3,'');
+    		$this->trapLog( $send." : to : " .$this->icinga2cmd,INFO );
     		
     		// TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why. Or not as using API will be by default....
     		exec('echo "'.$send.'" > ' .$this->icinga2cmd);
@@ -791,7 +791,7 @@ class Trap
 	        }
 	        else 
 	        {
-	            $this->trapLog( "Sent result : " .$retmessage,3,'');
+	            $this->trapLog( "Sent result : " .$retmessage,INFO );
 	            return true;
 	        }
 	    }
@@ -1078,7 +1078,7 @@ class Trap
 			// replace * with \* in oid for preg_replace
 			$oid=preg_replace('/\*/', '\*', $oid);
 			
-			$this->trapLog('OID in rule : '.$oid.' / '.$oidR,4,'');
+			$this->trapLog('OID in rule : '.$oid.' / '.$oidR,DEBUG );
 			
 			foreach($this->trap_data_ext as $val)
 			{
@@ -1107,7 +1107,7 @@ class Trap
 		}
 		$item=0;
 		$rule=$this->eval_cleanup($rule);
-		$this->trapLog('Rule after clenup: '.$rule,3,'');
+		$this->trapLog('Rule after clenup: '.$rule,INFO );
 		
 		return  $this->evaluation($rule,$item);
 	}
@@ -1120,7 +1120,7 @@ class Trap
 		
 		if ($rules===false || count($rules)==0)
 		{
-			$this->trapLog('No rules found for this trap',3,'');
+			$this->trapLog('No rules found for this trap',INFO );
 			$this->trap_data['status']='unknown';
 			$this->trap_to_db=true;
 			return;
@@ -1138,14 +1138,14 @@ class Trap
 			$this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
 			try
 			{
-				$this->trapLog('Rule to eval : '.$rule['rule'],3,'');
+				$this->trapLog('Rule to eval : '.$rule['rule'],INFO );
 				$evalr=$this->eval_rule($rule['rule']);
 				
 				if ($evalr == true)
 				{
-					//$this->trapLog('rules OOK: '.print_r($rule),3,'');
+					//$this->trapLog('rules OOK: '.print_r($rule),INFO );
 					$action=$rule['action_match'];
-					$this->trapLog('action OK : '.$action,3,'');
+					$this->trapLog('action OK : '.$action,INFO );
 					if ($action >= 0)
 					{
 						if ($this->serviceCheckResult($host_name,$service_name,$action,$display) == false)
@@ -1166,10 +1166,10 @@ class Trap
 				}
 				else
 				{
-					//$this->trapLog('rules KOO : '.print_r($rule),3,'');
+					//$this->trapLog('rules KOO : '.print_r($rule),INFO );
 					
 					$action=$rule['action_nomatch'];
-					$this->trapLog('action NOK : '.$action,3,'');
+					$this->trapLog('action NOK : '.$action,INFO );
 					if ($action >= 0)
 					{
 					    if ($this->serviceCheckResult($host_name,$service_name,$action,$display)==false)
@@ -1230,7 +1230,7 @@ class Trap
 			$this->trap_action='No action';
 		}
 		$sql="UPDATE ".$this->db_prefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
-		if ($db_conn->query($sql) == FALSE) {
+		if ($db_conn->query($sql) === false) {
 			$this->trapLog('Error in update query : ' . $sql,WARN,'');
 		}
 	}
@@ -1246,7 +1246,7 @@ class Trap
 		//Read data from snmptrapd from stdin
 		$input_stream=fopen($schema_file, 'r');
 
-		if ($input_stream==FALSE)
+		if ($input_stream=== false)
 		{
 			$this->trapLog("Error reading schema !",ERROR,''); 
 			return;
@@ -1262,7 +1262,7 @@ class Trap
 			if (preg_match('/; *$/', $newline)) 
             {
                 $sql= $newline;
-                if ($db_conn->query($sql) == FALSE) {
+                if ($db_conn->query($sql) === false) {
                     $this->trapLog('Error create schema : '.$sql,ERROR,'');
                 }
                 if (preg_match('/^ *CREATE TABLE ([^ ]+)/',$newline,$cur_table_array))
@@ -1273,7 +1273,7 @@ class Trap
                 {
                     $cur_table='secret SQL stuff :-)';
                 }
-                $this->trapLog('Creating : ' . $cur_table, 3,'');
+                $this->trapLog('Creating : ' . $cur_table,INFO );
                 $newline='';
             }
 		}
@@ -1281,11 +1281,11 @@ class Trap
 		$sql= $newline;
 		if ($sql != '')
 		{
-    		if ($db_conn->query($sql) == FALSE) {
+    		if ($db_conn->query($sql) === false) {
     			$this->trapLog('Error create schema : '.$sql,ERROR,'');
     		}
 		}
-		$this->trapLog('Schema created',3);		
+		$this->trapLog('Schema created',INFO);		
 	}
 
 	/** 
@@ -1301,8 +1301,8 @@ class Trap
 	    // Get current db number
 	    $db_conn=$this->db_connect_trap();
 	    $sql='SELECT id,value from '.$this->db_prefix.'db_config WHERE name=\'db_version\' ';
-	    $this->trapLog('SQL query : '.$sql,4,'');
-	    if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	    $this->trapLog('SQL query : '.$sql,DEBUG );
+	    if (($ret_code=$db_conn->query($sql)) === false) {
 	        $this->trapLog('Cannot get db version. Query : ' . $sql,2,'');
 	        return;
 	    }
@@ -1322,13 +1322,13 @@ class Trap
 	    if ($getmsg === true)
 	    {
 	        $message='';
-	        $this->trapLog('getting message for upgrade',4,'');
+	        $this->trapLog('getting message for upgrade',DEBUG );
 	        while($cur_version<$target_version)
 	        {
 	            $cur_version++;
 	            $updateFile=$prefix.'v'.($cur_version-1).'_v'.$cur_version.'.sql';
 	            $input_stream=fopen($updateFile, 'r');
-	            if ($input_stream==FALSE)
+	            if ($input_stream=== false)
 	            {
 	                $this->trapLog("Error reading update file ". $updateFile,2,'');
 	                return;
@@ -1347,10 +1347,10 @@ class Trap
 	    while($cur_version<$target_version)
 	    { // tODO : execute pre & post scripts
 	       $cur_version++;
-	       $this->trapLog('Updating to version : ' .$cur_version ,3,'');
+	       $this->trapLog('Updating to version : ' .$cur_version ,INFO );
 	       $updateFile=$prefix.'v'.($cur_version-1).'_v'.$cur_version.'.sql';
 	       $input_stream=fopen($updateFile, 'r');
-	       if ($input_stream==FALSE)
+	       if ($input_stream=== false)
 	       {
 	           $this->trapLog("Error reading update file ". $updateFile,2,'');
 	           return;
@@ -1378,7 +1378,7 @@ class Trap
 	                   $cur_table='secret SQL stuff :-)';
 	                   //$cur_table=$newline;
 	               }
-	               $this->trapLog('Doing : ' . $cur_table, 3,'');
+	               $this->trapLog('Doing : ' . $cur_table,INFO );
 	               
 	               $newline='';
 	           }
@@ -1386,18 +1386,18 @@ class Trap
 	       fclose($input_stream);
 	       
 	       //$sql= $newline;
-	       //if ($db_conn->query($sql) == FALSE) {
+	       //if ($db_conn->query($sql) === false) {
 	       //    $this->trapLog('Error updating schema : '.$sql,1,'');
 	       //}
 	       
 	       $sql='UPDATE '.$this->db_prefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
-	       $this->trapLog('SQL query : '.$sql,4,'');
+	       $this->trapLog('SQL query : '.$sql,DEBUG );
 	       if (($db_conn->query($sql) === false) {
 	           $this->trapLog('Cannot update db version. Query : ' . $sql,2,'');
 	           return;
 	       }
 	       
-	       $this->trapLog('Schema updated to version : '.$cur_version ,3);
+	       $this->trapLog('Schema updated to version : '.$cur_version ,INFO);
 	    }
 	}
 	
@@ -1417,7 +1417,7 @@ class Trap
     LEFT JOIN icinga_objects as v ON s.service_object_id=v.object_id
     WHERE s.current_state != 0;";
 		$db_conn=$this->db_connect_ido();
-		if (($services_db=$db_conn->query($sql_query)) == FALSE) { // set err to 1 to throw exception.
+		if (($services_db=$db_conn->query($sql_query)) === false) { // set err to 1 to throw exception.
 			$this->trapLog('No result in query : ' . $sql_query,ERROR,'');
 		}
 		$services=$services_db->fetchAll();
@@ -1425,7 +1425,7 @@ class Trap
 		// Get all rules
 		$sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->db_prefix."rules where revert_ok != 0;";
 		$db_conn2=$this->db_connect_trap();
-		if (($rules_db=$db_conn2->query($sql_query)) == FALSE) {
+		if (($rules_db=$db_conn2->query($sql_query)) === false) {
 			$this->trapLog('No result in query : ' . $sql_query,ERROR,''); 
 		}
 		$rules=$rules_db->fetchAll();
@@ -1509,12 +1509,12 @@ class Trap
 			    if ($sqlQuery->execute($sqlParam) === false) {
 			        $this->trapLog('Error in query : ' . $sql,ERROR,'');
 			    }
-			    $this->trapLog('Trap updated : '.$name . ' / OID : '.$oid,4,'');
+			    $this->trapLog('Trap updated : '.$name . ' / OID : '.$oid,DEBUG );
 				return 1;
 			}
 			else
 			{
-			    $this->trapLog('Trap unchanged : '.$name . ' / OID : '.$oid,4,'');
+			    $this->trapLog('Trap unchanged : '.$name . ' / OID : '.$oid,DEBUG );
 			    return 0;
 			}
 		}
@@ -1552,7 +1552,7 @@ class Trap
 		{
 		    case 'pgsql':
 		        // Get last id to insert oid/values in secondary table
-		        if (($inserted_id_ret=$sqlQuery->fetch(PDO::FETCH_ASSOC)) == FALSE) {		            
+		        if (($inserted_id_ret=$sqlQuery->fetch(PDO::FETCH_ASSOC)) === false) {		            
 		            $this->trapLog('Error getting id - pgsql - ',1,'');
 		        }
 		        if (! isset($inserted_id_ret['id'])) {
@@ -1563,7 +1563,7 @@ class Trap
 		    case 'mysql':
 		        // Get last id to insert oid/values in secondary table
 		        $sql='SELECT LAST_INSERT_ID();';
-		        if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		        if (($ret_code=$db_conn->query($sql)) === false) {
 		            $this->trapLog('Erreur getting id - mysql - ',1,'');
 		        }
 		        
@@ -1599,8 +1599,8 @@ class Trap
 	    {
 	        // Get all objects
 	        $sql='SELECT * FROM '.$this->db_prefix.'mib_cache_trap_object where trap_id='.$trapId.';';
-	        $this->trapLog('SQL query get all traps: '.$sql,4,'');
-	        if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	        $this->trapLog('SQL query get all traps: '.$sql,DEBUG );
+	        if (($ret_code=$db_conn->query($sql)) === false) {
 	            $this->trapLog('No result in query : ' . $sql,1,'');
 	        }
 	        $dbObjectsRaw=$ret_code->fetchAll();
@@ -1691,7 +1691,7 @@ class Trap
 	                continue;
 	            }
 	        }
-	        $this->trapLog("Adding trap $object : $objOid / $objSyntax / $objEnum / $objDispHint / $objTc",4,'');
+	        $this->trapLog("Adding trap $object : $objOid / $objSyntax / $objEnum / $objDispHint / $objTc",DEBUG );
 	        //echo "$object : $objOid / $objSyntax / $objEnum / $objDispHint / $objTc / $objDesc\n";
 	        // Update 
 	        $this->update_oid($objOid, $objMib, $object, '3', $objTc, $objDispHint, $objSyntax, $objEnum,$objDesc);
@@ -1739,7 +1739,7 @@ class Trap
 		$retVal=0;
 		// Get all mib objects from all mibs
 		$snmpCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -On -Tto 2>/dev/null';
-		$this->trapLog('Getting all traps : '.$snmpCommand,4,'');
+		$this->trapLog('Getting all traps : '.$snmpCommand,DEBUG );
 		unset($this->objectsAll);
 		exec($snmpCommand,$this->objectsAll,$retVal);		
 		if ($retVal!=0)
@@ -1752,8 +1752,8 @@ class Trap
 		$db_conn=$this->db_connect_trap();
 		
 		$sql='SELECT * from '.$this->db_prefix.'mib_cache;';
-		$this->trapLog('SQL query : '.$sql,4,'');
-		if (($ret_code=$db_conn->query($sql)) == FALSE) {
+		$this->trapLog('SQL query : '.$sql,DEBUG );
+		if (($ret_code=$db_conn->query($sql)) === false) {
 			$this->trapLog('No result in query : ' . $sql,ERROR,'');
 		}
 		$this->dbOidAll=$ret_code->fetchAll();
@@ -1767,7 +1767,7 @@ class Trap
 		
 		// Count elements to show progress
 		$numElements=count($this->objectsAll);
-		$this->trapLog('Total snmp objects returned by snmptranslate : '.$numElements,3,'');
+		$this->trapLog('Total snmp objects returned by snmptranslate : '.$numElements,INFO );
 		
 		$step=$basestep=$numElements/10; // output display of % done
 		$num_step=0;
@@ -1852,7 +1852,7 @@ class Trap
 			
 			$time_num_traps++;
 			
-			$this->trapLog('Found trap : '.$match[1] . ' / OID : '.$oid,3,'');
+			$this->trapLog('Found trap : '.$match[1] . ' / OID : '.$oid,INFO );
 			if ($display_progress) echo '#'; // echo a # when trap found
 				
 			// get trap objects & source MIB
