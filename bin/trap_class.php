@@ -25,7 +25,7 @@ class Trap
 	protected $api_use=false;
 	protected $icinga2api=null;
 	protected $api_hostname='';
-	protected $api_port='';
+	protected $api_port=0;
 	protected $api_username='';
 	protected $api_password='';
 
@@ -82,7 +82,7 @@ class Trap
 	 * @param string $option_category category in ini file
 	 * @param string $option_name name of option in category
 	 * @param resource $option_var variable to fill if found, left untouched if not found
-	 * @param number $log_level default 2 (warning)
+	 * @param integer $log_level default 2 (warning)
 	 * @param string $message warning message if not found
 	 * @return boolean true if found, or false
 	 */
@@ -149,7 +149,7 @@ class Trap
 	
 	/** Get data from db_config
 	*	@param $element string name of param
-	*	@return $value (or null)
+	*	@return mixed : value (or null)
 	*/	
 	protected function getDBConfig($element)
 	{
@@ -170,7 +170,7 @@ class Trap
 	/** Send log. Throws exception on critical error
 	*	@param	string $message Message to log
 	*	@param	int $level 1=critical 2=warning 3=trace 4=debug
-	*	@param  int $destination file/syslog/display
+	*	@param  string $destination file/syslog/display
 	*	@return void
 	**/	
 	public function trapLog( $message, $level, $destination ='')
@@ -194,6 +194,7 @@ class Trap
 						case 2 : $prio = LOG_WARNING;break;
 						case 3 : $prio = LOG_INFO;break;
 						case 4 : $prio = LOG_DEBUG;break;
+						default: $prio = LOG_ERR;
 					}
 					syslog($prio,$message);
 					break;
@@ -241,7 +242,7 @@ class Trap
 	}
 
 	/** Connects to trapdb 
-	*	@return PDO connection
+	*	@return mixed : PDO connection or null
 	*/
 	public function db_connect_trap() 
 	{
@@ -275,7 +276,7 @@ class Trap
 	}	
 	
 	/** connects to database named by parameter
-	*	@param string : 'traps' for traps database, 'ido' for ido database
+	*	@param $database string : 'traps' for traps database, 'ido' for ido database
 	*	@return PDO connection
 	**/
 	protected function db_connect($database) {
@@ -294,8 +295,8 @@ class Trap
 	}
 
 	/** Get database connexion options
-	*	@param string database : 'traps' for traps database, 'ido' for ido database
-	*	@return array( DB type (mysql, pgsql.) , db_host, database name , db_user, db_pass)
+	*	@param string $database : 'traps' for traps database, 'ido' for ido database
+	*	@return mixed : null or array( DB type (mysql, pgsql.) , db_host, database name , db_user, db_pass)
 	**/
 	protected function get_database($database) {
 
@@ -322,7 +323,8 @@ class Trap
 		}
 		else
 		{
-			$this->trapLog("Unknown database type : ".$database,ERROR,''); 		
+			$this->trapLog("Unknown database type : ".$database,ERROR,'');
+			return null;
 		}	
 		$this->trapLog("Found database in config file: ".$db_name,3,''); 
 		$db_config=parse_ini_file($this->icingaweb2_ressources,true);
@@ -348,7 +350,7 @@ class Trap
 	
 	/** read data from stream
 	*	@param $stream string input stream, defaults to "php://stdin"
-	*	@return array trap data
+	*	@return mixed array trap data or exception with error
 	*/
 	public function read_trap($stream='php://stdin')
 	{
@@ -358,7 +360,8 @@ class Trap
 		if ($input_stream==FALSE)
 		{
 		    $this->writeTrapErrorToDB("Error reading trap (code 1/Stdin)");
-			$this->trapLog("Error reading stdin !",ERROR,''); 
+			$this->trapLog("Error reading stdin !",ERROR,'');
+			return null; // note : exception thrown by traplog
 		}
 
 		// line 1 : host
@@ -377,7 +380,7 @@ class Trap
 		}
 		$matches=array();
 		$ret_code=preg_match('/.DP: \[(.*)\]:(.*)->\[(.*)\]:(.*)/',$IP,$matches);
-		if ($ret_code===0 || $ret_code==false) 
+		if ($ret_code===0 || $ret_code===false) 
 		{
 		    $this->writeTrapErrorToDB("Error parsing trap (code 2/IP)");
 			$this->trapLog('Error parsing IP : '.$IP,ERROR,'');
@@ -390,8 +393,9 @@ class Trap
 			$this->trap_data['destination_port']=$matches[4];
 		}
 
-		while (($vars=chop(fgets($input_stream))) !=false)
+		while (($vars=fgets($input_stream)) !==false)
 		{
+			$vars=chop($vars);
 			$ret_code=preg_match('/^([^ ]+) (.*)$/',$vars,$matches);
 			if ($ret_code===0 || $ret_code===false) 
 			{
@@ -491,8 +495,8 @@ class Trap
 	}
 	
 	/** Erase old trap records 
-	*	@param $days : erase traps when more than $days old
-	*	@return : number of lines deleted
+	*	@param integer $days : erase traps when more than $days old
+	*	@return integer : number of lines deleted
 	**/
 	public function eraseOldTraps($days=0)
 	{
@@ -520,8 +524,6 @@ class Trap
 	    
 	    $db_conn=$this->db_connect_trap();
 	    
-	    $insert_col='';
-	    $insert_val='';
 	    // add date time
 	    $insert_col ='date_received,status';
 	    $insert_val = "'" . date("Y-m-d H:i:s")."','error'";
@@ -563,7 +565,7 @@ class Trap
 	        case 'mysql':
 	            $sql .= ';';
 	            $this->trapLog('sql : '.$sql,3,'');
-	            if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	            if ($db_conn->query($sql) == FALSE) {
 	                $this->trapLog('Error SQL insert : '.$sql,1,'');
 	            }
 	            $this->trapLog('SQL insertion OK',3,'');
@@ -590,7 +592,7 @@ class Trap
 	{
 		
 		// If action is ignore -> don't send t DB
-		if ($this->trap_to_db == false) return;
+		if ($this->trap_to_db === false) return;
 		
 		
 		$db_conn=$this->db_connect_trap();
@@ -636,7 +638,7 @@ class Trap
 			case 'mysql': 
 				$sql .= ';';
 				$this->trapLog('sql : '.$sql,3,'');
-				if (($ret_code=$db_conn->query($sql)) == FALSE) {
+				if ($db_conn->query($sql) == FALSE) {
 					$this->trapLog('Error SQL insert : '.$sql,ERROR,'');
 				}
 				$this->trapLog('SQL insertion OK',3,'');
@@ -752,7 +754,7 @@ class Trap
 	{
 		$db_conn=$this->db_connect_trap();
 		$sql="UPDATE ".$this->db_prefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
-		if ($db_conn->query($sql) == FALSE) {
+		if ($db_conn->query($sql) === false) {
 			$this->trapLog('Error in update query : ' . $sql,WARN,'');
 		}
 	}
@@ -761,13 +763,13 @@ class Trap
 	 * 
 	 * @param string $host
 	 * @param string $service
-	 * @param number $state numerical staus 
+	 * @param integer $state numerical staus 
 	 * @param string $display
 	 * @returnn bool true is service check was sent without error
 	*/
 	public function serviceCheckResult($host,$service,$state,$display)
 	{
-	    if ($this->api_use == false)
+	    if ($this->api_use === false)
 	    {
     		$send = '[' . date('U') .'] PROCESS_SERVICE_CHECK_RESULT;' .
     			$host.';' .$service .';' . $state . ';'.$display;
@@ -967,7 +969,7 @@ class Trap
 		if ($item==strlen($rule)) // If only element, return value, but only boolean
 		{
 		  if ($type1 != 2) throw new Exception("Cannot use num/string as boolean : ".$rule);
-		  if ($negate == true) $val1= ! $val1;
+		  if ($negate === true) $val1= ! $val1;
 		  return $val1;
 		}  
 		
@@ -1010,14 +1012,14 @@ class Trap
 			case '&':	$retVal= ($val1 && $val2); break;
 			default:  throw new Exception("Error in expression - unknown comp : ".$comp);
 		}
-		if ($negate == true) $retVal = ! $retVal; // Inverse result if negate before expression
+		if ($negate === true) $retVal = ! $retVal; // Inverse result if negate before expression
 		
 		if ($item==strlen($rule)) return $retVal; // End of string : return evaluation
 		// check for logical operator :
 		switch ($rule[$item])
 		{
-			case '|':	$item++; return ($retVal || $this->evaluation($rule,$item) ); break;
-			case '&':	$item++; return ($retVal && $this->evaluation($rule,$item) ); break;
+			case '|':	$item++; return ($retVal || $this->evaluation($rule,$item) );
+			case '&':	$item++; return ($retVal && $this->evaluation($rule,$item) );
 			
 			default:  throw new Exception("Erreur in expr - garbadge at end of expression : ".$rule[$item]);
 		}
@@ -1054,7 +1056,7 @@ class Trap
 	
 	/** Evaluation rule (uses eval_* functions recursively)
 	*	@param $rule string rule ( _OID(.1.3.6.1.4.1.8072.2.3.2.1)=_OID(.1.3.6.1.2.1.1.3.0) )
-	*	@return : true : rule match, false : rule don't match , throw exception on error.
+	*	@return bool : true : rule match, false : rule don't match , throw exception on error.
 	*/
 	
 	protected function eval_rule($rule)
@@ -1116,7 +1118,7 @@ class Trap
 	{
 		$rules = $this->getRules($this->trap_data['source_ip'],$this->trap_data['trap_oid']);
 		
-		if ($rules==FALSE || count($rules)==0)
+		if ($rules===false || count($rules)==0)
 		{
 			$this->trapLog('No rules found for this trap',3,'');
 			$this->trap_data['status']='unknown';
@@ -1218,7 +1220,7 @@ class Trap
 	}
 
 	/** Add Time a action to rule
-	*	@param rule id
+	*	@param string $time : time to process to insert in SQL
 	*/
 	public function add_rule_final($time)
 	{
@@ -1247,6 +1249,7 @@ class Trap
 		if ($input_stream==FALSE)
 		{
 			$this->trapLog("Error reading schema !",ERROR,''); 
+			return;
 		}
 		$newline='';
 		$cur_table='';
@@ -1316,7 +1319,7 @@ class Trap
 	        $prefix .= 'update_sql/schema_';
 	    }
 	    //echo "version all :\n";print_r($version);echo " \n $cur_ver \n";
-	    if ($getmsg == true)
+	    if ($getmsg === true)
 	    {
 	        $message='';
 	        $this->trapLog('getting message for upgrade',4,'');
@@ -1355,14 +1358,14 @@ class Trap
 	       $newline='';
 	       $db_conn=$this->db_connect_trap();
 	       $db_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	       while (($line=fgets($input_stream)) != FALSE)
+	       while (($line=fgets($input_stream)) !== false)
 	       {
 	           if (preg_match('/^#/', $line)) continue; // ignore comment lines
 	           $newline.=chop(preg_replace('/#PREFIX#/',$table_prefix,$line));
 	           if (preg_match('/; *$/', $newline))
 	           {
 	               $sql_req=$db_conn->prepare($newline);
-	               if ($sql_req->execute() == FALSE) {
+	               if ($sql_req->execute() === false) {
 	                   $this->trapLog('Error create schema : '.$newline,1,'');
 	               }
 	               $cur_table_array=array();
@@ -1373,7 +1376,7 @@ class Trap
 	               else
 	               {
 	                   $cur_table='secret SQL stuff :-)';
-	                   $cur_table=$newline;
+	                   //$cur_table=$newline;
 	               }
 	               $this->trapLog('Doing : ' . $cur_table, 3,'');
 	               
@@ -1389,7 +1392,7 @@ class Trap
 	       
 	       $sql='UPDATE '.$this->db_prefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
 	       $this->trapLog('SQL query : '.$sql,4,'');
-	       if (($ret_code=$db_conn->query($sql)) == FALSE) {
+	       if (($db_conn->query($sql) === false) {
 	           $this->trapLog('Cannot update db version. Query : ' . $sql,2,'');
 	           return;
 	       }
@@ -1503,7 +1506,7 @@ class Trap
 			        ':id' => $this->dbOidAll[$this->dbOidIndex[$oid]['id']]
 			    );
 			    
-			    if ($sqlQuery->execute($sqlParam) == FALSE) {
+			    if ($sqlQuery->execute($sqlParam) === false) {
 			        $this->trapLog('Error in query : ' . $sql,ERROR,'');
 			    }
 			    $this->trapLog('Trap updated : '.$name . ' / OID : '.$oid,4,'');
@@ -1541,7 +1544,7 @@ class Trap
 		    ':description' => ($description==null)?'null':$description
 		);
 		
-		if ($sqlQuery->execute($sqlParam) == FALSE) {
+		if ($sqlQuery->execute($sqlParam) === false) {
 		    $this->trapLog('Error in query : ' . $sql,1,'');
 		}
 		
@@ -1592,7 +1595,7 @@ class Trap
 	    // Get id of trapmib.
 
 	    $trapId = $this->dbOidIndex[$trapOID]['id'];
-	    if ($check_existing == true)
+	    if ($check_existing === true)
 	    {
 	        // Get all objects
 	        $sql='SELECT * FROM '.$this->db_prefix.'mib_cache_trap_object where trap_id='.$trapId.';';
@@ -1639,7 +1642,7 @@ class Trap
 	        }
 	        foreach ($snmptrans as $line)
 	        {
-	            if ($indesc==true)
+	            if ($indesc===true)
 	            {
 	                $line=preg_replace('/[\t ]+/',' ',$line);
 	                if (preg_match('/(.*)"$/', $line,$match))
@@ -1698,7 +1701,7 @@ class Trap
 	            $dbObjects[$this->dbOidIndex[$objOid]['id']]=2;
 	            continue;
 	        }
-	        if ($check_existing == true) 
+	        if ($check_existing === true) 
 	        {
 	            // TODO : check link trap - objects exists, mark them.
 	        }
@@ -1711,11 +1714,11 @@ class Trap
 	            ':object_id' => $this->dbOidIndex[$objOid]['id'],
 	        );
 	        
-	        if ($sqlQuery->execute($sqlParam) == FALSE) {
+	        if ($sqlQuery->execute($sqlParam) === false) {
 	            $this->trapLog('Error adding trap object : ' . $sql . ' / ' . $trapId . '/'. $this->dbOidIndex[$objOid]['id'] ,1,'');
 	        }
 	    }
-	    if ($check_existing == true)
+	    if ($check_existing === true)
 	    {
 	        // TODO : remove link trap - objects that wasn't marked.
 	    }
@@ -1840,7 +1843,7 @@ class Trap
 				// Force as trap.
 				$type=21;
 			}
-			if ($onlyTraps==true && $type!=21) // if only traps and not a trap, continue
+			if ($onlyTraps===true && $type!=21) // if only traps and not a trap, continue
 			{
 			    $time_check3 += microtime(true) - $time_1;
 				$time_check3N++;
@@ -1887,7 +1890,7 @@ class Trap
 			$update=$this->update_oid($oid,$trapMib,$name,$type,NULL,NULL,NULL,NULL,$trapDesc);
 			$time_update += microtime(true) - $time_1; $time_1= microtime(true);
 			
-			if (($update==0) && ($check_change==false))
+			if (($update==0) && ($check_change===false))
 			{ // Trapd didn't change & force check disabled
 			    $time_objects += microtime(true) - $time_1;
 			    if ($display_progress) echo "C";
