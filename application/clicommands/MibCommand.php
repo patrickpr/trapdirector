@@ -89,7 +89,7 @@ class MibCommand extends Command
                     $trap->trapLog('Error in updating : ' . $e->getMessage(),2);
                 }
                 unlink($background);
-                exit(0);
+                return 0;
 		    }
 		    
 		}
