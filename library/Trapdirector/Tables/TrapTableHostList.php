@@ -116,7 +116,7 @@ class TrapTableHostList extends TrapTable
 				} else {
 					$val = '-';
 				}
-				if ($firstCol == true) { // Put link in first column for trap detail.
+				if ($firstCol === true) { // Put link in first column for trap detail.
 					$htm .= '<td>' 
 							. $view->qlink(
 									$view->escape($val),  
@@ -272,6 +272,3 @@ class TrapTableHostList extends TrapTable
     }	
 
 }
-
-
-?>

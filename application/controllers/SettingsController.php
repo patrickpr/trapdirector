@@ -37,7 +37,7 @@ class SettingsController extends TrapsController
     $this->view->configErrorDetected == NULL; // Displayed error on various conifugration errors.
     
     // Test if configuration exists, if not create for installer script
-	$emptyConfig=0;
+	//$emptyConfig=0;
     if ($this->Config()->isEmpty() == true)
     {
         $this->Config()->setSection('config'); // Set base config section.
@@ -45,7 +45,7 @@ class SettingsController extends TrapsController
         { 
             $this->Config()->saveIni();
             $this->view->configErrorDetected='Configuration is empty : you can run install script with parameters (see Automatic installation below)';
-			$emptyConfig=1;
+			//$emptyConfig=1;
         }
         catch (Exception $e)
         {

@@ -462,7 +462,7 @@ class HandlerController extends TrapsController
 	}
 
 	/** Get trap detail by trapid. 
-	*	@param $trapid int id of trap in received table
+	*	@param integer $trapid : id of trap in received table
 	*	@return array (objects)
 	*/
 	protected function getTrapDetail($trapid) 
@@ -488,6 +488,7 @@ class HandlerController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->displayExitError('Add handler : get trap detail returning : '.print_r($trapDetail,true),$e->getMessage());
+			return;
 		}
 
 		return $trapDetail;
@@ -495,8 +496,8 @@ class HandlerController extends TrapsController
 	}
 
 	/** Get trap objects
-	*	@param : trap id
-	* 	@return array of objects
+	*	@param integer $trapid : trap id
+	* 	@return array : full column in db of trap id
 	*/
 	protected function getTrapobjects($trapid)
 	{	
@@ -520,15 +521,16 @@ class HandlerController extends TrapsController
 		}
 		catch (Exception $e)
 		{
-			$this->displayExitError('Add handler : get trap data detail',$e->getMessage());
+			$this->displayExitError('Add handler : get trap data detail : ',$e->getMessage());
+			return array();
 		}
 
 		return $trapDetail;
 	}
 
 	/** Get rule detail by ruleid.
-	*	@param $ruleid int id of rule in rule table
-	*	@return array (objects)
+	*	@param integer $ruleid int id of rule in rule table
+	*	@return array : column objects in db
 	*/
 	protected function getRuleDetail($ruleid) 
 	{
@@ -548,6 +550,7 @@ class HandlerController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->displayExitError('Update handler : get rule detail',$e->getMessage());
+			return array();
 		}
 
 		return $ruleDetail;

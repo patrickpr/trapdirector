@@ -98,6 +98,7 @@ class StatusController extends TrapsController
 				    if ($file == false)
 				    {   // process is dead
 				        $this->_helper->json(array('status'=>'tu quoque fili','err'=>'Cannot open file'));
+				        return;
 				    }
 				    $pid=fgets($file);
 				    $output=array();
@@ -120,7 +121,7 @@ class StatusController extends TrapsController
 				$name=$_FILES['mibfile']['name'];
 				$DirConf=explode(':',$this->Config()->get('config', 'snmptranslate_dirs'));
 				$destination = array_shift($DirConf) .'/'.$name; //$this->Module()->getBaseDir() . "/mibs/$name";
-				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)==false)
+				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)===false)
 				{
 					$this->view->uploadStatus='ERROR, file not loaded. Check mibs directory permission';
 				}
@@ -161,7 +162,6 @@ class StatusController extends TrapsController
 		
 		// mib dirs
 		$DirConf=$this->Config()->get('config', 'snmptranslate_dirs');
-		$dirArray=array();
 		$dirArray=explode(':',$DirConf);
 
 		// Get base directories from net-snmp-config

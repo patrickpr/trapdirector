@@ -24,6 +24,7 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'KO'));
+			return;
 		}
 
 		$retHosts=array('status'=>'OK','hosts' => array());
@@ -51,6 +52,7 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'Error : no filter'));
+			return;
 		}
 
 		$retHosts=array('status'=>'OK','hosts' => array());
@@ -81,21 +83,25 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'No Hosts','hostid' => -1));
+			return;
 		}
 		
 		$hostArray=$this->getHostByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one host matches','hostid' => -1));
+			return;
 		}
 		else if (count($hostArray) == 0)
 		{
 			$this->_helper->json(array('status'=>'No host matches','hostid' => -1));
+			return;
 		}
 		$services=$this->getServicesByHostid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for host','hostid' => $hostArray[0]->id));
+			return;
 		}
 		$retServices=array('status'=>'OK','services' => array(),'hostid' => $hostArray[0]->id);
 		foreach ($services as $val)
@@ -121,21 +127,25 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'No Hosts','hostid' => -1));
+			return;
 		}
 		
 		$hostArray=$this->getHostGroupByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one hostgroup matches','hostid' => -1));
+			return;
 		}
 		else if (count($hostArray) == 0)
 		{
 			$this->_helper->json(array('status'=>'No hostgroup matches','hostid' => -1));
+			return;
 		}
 		$services=$this->getServicesByHostGroupid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for hostgroup','hostid' => $hostArray[0]->id));
+			return;
 		}
 		$retServices=array('status'=>'OK','services' => $services,'hostid' => $hostArray[0]->id);
 		
@@ -157,6 +167,7 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'No mib'));
+			return;
 		}
 		try
 		{
@@ -185,6 +196,7 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'No trap'));
+			return;
 		}
 		try
 		{
@@ -229,12 +241,14 @@ class HelperController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'No oid'));
+			return;
 		}
 		
 		// Try to get oid name from snmptranslate
 		if (($object=$this->getMIB()->translateOID($oid)) == null)
 		{
 			$this->_helper->json(array('status'=>'Not found'));
+			return;
 		}
 		else
 		{
@@ -267,11 +281,13 @@ class HelperController extends TrapsController
 			if (!preg_match('/^[0-9]+$/',$days))
 			{
 				$this->_helper->json(array('status'=>'invalid days : '.$days));
+				return;
 			}
 		}
 		else
 		{
 			$this->_helper->json(array('status'=>'No days'));
+			return;
 		}
 		if (isset($postData['action']))
 		{
@@ -338,6 +354,7 @@ class HelperController extends TrapsController
 			if (!isset($logDest[$destination]))
 			{
 				$this->_helper->json(array('status'=>'invalid destination : '.$destination));
+				return;
 			}
 		}
 		else
@@ -351,6 +368,7 @@ class HelperController extends TrapsController
 			if ($fileHandler == false)
 			{   // File os note writabe / cannot create
 			    $this->_helper->json(array('status'=>'File not writable :  '.$file));
+			    return;
 			}
 		}
 		else
@@ -362,6 +380,7 @@ class HelperController extends TrapsController
 			else
 			{
 				$this->_helper->json(array('status'=>'No file'));
+				return;
 			}
 		}
 
@@ -371,14 +390,7 @@ class HelperController extends TrapsController
 		}
 		else
 		{
-			if ($destination != 'level')
-			{
-				$level=null;
-			}
-			else
-			{
-				$this->_helper->json(array('status'=>'No level'));
-			}
+			$this->_helper->json(array('status'=>'No level'));
 			return;
 		}
 		

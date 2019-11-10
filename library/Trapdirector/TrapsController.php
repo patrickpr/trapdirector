@@ -467,14 +467,14 @@ class TrapsController extends Controller
 	*	does not catch exceptions
 	*	@param $hostname string host name
 	*	@param $name string service name
-	*	@return int  service id
+	*	@return array  service id
 	*/
 	protected function getServiceIDByName($hostname,$name) 
 	{
 		$db = $this->getIdoDb()->getConnection();
 		if ($name == null)
 		{
-			return 0;
+			return array();
 		}
 
 		$query=$db->select()

@@ -120,7 +120,7 @@ class MIBLoader
 
 	/** translate oid in MIB::Name 
 	*	@param string oid
-	*	@return array (oid -> oid, mib -> mib name, name -> oid name, type -> oid type)
+	*	@return array|null :  return array with index (oid -> oid, mib -> mib name, name -> oid name, type -> oid type)
 	*/
 	public function translateOID($oid)
 	{
@@ -169,7 +169,7 @@ class MIBLoader
 			$retArray['type_enum']='';			
 		}
 		$retArray['description']=null;
-		/* TODO : put in DB (but mybe only in trap_class).
+		/* TODO : put in DB (but maybe only in trap_class).
 		$query=$db->getConnection()->insert(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$array(
@@ -247,6 +247,3 @@ class MIBLoader
 	}
 	
 }
-
-
-?>
