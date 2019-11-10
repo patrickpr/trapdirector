@@ -34,8 +34,10 @@ class TrapsController extends Controller
 	/** Get instance of TrapModuleConfig class
 	*	@return TrapModuleConfig
 	*/
-	public function getModuleConfig() {
-		if ($this->moduleConfig == Null) {
+	public function getModuleConfig() 
+	{
+		if ($this->moduleConfig == Null) 
+		{
 			$db_prefix=$this->Config()->get('config', 'database_prefix');
 			if ($db_prefix === null) 
 			{
@@ -56,15 +58,18 @@ class TrapsController extends Controller
 	
 	public function getTrapHostListTable()
 	{
-	    if ($this->trapTableHostList == Null) {
+	    if ($this->trapTableHostList == Null) 
+		{
 	        $this->trapTableHostList = new TrapTableHostList();
 	        $this->trapTableHostList->setConfig($this->getModuleConfig());
 	    }
 	    return $this->trapTableHostList;
 	}
 	
-	public function getHandlerListTable() {
-		if ($this->handlerTableList == Null) {
+	public function getHandlerListTable() 
+	{
+		if ($this->handlerTableList == Null) 
+		{
 			$this->handlerTableList = new HandlerTableList();
 			$this->handlerTableList->setConfig($this->getModuleConfig());
 		}
@@ -74,8 +79,8 @@ class TrapsController extends Controller
 	/**	Get Database connexion
 	*	@param $DBname string DB name in resource.ini_ge
 	*	@param $test bool if set to true, returns error code and not database
-	*	@param $test_version	bool if set to flase, does not test database version of trapDB
-	*	@return IcingaDbConnection or int
+	*	@param $test_version bool if set to flase, does not test database version of trapDB
+	*	@return array<integer,mixed>|mixed : if test=false, returns DB connexion, else array(error_num,message) or null on error.
 	*/
 	public function getDbByName($DBname,$test=false,$test_version=true)
 	{
@@ -172,7 +177,11 @@ class TrapsController extends Controller
 		    return null;
 		}
 		
-		if ($test == false) { $this->icingaDB = $dbconn; return $this->icingaDB;}
+		if ($test == false) 
+		{ 
+			$this->icingaDB = $dbconn; 
+			return $this->icingaDB;
+		}
 		
 		try
 		{
@@ -186,9 +195,7 @@ class TrapsController extends Controller
 		}
 		catch (Exception $e)
 		{
-		    return array(3,"Error connecting to $dbresource : " . $e->getMessage());
-		    $this->redirectNow('trapdirector/settings?dberror=4');
-		    return null;
+			return array(3,"Error connecting to $dbresource : " . $e->getMessage());
 		}
 		
 		return array(0,'');
@@ -390,18 +397,15 @@ class TrapsController extends Controller
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
 		$db = $this->getIdoDb()->getConnection();
-		if ($id != null)
-		{
-			$query=$db->select()
-					->from(
-						array('s' => 'icinga_services'),
-						array('name' => 's.display_name','id' => 's.service_object_id'))
-					->join(
-						array('a' => 'icinga_objects'),
-						's.service_object_id=a.object_id',
-						array('is_active'=>'a.is_active','name2'=>'a.name2'))
-					->where('s.host_object_id='.$id.' AND a.is_active = 1');
-		}
+		$query=$db->select()
+				->from(
+					array('s' => 'icinga_services'),
+					array('name' => 's.display_name','id' => 's.service_object_id'))
+				->join(
+					array('a' => 'icinga_objects'),
+					's.service_object_id=a.object_id',
+					array('is_active'=>'a.is_active','name2'=>'a.name2'))
+				->where('s.host_object_id='.$id.' AND a.is_active = 1');
 
 		return $db->fetchAll($query);
 	}	
@@ -468,24 +472,27 @@ class TrapsController extends Controller
 	protected function getServiceIDByName($hostname,$name) 
 	{
 		$db = $this->getIdoDb()->getConnection();
-		if ($name != null)
+		if ($name == null)
 		{
-			$query=$db->select()
-					->from(
-						array('s' => 'icinga_services'),
-						array('name' => 's.display_name','id' => 's.service_object_id'))
-					->join(
-						array('a' => 'icinga_objects'),
-						's.service_object_id=a.object_id',
-						'is_active')
-					->where('a.name2=\''.$name.'\' AND a.name1=\''.$hostname.'\' AND a.is_active = 1');
+			return 0;
 		}
+
+		$query=$db->select()
+				->from(
+					array('s' => 'icinga_services'),
+					array('name' => 's.display_name','id' => 's.service_object_id'))
+				->join(
+					array('a' => 'icinga_objects'),
+					's.service_object_id=a.object_id',
+					'is_active')
+				->where('a.name2=\''.$name.'\' AND a.name1=\''.$hostname.'\' AND a.is_active = 1');
+
 		return $db->fetchAll($query);
 	}
 	
 	/** Get object name from object_id  in IDO database
 	*	does not catch exceptions
-	*	@param $id	int object_id (default to null, used first if not null)
+	*	@param int $id object_id (default to null, used first if not null)
 	*	@return array name1 (host) name2 (service)
 	*/
 	protected function getObjectNameByid($id) 
@@ -547,7 +554,7 @@ class TrapsController extends Controller
 	}	
 	
 	/** Delete rule by id
-	*	@param int rule id
+	*	@param int $ruleID rule id
 	*/
 	protected function deleteRule($ruleID)
 	{
@@ -576,10 +583,10 @@ class TrapsController extends Controller
 		}
 		if ($oid != null)
 		{
-			$condition=($condition==null)?'':$condition.' AND ';
+			$condition=($condition===null)?'':$condition.' AND ';
 			$condition.="trap_oid='$oid'";
 		}
-		if($condition ==null) return null;
+		if($condition === null) return null;
 		$query=$db->delete(
 			$this->getModuleConfig()->getTrapTableName(),
 			$condition
