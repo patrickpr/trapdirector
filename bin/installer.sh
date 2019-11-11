@@ -333,7 +333,7 @@ function add_schema_mysql(){
 	  echo -n "Enter password (or press enter if no password is required) : ";
 	  read -s dbPass;
 	  if [ ! "$dbPass" == "" ]; then dbPass=" -p${dbPass} " ;fi;
-	  sql_conn = " -h $dbHost -P $dbPort -u $dbUser $dbPass "
+	  sql_conn=" -h $dbHost -P $dbPort -u $dbUser $dbPass "
   fi
   
   echo
