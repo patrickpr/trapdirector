@@ -223,7 +223,7 @@ class SettingsController extends TrapsController
 		$schema=$this->Module()->getBaseDir() . 
 		'/SQL/schema_v'. $this->getModuleConfig()->getDbCurVersion() . '.' . $dbFileExt;
 		
-		$Trap->create_schema($schema,$prefix);
+		$Trap->mibClass->create_schema($schema,$prefix);
 		echo '</pre>';
 	}
 	echo '<br><br>Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a>';
@@ -269,7 +269,7 @@ class SettingsController extends TrapsController
 	      // Check for messages and display if any
               echo "Upgrade databse is going to start.<br>Don't forget to backup your database before update<br>";
 	      $Trap->setLogging(2,'syslog');
-	      $message = $Trap->update_schema($updateSchema,$target_version,$prefix,true);
+	      $message = $Trap->mibClass->update_schema($updateSchema,$target_version,$prefix,true);
 	      if ($message != '')
 	      {
 	          echo 'Note :<br><pre>';
@@ -287,7 +287,7 @@ class SettingsController extends TrapsController
 	  echo 'Updating schema to '. $target_version . ': <br>';
 	  echo '<pre>';
 	  	  
-	  $Trap->update_schema($updateSchema,$target_version,$prefix);
+	  $Trap->mibClass->update_schema($updateSchema,$target_version,$prefix);
 	  echo '</pre>';
   }  
 
