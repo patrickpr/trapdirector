@@ -212,7 +212,6 @@ if [ "$DB" = mysql ]; then
 	# Test Database for upgrades
 	 "${MODULE_HOME}/bin/installer.sh" -c database  -b mysql -t travistestupdate:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 	
-	OLD_VER=${DBVER}-1;
 	echo "Creation"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create -a "${MODULE_HOME}"
 	
