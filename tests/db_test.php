@@ -3,7 +3,7 @@
 // TODO
 require_once 'bin/trap_class.php';
 
-$options = getopt("c:v:d:b:");
+$options = getopt("c:v:d:b:a:");
 
 $icingaweb2Etc=(array_key_exists('d',$options))?$options['d']:"/etc/icingaweb2";
 
@@ -18,24 +18,24 @@ if (!array_key_exists('v',$options) || !array_key_exists('c',$options) || !array
     exit(1);
 }
 $command=$options['c'];
-
+$path=$options['a'];
 try {
     switch($command)
     {
         case 'create':
             $schema=($options['b']=='mysql')?'schema_v'.$options['v'].'.sql':'schema_v'.$options['v'].'.pgsql';
-            $schema='SQL/'.$schema;
+            $schema=$path.'SQL/'.$schema;
             $trap->trapsDB->create_schema($schema, 'traps_');
             break;
         case 'update':
-            $message=$trap->trapsDB->update_schema("SQL/",$options['v'], 'traps_',true);
+            $message=$trap->trapsDB->update_schema($path."SQL/",$options['v'], 'traps_',true);
             printf("Update message : %s\n",$message);
             if ($message == 'ERROR')
             {
                 exit(1);
             }
             printf("Messages DONE, updating : \n");
-            $message=$trap->trapsDB->update_schema("SQL/",$options['v'], 'traps_');
+            $message=$trap->trapsDB->update_schema($path."SQL/",$options['v'], 'traps_');
             if ($message == 'ERROR')
             {
                 exit(1);

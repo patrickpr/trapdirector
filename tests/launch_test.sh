@@ -207,17 +207,17 @@ expr_eval '((1=1) | (2>3)) & (("test"="test") & (3 != 2))' 0 "true"
 echo
 echo "############## Database create and update tests"
 
-OLD_VER=${DBVER}-1;
+let OLD_VER=DBVER-1;
 if [ "$DB" = mysql ]; then
 	# Test Database for upgrades
 	 "${MODULE_HOME}/bin/installer.sh" -c database  -b mysql -t travistestupdate:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 	
 	OLD_VER=${DBVER}-1;
 	echo "Creation"
-	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create
+	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create -a "${MODULE_HOME}"
 	
     echo "\nUpdate to current version\n"
-	"$PHP_BIN"  "${MODULE_HOME}tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update
+	"$PHP_BIN"  "${MODULE_HOME}tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update -a "${MODULE_HOME}"
 		
 elif [ "$DB" = pgsql ]; then
 
