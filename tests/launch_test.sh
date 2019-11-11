@@ -216,7 +216,7 @@ if [ "$DB" = mysql ]; then
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create -a "${MODULE_HOME}"
 	
     echo "\nUpdate to current version\n"
-	"$PHP_BIN"  "${MODULE_HOME}tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update -a "${MODULE_HOME}"
+	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update -a "${MODULE_HOME}"
 		
 elif [ "$DB" = pgsql ]; then
 
