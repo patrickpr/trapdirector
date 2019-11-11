@@ -198,13 +198,13 @@ class Database
      *     @param $target_version int target db version number
      *     @param $table_prefix string to replace #PREFIX# in schema file by this
      *     @param bool $getmsg : only get messages from version upgrades
-     *     @return string : if $getmsg=true, return messages.
+     *     @return string : if $getmsg=true, return messages or 'ERROR' on error.
      */
     public function update_schema($prefix,$target_version,$table_prefix,$getmsg=false)
     {
         // Get current db number
         $db_conn=$this->db_connect_trap();
-        $sql='SELECT id,value from '.$this->dbPrefix.'db_config WHERE name=\'db_version\' ';
+        $sql='SELECT value from '.$this->dbPrefix.'db_config WHERE name=\'db_version\' ';
         $this->logging->log('SQL query : '.$sql,DEBUG );
         if (($ret_code=$db_conn->query($sql)) === false) {
             $this->logging->log('Cannot get db version. Query : ' . $sql,2,'');
@@ -212,7 +212,6 @@ class Database
         }
         $version=$ret_code->fetchAll();
         $cur_version=$version[0]['value'];
-        $db_version_id=$version[0]['id'];
         
         if ($this->trapDBType == 'pgsql')
         {
@@ -225,39 +224,37 @@ class Database
         //echo "version all :\n";print_r($version);echo " \n $cur_ver \n";
         if ($getmsg === true)
         {
-            $message='';
-            $this->logging->log('getting message for upgrade',DEBUG );
-            while($cur_version<$target_version)
-            {
-                $cur_version++;
-                $updateFile=$prefix.'v'.($cur_version-1).'_v'.$cur_version.'.sql';
-                $input_stream=fopen($updateFile, 'r');
-                if ($input_stream=== false)
-                {
-                    $this->logging->log("Error reading update file ". $updateFile,2,'');
-                    return 'ERROR';
-                }
-                do { $line=fgets($input_stream); }
-                while ($line !== false && !preg_match('/#MESSAGE/',$line));
-                if ($line === false)
-                {
-                    $this->logging->log("No message in file ". $updateFile,2,'');
-                    return 'ERROR';
-                }
-                $message .= ($cur_version-1) . '->' . $cur_version. ' : ' . preg_replace('/#MESSAGE : /','',$line)."\n";
-            }
-            return $message;
+            return $this->update_schema_message($prefix, $cur_version, $target_version);
         }
+        
+        if ($this->update_schema_do($prefix, $cur_version, $target_version, $table_prefix) === true)
+        {
+            return 'ERROR';
+        }
+        return '';
+
+    }
+
+    /**
+     * Update database schema from current (as set in db) to $target_version
+     *     @param string $prefix  file prefix of sql update File
+     *     @param int $cur_version  current db version number
+     *     @param int $target_version  target db version number
+     *     @param string $table_prefix   to replace #PREFIX# in schema file by this
+     *     @return bool : true on error
+     */
+    public function update_schema_do($prefix,$cur_version,$target_version,$table_prefix)
+    {
         while($cur_version<$target_version)
-        { // tODO : execute pre & post scripts
+        { // TODO : execute pre & post scripts
             $cur_version++;
             $this->logging->log('Updating to version : ' .$cur_version ,INFO );
             $updateFile=$prefix.'v'.($cur_version-1).'_v'.$cur_version.'.sql';
             $input_stream=fopen($updateFile, 'r');
             if ($input_stream=== false)
             {
-                $this->logging->log("Error reading update file ". $updateFile,2,'');
-                return 'ERROR';
+                $this->logging->log("Error reading update file ". $updateFile,ERROR);
+                return true;
             }
             $newline='';
             $db_conn=$this->db_connect_trap();
@@ -270,7 +267,8 @@ class Database
                 {
                     $sql_req=$db_conn->prepare($newline);
                     if ($sql_req->execute() === false) {
-                        $this->logging->log('Error create schema : '.$newline,1,'');
+                        $this->logging->log('Error create schema : '.$newline,ERROR);
+                        return true;
                     }
                     $cur_table_array=array();
                     if (preg_match('/^ *([^ ]+) TABLE ([^ ]+)/',$newline,$cur_table_array))
@@ -289,15 +287,10 @@ class Database
             }
             fclose($input_stream);
             
-            //$sql= $newline;
-            //if ($db_conn->query($sql) === false) {
-            //    $this->logging->log('Error updating schema : '.$sql,1,'');
-            //}
-            
-            $sql='UPDATE '.$this->dbPrefix.'db_config SET value='.$cur_version.' WHERE ( id = '.$db_version_id.' )';
+            $sql='UPDATE '.$this->dbPrefix.'db_config SET value='.$cur_version.' WHERE ( name=\'db_version\' )';
             $this->logging->log('SQL query : '.$sql,DEBUG );
             if ($db_conn->query($sql) === false) {
-                $this->logging->log('Cannot update db version. Query : ' . $sql,2);
+                $this->logging->log('Cannot update db version. Query : ' . $sql,WARN);
                 return 'ERROR';
             }
             
@@ -305,5 +298,42 @@ class Database
         }
     }
     
+    /**
+     * Get database message for update to $target_version
+     *     @param string $prefix  file prefix of sql update File
+     *     @param int $cur_version  current db version number
+     *     @param int $target_version  target db version number
+     *     @return string : return messages or 'ERROR'.
+     */
+    private function update_schema_message($prefix,$cur_version,$target_version)
+    {
+ 
+        $message='';
+        $this->logging->log('getting message for upgrade',DEBUG );
+        while($cur_version<$target_version)
+        {
+            $cur_version++;
+            $updateFile=$prefix.'v'.($cur_version-1).'_v'.$cur_version.'.sql';
+            $input_stream=fopen($updateFile, 'r');
+            if ($input_stream=== false)
+            {
+                $this->logging->log("Error reading update file ". $updateFile,2,'');
+                return 'ERROR';
+            }
+            do 
+            { 
+                $line=fgets($input_stream); 
+            }
+            while ($line !== false && !preg_match('/#MESSAGE/',$line));
+            fclose($input_stream);
+            if ($line === false)
+            {
+                $this->logging->log("No message in file ". $updateFile,2,'');
+                return '';
+            }
+            $message .= ($cur_version-1) . '->' . $cur_version. ' : ' . preg_replace('/#MESSAGE : /','',$line)."\n";
+        }
+        return $message;
+    }
     
 }

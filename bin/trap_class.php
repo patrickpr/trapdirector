@@ -50,10 +50,10 @@ class Trap
 	
 	// Mib update data
 	public $mibClass; //< Mib class
-	private $dbOidAll; //< All oid in database;
-	private $dbOidIndex; //< Index of oid in dbOidAll
-	private $objectsAll; //< output lines of snmptranslate list
-	private $trapObjectsIndex; //< array of traps objects (as OID)
+	private $dbOidAll; //< All oid in database;   //DUP
+	private $dbOidIndex; //< Index of oid in dbOidAll      //DUP
+	private $objectsAll; //< output lines of snmptranslate list    //DUP
+	private $trapObjectsIndex; //< array of traps objects (as OID)  //DUP
 	
 	function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
 	{
@@ -85,7 +85,7 @@ class Trap
 		$this->getDatabaseOptions(); // Get options in database
 		if ($this->api_use === true) $this->getAPI(); // Setup API
 		
-		$this->mibClass = new Mib($this->logging,$this->trapsDB); // Create Mib class
+		$this->mibClass = new Mib($this->logging,$this->trapsDB,$this->snmptranslate,$this->snmptranslate_dirs); // Create Mib class
 		
 		$this->trap_data=array(
 			'source_ip'	=> 'unknown',

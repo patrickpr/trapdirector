@@ -212,16 +212,26 @@ if [ "$DB" = mysql ]; then
 	# Test Database for upgrades
 	 "${MODULE_HOME}/bin/installer.sh" -c database  -b mysql -t travistestupdate:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 	
-	echo "Creation"
+	echo "##############Creation"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create -a "${MODULE_HOME}"
-	
-    echo "\nUpdate to current version\n"
+	if [ $? -ne 0 ]; then 
+		echo "ERROR in creation"
+		exit 1;
+	fi
+    echo -e "\n##############Update to current version\n"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update -a "${MODULE_HOME}"
 		
 elif [ "$DB" = pgsql ]; then
 
 	# Test Database for upgrades
-	bin/installer.sh -c database  -b pgsql -t travistestupdate:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
+	"${MODULE_HOME}/bin/installer.sh" -c database  -b pgsql -t travistestupdate:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
+
+	echo "##############Creation"
+	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b pgsql -c create -a "${MODULE_HOME}"
+	
+    echo -e "\n##############Update to current version\n"
+	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b pgsql -c update -a "${MODULE_HOME}"	
+	
 fi
 
 

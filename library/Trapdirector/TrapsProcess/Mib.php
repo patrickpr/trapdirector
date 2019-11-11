@@ -13,16 +13,26 @@ class Mib
     protected $logging; //< logging class
     protected $trapsDB; //< Database class
     
+    public $snmptranslate;
+    public $snmptranslate_dirs;
+    
+    private $dbOidAll; //< All oid in database;
+    private $dbOidIndex; //< Index of oid in dbOidAll
+    private $objectsAll; //< output lines of snmptranslate list
+    private $trapObjectsIndex; //< array of traps objects (as OID)
     
     /**
      * Setup Mib Class
      * @param Logging $logClass : where to log
      * @param Database $dbClass : Database
      */
-    function __construct($logClass,$dbClass)
+    function __construct($logClass,$dbClass,$snmptrans,$snmptransdir)
     {
         $this->logging=$logClass;
-        $this->trapsDB=$dbClass;       
+        $this->trapsDB=$dbClass;
+        $this->snmptranslate=$snmptrans;
+        $this->snmptranslate_dirs=$snmptransdir;
+
     }
     
     

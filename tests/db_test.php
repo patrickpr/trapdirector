@@ -1,6 +1,6 @@
 #!/opt/rh/rh-php71/root/bin/php
 <?php
-// TODO
+
 require_once 'bin/trap_class.php';
 
 $options = getopt("c:v:d:b:a:");
@@ -12,9 +12,9 @@ $debugLevel=4;// 0=No output 1=critical 2=warning 3=trace 4=ALL
 $trap = new trap($icingaweb2Etc,$debugLevel,'display');
 $trap->setLogging($debugLevel,'display');
 
-if (!array_key_exists('v',$options) || !array_key_exists('c',$options) || !array_key_exists('b',$options))
+if (!array_key_exists('v',$options) || !array_key_exists('c',$options) || !array_key_exists('b',$options)|| !array_key_exists('a',$options))
 {
-    printf("Need version -v, database -b (mysql,pgsql) command -c (create/update)\n");
+    printf("Need version -v, path -a, database -b (mysql,pgsql) command -c (create/update)\n");
     exit(1);
 }
 $command=$options['c'];
@@ -42,7 +42,7 @@ try {
             }
             break;
         default:
-            prtinf("Unknown command\n");
+            printf("Unknown command\n");
             exit(1);
     }
 } catch (Exception $e) {
