@@ -38,7 +38,7 @@ class Trap
 	protected $logSetup;   //< bool true if log was setup in constructor
 	
 	// Databases
-	protected $trapsDB; //< Database class
+	public $trapsDB; //< Database class
 	
 	// Trap received data
 	protected $receivingHost;
@@ -180,7 +180,7 @@ class Trap
 	        return;
 	    }
 	    
-        $this->trapsDB = new Database($this->logging,$dbConfig[$dbTrapName]);
+	    $this->trapsDB = new Database($this->logging,$dbConfig[$dbTrapName],$this->db_prefix);
 	    
 	    if ($this->api_use === true) return; // In case of API use, no IDO is necessary
         

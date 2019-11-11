@@ -35,8 +35,7 @@ if [ "$DB" = mysql ]; then
 	sed -i -e 's/#PREFIX#/traps_/g' "${MODULE_HOME}/SQL/schema_v${DBVER}.sql"	
 	mysql -u root travistest < "SQL/schema_v${DBVER}.sql"
 	echo -e "database_prefix = \"traps_\"\n" >> "${MODULE_HOME}/vendor/icinga_etc/modules/trapdirector/config.ini"	
-	
-	
+		
 elif [ "$DB" = pgsql ]; then
 
 	bin/installer.sh -c database  -b pgsql -t travistest:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
