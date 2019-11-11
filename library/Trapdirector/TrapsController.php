@@ -135,6 +135,11 @@ class TrapsController extends Controller
 		return $dbconn;
 	}
 
+	/**
+	 * 
+	 * @param boolean $test
+	 * @return \Icinga\Module\Trapdirector\array<integer,mixed>|mixed|number[]|string[]|NULL
+	 */
 	public function getDb($test=false)
 	{
 		if ($this->trapDB != null && $test = false) return $this->trapDB;
@@ -510,7 +515,7 @@ class TrapsController extends Controller
 	}		
 
 	/** Add handler rule in traps DB
-	*	@param array(<db item>=><value>)
+	*	@param array $params : array(<db item>=><value>)
 	*	@return int inserted id
 	*/
 	protected function addHandlerRule($params)
@@ -611,7 +616,7 @@ class TrapsController extends Controller
 		}
 		if ($oid != null)
 		{
-			$condition=($condition==null)?'':$condition.' AND ';
+			$condition=($condition===null)?'':$condition.' AND ';
 			$condition.="trap_oid='$oid'";
 		}
 		if($condition ==null) return 0;
@@ -625,7 +630,7 @@ class TrapsController extends Controller
 	}		
 	
 	/** get configuration value
-	*	@param configuration name in db
+	*	@param string $element : configuration name in db
 	*/
 	protected function getDBConfigValue($element)
 	{
@@ -657,8 +662,10 @@ class TrapsController extends Controller
 	}
 
 	/** add configuration value
-	*	@param name value
+	*	@param string $element : name of config element
+	*   @param string $value : value
 	*/
+		
 	protected function addDBConfigValue($element,$value)
 	{
 	
@@ -675,7 +682,8 @@ class TrapsController extends Controller
 	}
 
 	/** set configuration value
-	*	@param name value
+	*	@param string $element : name of config element
+	*   @param string $value : value
 	*/
 	protected function setDBConfigValue($element,$value)
 	{

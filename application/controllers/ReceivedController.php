@@ -81,6 +81,7 @@ class ReceivedController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->displayExitError('Trap detail',$e->getMessage());
+			return;
 		}
 
 		// Store result in array (with Titles).
@@ -208,14 +209,17 @@ class ReceivedController extends TrapsController
 		else
 		{
 			$this->_helper->json(array('status'=>'Missing variables'));
+			return;
 		}
 		if ($action =="count")
 		{
 			$this->_helper->json(array('status'=>'OK','count'=>$this->countTrap($ip,$oid)));
+			return;
 		}
 		if ($action =="delete")
 		{
 			$this->_helper->json(array('status'=>'OK','count'=>$this->deleteTrap($ip,$oid)));
+			return;
 		}		
 		$this->_helper->json(array('status'=>'unknown action'));
 	}

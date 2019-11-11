@@ -31,7 +31,11 @@ class MIBLoader
 				
 	}
 
-	// Get all mibs in db which have at least one trap
+    /**
+     * Get all mibs in db which have at least one trap
+     * @return array
+     */	
+	
 	public function getMIBList()
 	{
 		$dbconn = $this->db->getConnection();
@@ -55,7 +59,7 @@ class MIBLoader
 	
 	/** Get trap list from a mib 
 	*	@param $mib string mib name
-	*	@return array(traps)
+	*	@return array : traps
 	*/
 	public function getTrapList($mib)
 	{
@@ -75,8 +79,8 @@ class MIBLoader
 	}
 	
 	/** Get objects a trap can have
-	*	@param int oid of trap
-	*	@return : null if trap not found, or array ( <oid> => name/mib/type )
+	*	@param int $trap oid of trap
+	*	@return array|null : null if trap not found, or array ( <oid> => name/mib/type )
 	*/
 	public function getObjectList($trap)
 	{
@@ -150,7 +154,7 @@ class MIBLoader
 		$translate=exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
 		    ' '.$oid);
 		$ret_code=preg_match('/(.*)::(.*)/',$translate,$matches);
-		if ($ret_code==0 || $ret_code==FALSE) {
+		if ($ret_code===0 || $ret_code===false) {
 			return null;
 		} 
 		$retArray['mib']=$matches[1];
@@ -201,16 +205,16 @@ class MIBLoader
 					$this->config->getMIBCacheTableName(),
 					array('COUNT(*)'));
 		$where=null;
-		if ($mib != null)
+		if ($mib !== null)
 		{
 			$where ="mib = '$mib' ";
 		}
-		if ($type != null)
+		if ($type !== null)
 		{
 			$where=($where != null)?' AND ':'';
 			$where.="type='$type'";
 		}
-		if ($where != null)
+		if ($where !== null)
 		{
 			$query->where($where);
 		}		
@@ -220,13 +224,13 @@ class MIBLoader
 	/**
 	 * Get trap by oid, or if null, by id
 	 * @param string $oid
-	 * @param number $id
+	 * @param integer $id
 	 * @return array trap details
 	 */
 	public function getTrapDetails($oid=null,$id=null)
 	{	    
 	    // Get trap id in DB
-	    if ($oid==null)
+	    if ($oid===null)
 	    {
 	        $where="c.id = '$id'";
 	    }
