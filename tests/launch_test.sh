@@ -210,14 +210,14 @@ echo "############## Database create and update tests"
 OLD_VER=${DBVER}-1;
 if [ "$DB" = mysql ]; then
 	# Test Database for upgrades
-	bin/installer.sh -c database  -b mysql -t travistestupdate:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
+	 "${MODULE_HOME}/bin/installer.sh" -c database  -b mysql -t travistestupdate:127.0.0.1:3306:root: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 	
 	OLD_VER=${DBVER}-1;
 	echo "Creation"
-	"$PHP_BIN" tests/db_test.php -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create
+	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create
 	
     echo "\nUpdate to current version\n"
-	tests/db_test.php -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update
+	"$PHP_BIN"  "${MODULE_HOME}tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update
 		
 elif [ "$DB" = pgsql ]; then
 
