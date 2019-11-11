@@ -138,7 +138,7 @@ class TrapsController extends Controller
 	/**
 	 * 
 	 * @param boolean $test
-	 * @return \Icinga\Module\Trapdirector\array<integer,mixed>|mixed|number[]|string[]|NULL
+	 * @return array<integer,mixed>|mixed|number[]|string[]|NULL
 	 */
 	public function getDb($test=false)
 	{
@@ -539,7 +539,8 @@ class TrapsController extends Controller
 	}	
 
 	/** Update handler rule in traps DB
-	*	@param array(<db item>=><value>)
+	*	@param array $params : (<db item>=><value>)
+	*   @param integer $ruleID : rule id in db
 	*	@return array affected rows
 	*/
 	protected function updateHandlerRule($params,$ruleID)
@@ -619,7 +620,7 @@ class TrapsController extends Controller
 			$condition=($condition===null)?'':$condition.' AND ';
 			$condition.="trap_oid='$oid'";
 		}
-		if($condition ==null) return 0;
+		if($condition === null) return 0;
 		$query=$db->select()
 			->from(
 				$this->getModuleConfig()->getTrapTableName(),

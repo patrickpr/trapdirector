@@ -35,14 +35,8 @@ class Trap
 	protected $logging;    //< Logging class.
 	protected $logSetup;   //< bool true if log was setup in constructor
 	
-	//protected $debug_file="php://stdout";	
 	// Databases
 	protected $trapsDB; //< Database class
-	
-	protected $trapDB=null; //< trap database  // DUP
-	protected $idoDB=null; //< ido database  // DUP
-	protected $trapDBType; //< Type of database for traps (mysql, pgsql)  // DUP
-	protected $idoDBType; //< Type of database for ido (mysql, pgsql)  // DUP
 	
 	// Trap received data
 	protected $receivingHost;
@@ -127,40 +121,38 @@ class Trap
 	}
 	
 	/** 
-	 * Get options from ini file and database
-	 * Setup the database class with options.
-	 * @param array : ini file array
+	 * Get options from ini file
+	 * @param array $trap_config : ini file array
 	*/
-	protected function getMainOptions($trap_config)
+	protected function getMainOptions($trapConfig)
 	{
-		$trap_config=parse_ini_file($this->trap_module_config,true);
-		if ($trap_config == false) 
-		{
-			$this->logging->log("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog'); 
-		}
+
 		// Snmptranslate binary path
-		$this->getOptionIfSet($trap_config,'config','snmptranslate', $this->snmptranslate);
+		$this->getOptionIfSet($trapConfig,'config','snmptranslate', $this->snmptranslate);
 
 		// mibs path
-		$this->getOptionIfSet($trap_config,'config','snmptranslate_dirs', $this->snmptranslate_dirs);
+		$this->getOptionIfSet($trapConfig,'config','snmptranslate_dirs', $this->snmptranslate_dirs);
 
 		// icinga2cmd path
-		$this->getOptionIfSet($trap_config,'config','icingacmd', $this->icinga2cmd);
+		$this->getOptionIfSet($trapConfig,'config','icingacmd', $this->icinga2cmd);
 		
 		// table prefix
-		$this->getOptionIfSet($trap_config,'config','database_prefix', $this->db_prefix);
+		$this->getOptionIfSet($trapConfig,'config','database_prefix', $this->db_prefix);
 
 		// API options
-		if ($this->getOptionIfSet($trap_config,'config','icingaAPI_host', $this->api_hostname))
+		if ($this->getOptionIfSet($trapConfig,'config','icingaAPI_host', $this->api_hostname))
 		{
 		    $this->api_use=true;
-		    $this->getOptionIfSet($trap_config,'config','icingaAPI_port', $this->api_port);
-		    $this->getOptionIfSet($trap_config,'config','icingaAPI_user', $this->api_username);
-		    $this->getOptionIfSet($trap_config,'config','icingaAPI_password', $this->api_password);
+		    $this->getOptionIfSet($trapConfig,'config','icingaAPI_port', $this->api_port);
+		    $this->getOptionIfSet($trapConfig,'config','icingaAPI_user', $this->api_username);
+		    $this->getOptionIfSet($trapConfig,'config','icingaAPI_password', $this->api_password);
 		}
 	}
 	
-	
+	/**
+	 * Create and setup database class for trap & ido (if no api) db
+	 * @param array $trap_config : ini file array
+	 */
 	protected function setupDatabase($trapConfig)
 	{
 	    // Trap database
@@ -210,7 +202,7 @@ class Trap
 	protected function getDatabaseOptions()
 	{
 		// Database options
-		if ($this->logSetup == false) // Only if logging was no setup in constructor
+		if ($this->logSetup === false) // Only if logging was no setup in constructor
 		{
     		$this->getDBConfigIfSet('log_level',$this->logging->debugLevel);
     		$this->getDBConfigIfSet('log_destination',$this->logging->outputMode);
@@ -605,7 +597,7 @@ class Trap
 
 			$sql= 'INSERT INTO '.$this->db_prefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';			
 
-			if (($ret_code=$db_conn->query($sql)) === false) {
+			if ($db_conn->query($sql) === false) {
 				$this->logging->log('Erreur insertion data : ' . $sql,WARN,'');
 			}	
 		}	
@@ -1330,7 +1322,7 @@ class Trap
 	
 	/** reset service to OK after time defined in rule
 	*	TODO logic is : get all service in error + all rules, see if getting all rules then select services is better 
-	*	@return : like a plugin : status code (0->3) <message> | <perfdata>
+	*	@return integer : not in use
 	**/
 	public function reset_services()
 	{
@@ -1346,6 +1338,7 @@ class Trap
 		$db_conn=$this->trapsDB->db_connect_ido();
 		if (($services_db=$db_conn->query($sql_query)) === false) { // set err to 1 to throw exception.
 			$this->logging->log('No result in query : ' . $sql_query,ERROR,'');
+			return 0;
 		}
 		$services=$services_db->fetchAll();
 		
@@ -1353,7 +1346,8 @@ class Trap
 		$sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->db_prefix."rules where revert_ok != 0;";
 		$db_conn2=$this->trapsDB->db_connect_trap();
 		if (($rules_db=$db_conn2->query($sql_query)) === false) {
-			$this->logging->log('No result in query : ' . $sql_query,ERROR,''); 
+			$this->logging->log('No result in query : ' . $sql_query,ERROR,'');
+			return 0;
 		}
 		$rules=$rules_db->fetchAll();
 		

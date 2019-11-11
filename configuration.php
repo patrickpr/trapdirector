@@ -30,4 +30,3 @@ $section->add(N_('Handlers'),array(
 	'permission' 	=> 'trapdirector/config'
 ));
 
-?>

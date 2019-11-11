@@ -15,8 +15,9 @@ $Trap=null;
 
 try
 {
-    $Trap = new Trap($icingaweb2_etc,4,'syslog');
+    $Trap = new Trap($icingaweb2_etc);
     //$Trap = new Trap($icingaweb2_etc,4,'display'); // For debug
+    //$Trap = new Trap($icingaweb2_etc,4,'syslog'); // For debug
     //$Trap->setLogging(4,'syslog'); 
     
     // TODO : tranfer this to reset_trap cli command
