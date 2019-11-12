@@ -155,6 +155,130 @@ class Mib
         return 2;
     }
     
+/**
+ * get all objects for a trap.
+ * @param integer $trapId
+ * @return array : array of cached objects
+ */    
+    private function cache_db_objects($trapId)
+    {
+        $dbObjects=array(); // cache of objects for trap in db
+        $db_conn=$this->trapsDB->db_connect_trap();
+        // Get all objects
+        $sql='SELECT * FROM '.$this->trapsDB->dbPrefix.'mib_cache_trap_object where trap_id='.$trapId.';';
+        $this->logging->log('SQL query get all traps: '.$sql,DEBUG );
+        if (($ret_code=$db_conn->query($sql)) === false) {
+            $this->logging->log('No result in query : ' . $sql,1,'');
+        }
+        $dbObjectsRaw=$ret_code->fetchAll();
+        
+        foreach ($dbObjectsRaw as $val)
+        {
+            $dbObjects[$val['object_id']]=1;
+        }
+        return $dbObjects;
+    }
+
+/**
+ * Get object details & mib , returns snmptranslate output
+ * @param string $object : object name
+ * @param string $trapmib : mib of trap
+ * @return NULL|array : null if not found, or output of snmptranslate
+ */
+    private function get_object_details($object,$trapmib)
+    {
+        $match=$snmptrans=array();
+        $retVal=0;
+        $this->oidDesc['mib']=$trapmib;
+        exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+            ' -On -Td '.$this->oidDesc['mib'].'::'.$object . ' 2>/dev/null',$snmptrans,$retVal);
+        if ($retVal!=0)
+        {
+            // Maybe not trap mib, search with IR
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+                ' -IR '.$object . ' 2>/dev/null',$snmptrans,$retVal);
+            if ($retVal != 0 || !preg_match('/(.*)::(.*)/',$snmptrans[0],$match))
+            { // Not found -> continue with warning
+                $this->logging->log('Error finding trap object : '.$trapmib.'::'.$object,2,'');
+                return null;
+            }
+            $this->oidDesc['mib']=$match[1];
+            
+            // Do the snmptranslate again.
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+                ' -On -Td '.$this->oidDesc['mib'].'::'.$object,$snmptrans,$retVal);
+            if ($retVal!=0) {
+                $this->logging->log('Error finding trap object : '.$this->oidDesc['mib'].'::'.$object,2,'');
+                return null;
+            }
+            
+        }
+        return $snmptrans;
+    }
+
+/**
+ * Parse snmptranslate output and set  $this->oidDesc with elements 
+ * @param array $snmptrans : multi line output of snmptrans
+ */
+    private function parse_object($snmptrans)
+    {
+        $tmpdesc=''; // For multiline description
+        $indesc=false; // true if currently inside multiline description
+        $match=array();
+        
+        foreach ($snmptrans as $line)
+        {
+            if ($indesc===true)
+            {
+                $line=preg_replace('/[\t ]+/',' ',$line);
+                if (preg_match('/(.*)"$/', $line,$match))
+                {
+                    $this->oidDesc['description'] = $tmpdesc . $match[1];
+                    $indesc=false;
+                }
+                $tmpdesc.=$line;
+                continue;
+            }
+            if (preg_match('/^\.[0-9\.]+$/', $line))
+            {
+                $this->oidDesc['oid']=$line;
+                continue;
+            }
+            if (preg_match('/^[\t ]+SYNTAX[\t ]+([^{]*) \{(.*)\}/',$line,$match))
+            {
+                $this->oidDesc['syntax']=$match[1];
+                $this->oidDesc['type_enum']=$match[2];
+                continue;
+            }
+            if (preg_match('/^[\t ]+SYNTAX[\t ]+(.*)/',$line,$match))
+            {
+                $this->oidDesc['syntax']=$match[1];
+                continue;
+            }
+            if (preg_match('/^[\t ]+DISPLAY-HINT[\t ]+"(.*)"/',$line,$match))
+            {
+                $this->oidDesc['dispHint']=$match[1];
+                continue;
+            }
+            if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)"/',$line,$match))
+            {
+                $this->oidDesc['description']=$match[1];
+                continue;
+            }
+            if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$line,$match))
+            {
+                $tmpdesc=$match[1];
+                $indesc=true;
+                continue;
+            }
+            if (preg_match('/^[\t ]+-- TEXTUAL CONVENTION[\t ]+(.*)/',$line,$match))
+            {
+                $this->oidDesc['textconv']=$match[1];
+                continue;
+            }
+        }
+    }
+
     /**
      * create or update (with check_existing = true) objects of trap
      * @param string $trapOID : trap oid
@@ -163,116 +287,28 @@ class Mib
      * @param bool $check_existing : check instead of create
      */
     public function trap_objects($trapOID,$trapmib,$objects,$check_existing)
-    {
-        $dbObjects=null; // cache of objects for trap in db
-        $db_conn=$this->trapsDB->db_connect_trap();
+    {              
+        $trapId = $this->dbOidIndex[$trapOID]['id']; // Get id of trap
         
-        // Get id of trapmib.
-        
-        $trapId = $this->dbOidIndex[$trapOID]['id'];
         if ($check_existing === true)
         {
-            // Get all objects
-            $sql='SELECT * FROM '.$this->trapsDB->dbPrefix.'mib_cache_trap_object where trap_id='.$trapId.';';
-            $this->logging->log('SQL query get all traps: '.$sql,DEBUG );
-            if (($ret_code=$db_conn->query($sql)) === false) {
-                $this->logging->log('No result in query : ' . $sql,1,'');
-            }
-            $dbObjectsRaw=$ret_code->fetchAll();
-            
-            foreach ($dbObjectsRaw as $val)
-            {
-                $dbObjects[$val['object_id']]=1;
-            }
+            $dbObjects=$this->cache_db_objects($trapId);
         }
+        
         foreach ($objects as $object)
         {
-            $match=$snmptrans=array();
-            $retVal=0;
             
             $this->reset_oidDesc();
             
+            $snmptrans=$this->get_object_details($object, $trapmib); // Get object mib & details
+            if ($snmptrans === null) continue; // object not found
             
-            $tmpdesc=''; // For multiline description
-            $indesc=false; // true if currently inside multiline description
-            
-            $this->oidDesc['mib']=$trapmib;
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                ' -On -Td '.$this->oidDesc['mib'].'::'.$object . ' 2>/dev/null',$snmptrans,$retVal);
-            if ($retVal!=0)
-            {
-                // Maybe not trap mib, search with IR
-                exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                    ' -IR '.$object . ' 2>/dev/null',$snmptrans,$retVal);
-                if ($retVal != 0 || !preg_match('/(.*)::(.*)/',$snmptrans[0],$match))
-                { // Not found -> continue with warning
-                    $this->logging->log('Error finding trap object : '.$trapmib.'::'.$object,2,'');
-                    continue;
-                }
-                $this->oidDesc['mib']=$match[1];
-                
-                // Do the snmptranslate again.
-                exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                    ' -On -Td '.$this->oidDesc['mib'].'::'.$object,$snmptrans,$retVal);
-                if ($retVal!=0) {
-                    $this->logging->log('Error finding trap object : '.$this->oidDesc['mib'].'::'.$object,2,'');
-                }
-                
-            }
-            foreach ($snmptrans as $line)
-            {
-                if ($indesc===true)
-                {
-                    $line=preg_replace('/[\t ]+/',' ',$line);
-                    if (preg_match('/(.*)"$/', $line,$match))
-                    {
-                        $this->oidDesc['description'] = $tmpdesc . $match[1];
-                        $indesc=false;
-                    }
-                    $tmpdesc.=$line;
-                    continue;
-                }
-                if (preg_match('/^\.[0-9\.]+$/', $line))
-                {
-                    $this->oidDesc['oid']=$line;
-                    continue;
-                }
-                if (preg_match('/^[\t ]+SYNTAX[\t ]+([^{]*) \{(.*)\}/',$line,$match))
-                {
-                    $this->oidDesc['syntax']=$match[1];
-                    $this->oidDesc['type_enum']=$match[2];
-                    continue;
-                }
-                if (preg_match('/^[\t ]+SYNTAX[\t ]+(.*)/',$line,$match))
-                {
-                    $this->oidDesc['syntax']=$match[1];
-                    continue;
-                }
-                if (preg_match('/^[\t ]+DISPLAY-HINT[\t ]+"(.*)"/',$line,$match))
-                {
-                    $this->oidDesc['dispHint']=$match[1];
-                    continue;
-                }
-                if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)"/',$line,$match))
-                {
-                    $this->oidDesc['description']=$match[1];
-                    continue;
-                }
-                if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$line,$match))
-                {
-                    $tmpdesc=$match[1];
-                    $indesc=true;
-                    continue;
-                }
-                if (preg_match('/^[\t ]+-- TEXTUAL CONVENTION[\t ]+(.*)/',$line,$match))
-                {
-                    $this->oidDesc['textconv']=$match[1];
-                    continue;
-                }
-            }
+            $this->parse_object($snmptrans);
+
             $this->oidDesc['name'] = $object;
+            
             $this->logging->log("Adding object ".$this->oidDesc['name']." : ".$this->oidDesc['oid']." / ".$this->oidDesc['syntax']." / ".$this->oidDesc['type_enum']." / ".$this->oidDesc['dispHint']." / ".$this->oidDesc['textconv'],DEBUG );
-            //echo "$this->oidDesc['name'] : $this->oidDesc['oid'] / $this->oidDesc['syntax'] / $this->oidDesc['type_enum'] / $this->oidDesc['dispHint'] / $this->oidDesc['textconv'] / $this->oidDesc['description']\n";
+
             // Update
             $this->update_oid();
             
@@ -286,6 +322,7 @@ class Mib
                 // TODO : check link trap - objects exists, mark them.
             }
             // Associate in object table
+            $db_conn=$this->trapsDB->db_connect_trap();
             $sql='INSERT INTO '.$this->trapsDB->dbPrefix.'mib_cache_trap_object (trap_id,object_id) '.
                 'values (:trap_id, :object_id)';
             $sqlQuery=$db_conn->prepare($sql);
@@ -384,6 +421,12 @@ class Mib
         $this->timing['num_traps']=0;
     }
 
+    /**
+     * Detect if $this->objectsAll[$curElement] is a trap 
+     * @param integer $curElement
+     * @param bool $onlyTraps : set to false to get all and not only traps.
+     * @return boolean : false if it's a trap , true if not
+     */
     private function detect_trap($curElement,$onlyTraps)
     {
         // Get oid or pass if not found
