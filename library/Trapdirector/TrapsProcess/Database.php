@@ -291,11 +291,12 @@ class Database
             $this->logging->log('SQL query : '.$sql,DEBUG );
             if ($db_conn->query($sql) === false) {
                 $this->logging->log('Cannot update db version. Query : ' . $sql,WARN);
-                return 'ERROR';
+                return true;
             }
             
             $this->logging->log('Schema updated to version : '.$cur_version ,INFO);
         }
+        return false;
     }
     
     /**

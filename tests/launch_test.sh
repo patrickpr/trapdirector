@@ -215,12 +215,15 @@ if [ "$DB" = mysql ]; then
 	echo "##############Creation"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b mysql -c create -a "${MODULE_HOME}"
 	if [ $? -ne 0 ]; then 
-		echo "ERROR in creation"
+		echo "##############ERROR in creation"
 		exit 1;
 	fi
     echo -e "\n##############Update to current version\n"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b mysql -c update -a "${MODULE_HOME}"
-		
+	if [ $? -ne 0 ]; then 
+		echo "##############ERROR in update"
+		exit 1;
+	fi		
 elif [ "$DB" = pgsql ]; then
 
 	# Test Database for upgrades
@@ -228,10 +231,16 @@ elif [ "$DB" = pgsql ]; then
 
 	echo "##############Creation"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b pgsql -c create -a "${MODULE_HOME}"
-	
+	if [ $? -ne 0 ]; then 
+		echo "##############ERROR in creation"
+		exit 1;
+	fi	
     echo -e "\n##############Update to current version\n"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v ${DBVER} -b pgsql -c update -a "${MODULE_HOME}"	
-	
+	if [ $? -ne 0 ]; then 
+		echo "##############ERROR in update"
+		exit 1;
+	fi	
 fi
 
 

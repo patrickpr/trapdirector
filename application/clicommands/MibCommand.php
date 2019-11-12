@@ -82,7 +82,7 @@ class MibCommand extends Command
                 fclose(STDERR);
                 try
                 {
-                    $trap->update_mib_database(false,$forceCheck);
+                    $trap->mibClass->update_mib_database(false,$forceCheck);
                 }
                 catch (Exception $e)
                 {
@@ -98,7 +98,7 @@ class MibCommand extends Command
 		{
 			echo "Update main mib database : \n";
 			echo "# (trap found) C (trap already processed) . (every 2 seconds) : \n";
-			$trap->update_mib_database(true,$forceCheck);
+			$trap->mibClass->update_mib_database(true,$forceCheck);
 			echo "Done\n";
 			
 		}
