@@ -50,10 +50,6 @@ class Trap
 	
 	// Mib update data
 	public $mibClass; //< Mib class
-	private $dbOidAll; //< All oid in database;   //DUP
-	private $dbOidIndex; //< Index of oid in dbOidAll      //DUP
-	private $objectsAll; //< output lines of snmptranslate list    //DUP
-	private $trapObjectsIndex; //< array of traps objects (as OID)  //DUP
 	
 	function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
 	{

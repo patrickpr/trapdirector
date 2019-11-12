@@ -21,6 +21,11 @@ class Mib
     private $objectsAll; //< output lines of snmptranslate list
     private $trapObjectsIndex; //< array of traps objects (as OID)
     
+    private $oidDesc=array(); //< $oid,$mib,$name,$type,$textConv,$dispHint,$syntax,$type_enum,$description=NULL
+    
+    // Timing vars for update
+    private $timing=array();
+    
     /**
      * Setup Mib Class
      * @param Logging $logClass : where to log
@@ -307,16 +312,11 @@ class Mib
     }
     
     /**
-     * Cache mib in database
-     * @param boolean $display_progress : Display progress on standard output
-     * @param boolean $check_change : Force check of trap params & objects
-     * @param boolean $onlyTraps : only cache traps and objects (true) or all (false)
-     * @param string $startOID : only cache under startOID (NOT IMPLEMENTED)
+     * Fills $this->objectsAll with all mibs from snmptranslate
+     * @return integer : number of elements 
      */
-    public function update_mib_database($display_progress=false,$check_change=false,$onlyTraps=true,$startOID='.1')
+    private function load_mibs_snmptranslate()
     {
-        // Timing
-        $timeTaken = microtime(true);
         $retVal=0;
         // Get all mib objects from all mibs
         $snmpCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -On -Tto 2>/dev/null';
@@ -327,7 +327,17 @@ class Mib
         {
             $this->logging->log('error executing snmptranslate',ERROR,'');
         }
-        
+        // Count elements to show progress
+        $numElements=count($this->objectsAll);
+        $this->logging->log('Total snmp objects returned by snmptranslate : '.$numElements,INFO );
+        return $numElements;
+    }
+
+    /**
+     * load all mib objects db in dbOidAll (raw) and index in dbOidIndex
+     */
+    private function load_mibs_from_db()
+    {
         // Get all mibs from databse to have a memory index
         
         $db_conn=$this->trapsDB->db_connect_trap();
@@ -345,10 +355,94 @@ class Mib
             $this->dbOidIndex[$val['oid']]['key']=$key;
             $this->dbOidIndex[$val['oid']]['id']=$val['id'];
         }
+    }
+
+    /**
+     * Reset all update timers & count to zero
+     */
+    private function reset_update_timers()
+    {
+        $this->timing['base_parse_time']=$this->timing['base_check_time']=0;
+        $this->timing['type0_check_time']=$this->timing['nottrap_time']=0;
+        $this->timing['update_time']=$this->timing['objects_time']=0;
+        $this->timing['base_parse_num']=$this->timing['base_check_num']=0;
+        $this->timing['type0_check_num']=$this->timing['nottrap_num']=0;
+        $this->timing['update_num']=$this->timing['objects_num']=0;
+        $this->timing['num_traps']=0;
+    }
+
+    private function detect_trap($curElement,$onlyTraps,&$name,&$type,&$oid)
+    {
+        // Get oid or pass if not found
+        if (!preg_match('/^\.[0-9\.]+$/',$this->objectsAll[$curElement]))
+        {
+            $this->timing['base_parse_time'] += microtime(true) - $this->timing['base_time'];
+            $this->timing['base_parse_num'] ++;
+            return true;
+        }
+        $oid=$this->objectsAll[$curElement];
         
-        // Count elements to show progress
-        $numElements=count($this->objectsAll);
-        $this->logging->log('Total snmp objects returned by snmptranslate : '.$numElements,INFO );
+        // get next line
+        $curElement++;
+        $match=$snmptrans=array();
+        if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
+            $this->objectsAll[$curElement],$match))
+        {
+            $this->timing['base_check_time'] += microtime(true) - $this->timing['base_time'];
+            $this->timing['base_check_num']++;
+            return true;
+        }
+        
+        $name=$match[1]; // Name
+        $type=$match[2]; // type (21=trap, 0: may be trap, else : not trap
+        
+        if ($type==0) // object type=0 : check if v1 trap
+        {
+            // Check if next is suboid -> in that case is cannot be a trap
+            if (preg_match("/^$oid/",$this->objectsAll[$curElement+1]))
+            {
+                $this->timing['type0_check_time'] += microtime(true) - $this->timing['base_time'];
+                $this->timing['type0_check_num']++;
+                return true;
+            }
+            unset($snmptrans);
+            $retVal=0;
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+                ' -Td '.$oid . ' | grep OBJECTS ',$snmptrans,$retVal);
+            if ($retVal!=0)
+            {
+                $this->timing['type0_check_time'] += microtime(true) - $this->timing['base_time'];
+                $this->timing['type0_check_num']++;
+                return true;
+            }
+            //echo "\n v1 trap found : $oid \n";
+            // Force as trap.
+            $type=21;
+        }
+        if ($onlyTraps===true && $type!=21) // if only traps and not a trap, continue
+        {
+            $this->timing['nottrap_time'] += microtime(true) - $this->timing['base_time'];
+            $this->timing['nottrap_num']++;
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Cache mib in database
+     * @param boolean $display_progress : Display progress on standard output
+     * @param boolean $check_change : Force check of trap params & objects
+     * @param boolean $onlyTraps : only cache traps and objects (true) or all (false)
+     * @param string $startOID : only cache under startOID (NOT IMPLEMENTED)
+     */
+    public function update_mib_database($display_progress=false,$check_change=false,$onlyTraps=true,$startOID='.1')
+    {
+        // Global Timing
+        $timeTaken = microtime(true);
+        
+        $numElements=$this->load_mibs_snmptranslate(); // Load objectsAll
+        
+        $this->load_mibs_from_db(); // Load from db dbOidAll & dbOidIndex
         
         $step=$basestep=$numElements/10; // output display of % done
         $num_step=0;
@@ -358,13 +452,11 @@ class Mib
         $this->trapObjectsIndex=array();
         
         // detailed timing (time_* vars)
-        $time_parse1=$time_check1=$time_check2=$time_check3=$time_update=$time_objects=0;
-        $time_parse1N=$time_check1N=$time_check2N=$time_check3N=$time_updateN=$time_objectsN=0;
-        $time_num_traps=0;
+        $this->reset_update_timers();
         
         for ($curElement=0;$curElement < $numElements;$curElement++)
         {
-            $time_1= microtime(true);
+            $this->timing['base_time']= microtime(true);
             if ((microtime(true)-$timeFiveSec) > 2 && $display_progress)
             { // echo a . every 2 sec
                 echo '.';
@@ -379,65 +471,20 @@ class Mib
                     echo "\n" . ($num_step*10). '% : ';
                 }
             }
-            // Get oid or pass if not found
-            if (!preg_match('/^\.[0-9\.]+$/',$this->objectsAll[$curElement]))
+            $name=$type=$oid='';
+            if ($this->detect_trap($curElement,$onlyTraps,$name,$type,$oid)===true)
             {
-                $time_parse1 += microtime(true) - $time_1;
-                $time_parse1N ++;
-                continue;
-            }
-            $oid=$this->objectsAll[$curElement];
-            
-            // get next line
-            $curElement++;
-            $match=$snmptrans=array();
-            if (!preg_match('/ +([^\(]+)\(.+\) type=([0-9]+)( tc=([0-9]+))?( hint=(.+))?/',
-                $this->objectsAll[$curElement],$match))
-            {
-                $time_check1 += microtime(true) - $time_1;
-                $time_check1N++;
                 continue;
             }
             
-            $name=$match[1]; // Name
-            $type=$match[2]; // type (21=trap, 0: may be trap, else : not trap
+            $this->timing['num_traps']++;
             
-            if ($type==0) // object type=0 : check if v1 trap
-            {
-                // Check if next is suboid -> in that case is cannot be a trap
-                if (preg_match("/^$oid/",$this->objectsAll[$curElement+1]))
-                {
-                    $time_check2 += microtime(true) - $time_1;
-                    $time_check2N++;
-                    continue;
-                }
-                unset($snmptrans);
-                exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                    ' -Td '.$oid . ' | grep OBJECTS ',$snmptrans,$retVal);
-                if ($retVal!=0)
-                {
-                    $time_check2 += microtime(true) - $time_1;
-                    $time_check2N++;
-                    continue;
-                }
-                //echo "\n v1 trap found : $oid \n";
-                // Force as trap.
-                $type=21;
-            }
-            if ($onlyTraps===true && $type!=21) // if only traps and not a trap, continue
-            {
-                $time_check3 += microtime(true) - $time_1;
-                $time_check3N++;
-                continue;
-            }
-            
-            $time_num_traps++;
-            
-            $this->logging->log('Found trap : '.$match[1] . ' / OID : '.$oid,INFO );
+            $this->logging->log('Found trap : '.$name . ' / OID : '.$oid,INFO );
             if ($display_progress) echo '#'; // echo a # when trap found
             
             // get trap objects & source MIB
-            unset($snmptrans);
+            $retVal=0;
+            $match=$snmptrans=array();
             exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
                 ' -Td '.$oid,$snmptrans,$retVal);
             if ($retVal!=0)
@@ -469,11 +516,14 @@ class Mib
                 
             }
             $update=$this->update_oid($oid,$trapMib,$name,$type,NULL,NULL,NULL,NULL,$trapDesc);
-            $time_update += microtime(true) - $time_1; $time_1= microtime(true);
+            $this->timing['update_time'] += microtime(true) - $this->timing['base_time'];
+            $this->timing['update_num']++;
+            
+            $this->timing['base_time']= microtime(true); // Reset to check object time
             
             if (($update==0) && ($check_change===false))
             { // Trapd didn't change & force check disabled
-                $time_objects += microtime(true) - $time_1;
+                $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
                 if ($display_progress) echo "C";
                 continue;
             }
@@ -489,7 +539,7 @@ class Mib
             if ($synt == null)
             {
                 //echo "No objects for $trapOID\n";
-                $time_objects += microtime(true) - $time_1;
+                $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
                 continue;
             }
             //echo "$synt \n";
@@ -502,17 +552,17 @@ class Mib
             
             $this->trap_objects($oid, $trapMib, $trapObjects, false);
             
-            $time_objects += microtime(true) - $time_1;
-            $time_objectsN++;
+            $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
+            $this->timing['objects_num']++;
         }
         
         if ($display_progress)
         {
-            echo "\nNumber of processed traps : $time_num_traps \n";
-            echo "\nParsing : " . number_format($time_parse1+$time_check1,1) ." sec / " . ($time_parse1N+ $time_check1N)  . " occurences\n";
-            echo "Detecting traps : " . number_format($time_check2+$time_check3,1) . " sec / " . ($time_check2N+$time_check3N) ." occurences\n";
-            echo "Trap processing ($time_updateN): ".number_format($time_update,1)." sec , ";
-            echo "Objects processing ($time_objectsN) : ".number_format($time_objects,1)." sec \n";
+            echo "\nNumber of processed traps :  ". $this->timing['num_traps'] ."\n";
+            echo "\nParsing : " . number_format($this->timing['base_parse_time']+$this->timing['base_check_time'],1) ." sec / " . ($this->timing['base_parse_num']+ $this->timing['base_check_num'])  . " occurences\n";
+            echo "Detecting traps : " . number_format($this->timing['type0_check_time']+$this->timing['nottrap_time'],1) . " sec / " . ($this->timing['type0_check_num']+$this->timing['nottrap_num']) ." occurences\n";
+            echo "Trap processing (".$this->timing['update_num']."): ".number_format($this->timing['update_time'],1)." sec , ";
+            echo "Objects processing (".$this->timing['objects_num'].") : ".number_format($this->timing['objects_time'],1)." sec \n";
         }
         
         // Timing ends
