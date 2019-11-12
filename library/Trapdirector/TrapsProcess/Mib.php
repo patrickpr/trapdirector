@@ -22,7 +22,7 @@ class Mib
     private $trapObjectsIndex; //< array of traps objects (as OID)
     
     private $oidDesc=array(); //< $oid,$mib,$name,$type,$textConv,$dispHint,$syntax,$type_enum,$description=NULL
-    
+
     // Timing vars for update
     private $timing=array();
     
@@ -43,36 +43,25 @@ class Mib
     
     /**
      * Update or add an OID to database uses $this->dbOidIndex for mem cache
-     * @param string $oid
-     * @param string $mib
-     * @param string $name
-     * @param string $type
-     * @param string $textConv
-     * @param string $dispHint
-     * @param string $syntax
-     * @param string $type_enum
-     * @param string $description
+     * and $this->oidDesc doe data
      * @return number : 0=unchanged, 1 = changed, 2=created
      */
-    public function update_oid($oid,$mib,$name,$type,$textConv,$dispHint,$syntax,$type_enum,$description=NULL)
+    public function update_oid()
     {
         $db_conn=$this->trapsDB->db_connect_trap();
-        $description=$db_conn->quote($description);
-        if (isset($this->dbOidIndex[$oid]))
+        $this->oidDesc['description']=$db_conn->quote($this->oidDesc['description']);
+        if (isset($this->dbOidIndex[$this->oidDesc['oid']]))
         {
-            if ($this->dbOidIndex[$oid]['key'] == -1)
+            if ($this->dbOidIndex[$this->oidDesc['oid']]['key'] == -1)
             { // newly created.
                 return 0;
             }
-            if ( $name != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['name'] ||
-                $mib != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['mib'] ||
-                $type != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['type'] //||
-                //$textConv != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['textual_convention'] //||
-                //$dispHint != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['display_hint'] ||
-                //$syntax != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['syntax'] ||
-                //$type_enum != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['type_enum'] ||
-                //$description != $this->dbOidAll[$this->dbOidIndex[$oid]['key']]['description']
-                )
+            $oidIndex=$this->dbOidIndex[$this->oidDesc['oid']]['key']; // Get index in dbOidAll
+            $dbOid=$this->dbOidAll[$oidIndex]; // Get array of element
+            if ( $this->oidDesc['name'] != $dbOid['name'] ||
+                $this->oidDesc['mib'] != $dbOid['mib'] ||
+                $this->oidDesc['type'] !=$dbOid['type']
+               )
             { // Do update
                 $sql='UPDATE '.$this->trapsDB->dbPrefix.'mib_cache SET '.
                     'name = :name , type = :type , mib = :mib , textual_convention = :tc , display_hint = :display_hint'.
@@ -81,26 +70,26 @@ class Mib
                 $sqlQuery=$db_conn->prepare($sql);
                 
                 $sqlParam=array(
-                    ':name' => $name,
-                    ':type' => $type,
-                    ':mib' => $mib,
-                    ':tc' =>  ($textConv==null)?'null':$textConv ,
-                    ':display_hint' => ($dispHint==null)?'null':$dispHint ,
-                    ':syntax' => ($syntax==null)?'null':$syntax,
-                    ':type_enum' => ($type_enum==null)?'null':$type_enum,
-                    ':description' => ($description==null)?'null':$description,
-                    ':id' => $this->dbOidAll[$this->dbOidIndex[$oid]['id']]
+                    ':name' => $this->oidDesc['name'],
+                    ':type' => $this->oidDesc['type'],
+                    ':mib' => $this->oidDesc['mib'],
+                    ':tc' =>  $this->oidDesc['textconv']??'null',
+                    ':display_hint' => $this->oidDesc['dispHint']??'null' ,
+                    ':syntax' => $this->oidDesc['syntax']==null??'null',
+                    ':type_enum' => $this->oidDesc['type_enum']??'null',
+                    ':description' => $this->oidDesc['description']??'null',
+                    ':id' => $this->dbOidAll[$this->dbOidIndex[$this->oidDesc['oid']]['id']]
                 );
                 
                 if ($sqlQuery->execute($sqlParam) === false) {
                     $this->logging->log('Error in query : ' . $sql,ERROR,'');
                 }
-                $this->logging->log('Trap updated : '.$name . ' / OID : '.$oid,DEBUG );
+                $this->logging->log('Trap updated : '.$this->oidDesc['name'] . ' / OID : '.$this->oidDesc['oid'],DEBUG );
                 return 1;
             }
             else
             {
-                $this->logging->log('Trap unchanged : '.$name . ' / OID : '.$oid,DEBUG );
+                $this->logging->log('Trap unchanged : '.$this->oidDesc['name'] . ' / OID : '.$this->oidDesc['oid'],DEBUG );
                 return 0;
             }
         }
@@ -119,15 +108,15 @@ class Mib
         $sqlQuery=$db_conn->prepare($sql);
         
         $sqlParam=array(
-            ':oid' => $oid,
-            ':name' => $name,
-            ':type' => $type,
-            ':mib' => $mib,
-            ':tc' =>  ($textConv==null)?'null':$textConv ,
-            ':display_hint' => ($dispHint==null)?'null':$dispHint ,
-            ':syntax' => ($syntax==null)?'null':$syntax,
-            ':type_enum' => ($type_enum==null)?'null':$type_enum,
-            ':description' => ($description==null)?'null':$description
+            ':oid' => $this->oidDesc['oid'],
+            ':name' => $this->oidDesc['name'],
+            ':type' => $this->oidDesc['type'],
+            ':mib' => $this->oidDesc['mib'],
+            ':tc' =>  ($this->oidDesc['textconv']==null)?'null':$this->oidDesc['textconv'] ,
+            ':display_hint' => ($this->oidDesc['dispHint']==null)?'null':$this->oidDesc['dispHint'] ,
+            ':syntax' => ($this->oidDesc['syntax']==null)?'null':$this->oidDesc['syntax'],
+            ':type_enum' => ($this->oidDesc['type_enum']==null)?'null':$this->oidDesc['type_enum'],
+            ':description' => ($this->oidDesc['description']==null)?'null':$this->oidDesc['description']
         );
         
         if ($sqlQuery->execute($sqlParam) === false) {
@@ -144,7 +133,7 @@ class Mib
                 if (! isset($inserted_id_ret['id'])) {
                     $this->logging->log('Error getting id - pgsql - empty.',1,'');
                 }
-                $this->dbOidIndex[$oid]['id']=$inserted_id_ret['id'];
+                $this->dbOidIndex[$this->oidDesc['oid']]['id']=$inserted_id_ret['id'];
                 break;
             case 'mysql':
                 // Get last id to insert oid/values in secondary table
@@ -155,14 +144,14 @@ class Mib
                 
                 $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
                 if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
-                $this->dbOidIndex[$oid]['id']=$inserted_id;
+                $this->dbOidIndex[$this->oidDesc['oid']]['id']=$inserted_id;
                 break;
             default:
                 $this->logging->log('Error SQL type Unknown : '.$this->trapsDB->trapDBType,1,'');
         }
         
         // Set as newly created.
-        $this->dbOidIndex[$oid]['key']=-1;
+        $this->dbOidIndex[$this->oidDesc['oid']]['key']=-1;
         return 2;
     }
     
@@ -200,12 +189,16 @@ class Mib
         {
             $match=$snmptrans=array();
             $retVal=0;
-            $objOid=$objTc=$objDispHint=$objSyntax=$objDesc=$objEnum=NULL;
-            $tmpdesc='';$indesc=false;
             
-            $objMib=$trapmib;
+            $this->reset_oidDesc();
+            
+            
+            $tmpdesc=''; // For multiline description
+            $indesc=false; // true if currently inside multiline description
+            
+            $this->oidDesc['mib']=$trapmib;
             exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                ' -On -Td '.$objMib.'::'.$object . ' 2>/dev/null',$snmptrans,$retVal);
+                ' -On -Td '.$this->oidDesc['mib'].'::'.$object . ' 2>/dev/null',$snmptrans,$retVal);
             if ($retVal!=0)
             {
                 // Maybe not trap mib, search with IR
@@ -216,13 +209,13 @@ class Mib
                     $this->logging->log('Error finding trap object : '.$trapmib.'::'.$object,2,'');
                     continue;
                 }
-                $objMib=$match[1];
+                $this->oidDesc['mib']=$match[1];
                 
                 // Do the snmptranslate again.
                 exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                    ' -On -Td '.$objMib.'::'.$object,$snmptrans,$retVal);
+                    ' -On -Td '.$this->oidDesc['mib'].'::'.$object,$snmptrans,$retVal);
                 if ($retVal!=0) {
-                    $this->logging->log('Error finding trap object : '.$objMib.'::'.$object,2,'');
+                    $this->logging->log('Error finding trap object : '.$this->oidDesc['mib'].'::'.$object,2,'');
                 }
                 
             }
@@ -233,7 +226,7 @@ class Mib
                     $line=preg_replace('/[\t ]+/',' ',$line);
                     if (preg_match('/(.*)"$/', $line,$match))
                     {
-                        $objDesc = $tmpdesc . $match[1];
+                        $this->oidDesc['description'] = $tmpdesc . $match[1];
                         $indesc=false;
                     }
                     $tmpdesc.=$line;
@@ -241,28 +234,28 @@ class Mib
                 }
                 if (preg_match('/^\.[0-9\.]+$/', $line))
                 {
-                    $objOid=$line;
+                    $this->oidDesc['oid']=$line;
                     continue;
                 }
                 if (preg_match('/^[\t ]+SYNTAX[\t ]+([^{]*) \{(.*)\}/',$line,$match))
                 {
-                    $objSyntax=$match[1];
-                    $objEnum=$match[2];
+                    $this->oidDesc['syntax']=$match[1];
+                    $this->oidDesc['type_enum']=$match[2];
                     continue;
                 }
                 if (preg_match('/^[\t ]+SYNTAX[\t ]+(.*)/',$line,$match))
                 {
-                    $objSyntax=$match[1];
+                    $this->oidDesc['syntax']=$match[1];
                     continue;
                 }
                 if (preg_match('/^[\t ]+DISPLAY-HINT[\t ]+"(.*)"/',$line,$match))
                 {
-                    $objDispHint=$match[1];
+                    $this->oidDesc['dispHint']=$match[1];
                     continue;
                 }
                 if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)"/',$line,$match))
                 {
-                    $objDesc=$match[1];
+                    $this->oidDesc['description']=$match[1];
                     continue;
                 }
                 if (preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$line,$match))
@@ -273,18 +266,19 @@ class Mib
                 }
                 if (preg_match('/^[\t ]+-- TEXTUAL CONVENTION[\t ]+(.*)/',$line,$match))
                 {
-                    $objTc=$match[1];
+                    $this->oidDesc['textconv']=$match[1];
                     continue;
                 }
             }
-            $this->logging->log("Adding trap $object : $objOid / $objSyntax / $objEnum / $objDispHint / $objTc",DEBUG );
-            //echo "$object : $objOid / $objSyntax / $objEnum / $objDispHint / $objTc / $objDesc\n";
+            $this->oidDesc['name'] = $object;
+            $this->logging->log("Adding object ".$this->oidDesc['name']." : ".$this->oidDesc['oid']." / ".$this->oidDesc['syntax']." / ".$this->oidDesc['type_enum']." / ".$this->oidDesc['dispHint']." / ".$this->oidDesc['textconv'],DEBUG );
+            //echo "$this->oidDesc['name'] : $this->oidDesc['oid'] / $this->oidDesc['syntax'] / $this->oidDesc['type_enum'] / $this->oidDesc['dispHint'] / $this->oidDesc['textconv'] / $this->oidDesc['description']\n";
             // Update
-            $this->update_oid($objOid, $objMib, $object, '3', $objTc, $objDispHint, $objSyntax, $objEnum,$objDesc);
+            $this->update_oid();
             
-            if (isset($dbObjects[$this->dbOidIndex[$objOid]['id']]))
+            if (isset($dbObjects[$this->dbOidIndex[$this->oidDesc['oid']]['id']]))
             {   // if link exists, continue
-                $dbObjects[$this->dbOidIndex[$objOid]['id']]=2;
+                $dbObjects[$this->dbOidIndex[$this->oidDesc['oid']]['id']]=2;
                 continue;
             }
             if ($check_existing === true)
@@ -297,11 +291,11 @@ class Mib
             $sqlQuery=$db_conn->prepare($sql);
             $sqlParam=array(
                 ':trap_id' => $trapId,
-                ':object_id' => $this->dbOidIndex[$objOid]['id'],
+                ':object_id' => $this->dbOidIndex[$this->oidDesc['oid']]['id'],
             );
             
             if ($sqlQuery->execute($sqlParam) === false) {
-                $this->logging->log('Error adding trap object : ' . $sql . ' / ' . $trapId . '/'. $this->dbOidIndex[$objOid]['id'] ,1,'');
+                $this->logging->log('Error adding trap object : ' . $sql . ' / ' . $trapId . '/'. $this->dbOidIndex[$this->oidDesc['oid']]['id'] ,1,'');
             }
         }
         if ($check_existing === true)
@@ -309,6 +303,19 @@ class Mib
             // TODO : remove link trap - objects that wasn't marked.
         }
         
+    }
+
+    private function reset_oidDesc()
+    {
+        $this->oidDesc['oid']=null;
+        $this->oidDesc['name']=null;
+        $this->oidDesc['type']=null;
+        $this->oidDesc['mib']=null;
+        $this->oidDesc['textconv']=null;
+        $this->oidDesc['dispHint'] =null;
+        $this->oidDesc['syntax']=null;
+        $this->oidDesc['type_enum']=null;
+        $this->oidDesc['description']=null;
     }
     
     /**
@@ -362,16 +369,22 @@ class Mib
      */
     private function reset_update_timers()
     {
-        $this->timing['base_parse_time']=$this->timing['base_check_time']=0;
-        $this->timing['type0_check_time']=$this->timing['nottrap_time']=0;
-        $this->timing['update_time']=$this->timing['objects_time']=0;
-        $this->timing['base_parse_num']=$this->timing['base_check_num']=0;
-        $this->timing['type0_check_num']=$this->timing['nottrap_num']=0;
-        $this->timing['update_num']=$this->timing['objects_num']=0;
+        $this->timing['base_parse_time']=0;
+        $this->timing['base_check_time']=0;
+        $this->timing['type0_check_time']=0;
+        $this->timing['nottrap_time']=0;
+        $this->timing['update_time']=0;
+        $this->timing['objects_time']=0;
+        $this->timing['base_parse_num']=0;
+        $this->timing['base_check_num']=0;
+        $this->timing['type0_check_num']=0;
+        $this->timing['nottrap_num']=0;
+        $this->timing['update_num']=0;
+        $this->timing['objects_num']=0;
         $this->timing['num_traps']=0;
     }
 
-    private function detect_trap($curElement,$onlyTraps,&$name,&$type,&$oid)
+    private function detect_trap($curElement,$onlyTraps)
     {
         // Get oid or pass if not found
         if (!preg_match('/^\.[0-9\.]+$/',$this->objectsAll[$curElement]))
@@ -380,7 +393,7 @@ class Mib
             $this->timing['base_parse_num'] ++;
             return true;
         }
-        $oid=$this->objectsAll[$curElement];
+        $this->oidDesc['oid']=$this->objectsAll[$curElement];
         
         // get next line
         $curElement++;
@@ -393,13 +406,13 @@ class Mib
             return true;
         }
         
-        $name=$match[1]; // Name
-        $type=$match[2]; // type (21=trap, 0: may be trap, else : not trap
+        $this->oidDesc['name']=$match[1]; // Name
+        $this->oidDesc['type']=$match[2]; // type (21=trap, 0: may be trap, else : not trap
         
-        if ($type==0) // object type=0 : check if v1 trap
+        if ($this->oidDesc['type']==0) // object type=0 : check if v1 trap
         {
             // Check if next is suboid -> in that case is cannot be a trap
-            if (preg_match("/^$oid/",$this->objectsAll[$curElement+1]))
+            if (preg_match("/^".$this->oidDesc['oid']."/",$this->objectsAll[$curElement+1]))
             {
                 $this->timing['type0_check_time'] += microtime(true) - $this->timing['base_time'];
                 $this->timing['type0_check_num']++;
@@ -408,18 +421,18 @@ class Mib
             unset($snmptrans);
             $retVal=0;
             exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                ' -Td '.$oid . ' | grep OBJECTS ',$snmptrans,$retVal);
+                ' -Td '.$this->oidDesc['oid'] . ' | grep OBJECTS ',$snmptrans,$retVal);
             if ($retVal!=0)
             {
                 $this->timing['type0_check_time'] += microtime(true) - $this->timing['base_time'];
                 $this->timing['type0_check_num']++;
                 return true;
             }
-            //echo "\n v1 trap found : $oid \n";
+            //echo "\n v1 trap found : $this->oidDesc['oid'] \n";
             // Force as trap.
-            $type=21;
+            $this->oidDesc['type']=21;
         }
-        if ($onlyTraps===true && $type!=21) // if only traps and not a trap, continue
+        if ($onlyTraps===true && $this->oidDesc['type']!=21) // if only traps and not a trap, continue
         {
             $this->timing['nottrap_time'] += microtime(true) - $this->timing['base_time'];
             $this->timing['nottrap_num']++;
@@ -457,48 +470,50 @@ class Mib
         for ($curElement=0;$curElement < $numElements;$curElement++)
         {
             $this->timing['base_time']= microtime(true);
-            if ((microtime(true)-$timeFiveSec) > 2 && $display_progress)
-            { // echo a . every 2 sec
-                echo '.';
-                $timeFiveSec = microtime(true);
-            }
-            if ($curElement>$step)
-            { // display progress
-                $num_step++;
-                $step+=$basestep;
-                if ($display_progress)
-                {
+            if ($display_progress)
+            {
+                if ((microtime(true)-$timeFiveSec) > 2)
+                { // echo a . every 2 sec
+                    echo '.';
+                    $timeFiveSec = microtime(true);
+                }
+                if ($curElement>$step)
+                { // display progress
+                    $num_step++;
+                    $step+=$basestep;   
                     echo "\n" . ($num_step*10). '% : ';
                 }
             }
-            $name=$type=$oid='';
-            if ($this->detect_trap($curElement,$onlyTraps,$name,$type,$oid)===true)
+            
+            $this->reset_oidDesc();
+            if ($this->detect_trap($curElement,$onlyTraps)===true)
             {
                 continue;
             }
             
             $this->timing['num_traps']++;
             
-            $this->logging->log('Found trap : '.$name . ' / OID : '.$oid,INFO );
+            $this->logging->log('Found trap : '.$this->oidDesc['name'] . ' / OID : '.$this->oidDesc['oid'],INFO );
             if ($display_progress) echo '#'; // echo a # when trap found
             
+            //################################
             // get trap objects & source MIB
             $retVal=0;
             $match=$snmptrans=array();
             exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
-                ' -Td '.$oid,$snmptrans,$retVal);
+                ' -Td '.$this->oidDesc['oid'],$snmptrans,$retVal);
             if ($retVal!=0)
             {
-                $this->logging->log('error executing snmptranslate',ERROR,'');
+                $this->logging->log('error executing snmptranslate',ERROR);
             }
             
             if (!preg_match('/^(.*)::/',$snmptrans[0],$match))
             {
-                $this->logging->log('Error getting mib from trap '.$oid.' : ' . $snmptrans[0],1,'');
+                $this->logging->log('Error getting mib from trap '.$this->oidDesc['oid'].' : ' . $snmptrans[0],ERROR);
             }
-            $trapMib=$match[1];
+            $this->oidDesc['mib']=$match[1];
             
-            $numLine=1;$trapDesc='';
+            $numLine=1;
             while (isset($snmptrans[$numLine]) && !preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$snmptrans[$numLine],$match)) $numLine++;
             if (isset($snmptrans[$numLine]))
             {
@@ -506,16 +521,18 @@ class Mib
                 
                 while (isset($snmptrans[$numLine]) && !preg_match('/"/',$snmptrans[$numLine]))
                 {
-                    $trapDesc.=preg_replace('/[\t ]+/',' ',$snmptrans[$numLine]);
+                    $this->oidDesc['description'].=preg_replace('/[\t ]+/',' ',$snmptrans[$numLine]);
                     $numLine++;
                 }
                 if (isset($snmptrans[$numLine])) {
-                    $trapDesc.=preg_replace('/".*/','',$snmptrans[$numLine]);
-                    $trapDesc=preg_replace('/[\t ]+/',' ',$trapDesc);
+                    $this->oidDesc['description'].=preg_replace('/".*/','',$snmptrans[$numLine]);
+                    $this->oidDesc['description']=preg_replace('/[\t ]+/',' ',$this->oidDesc['description']);
                 }
                 
             }
-            $update=$this->update_oid($oid,$trapMib,$name,$type,NULL,NULL,NULL,NULL,$trapDesc);
+            
+            $update=$this->update_oid(); // Do update of trap.
+            
             $this->timing['update_time'] += microtime(true) - $this->timing['base_time'];
             $this->timing['update_num']++;
             
@@ -550,7 +567,7 @@ class Mib
                 $synt=preg_replace('/'.$match[0].'/','',$synt);
             }
             
-            $this->trap_objects($oid, $trapMib, $trapObjects, false);
+            $this->trap_objects($this->oidDesc['oid'], $this->oidDesc['mib'], $trapObjects, false);
             
             $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
             $this->timing['objects_num']++;
@@ -563,15 +580,10 @@ class Mib
             echo "Detecting traps : " . number_format($this->timing['type0_check_time']+$this->timing['nottrap_time'],1) . " sec / " . ($this->timing['type0_check_num']+$this->timing['nottrap_num']) ." occurences\n";
             echo "Trap processing (".$this->timing['update_num']."): ".number_format($this->timing['update_time'],1)." sec , ";
             echo "Objects processing (".$this->timing['objects_num'].") : ".number_format($this->timing['objects_time'],1)." sec \n";
-        }
-        
-        // Timing ends
-        $timeTaken=microtime(true) - $timeTaken;
-        if ($display_progress)
-        {
+            
+            $timeTaken=microtime(true) - $timeTaken;
             echo "Global time : ".round($timeTaken)." seconds\n";
         }
-        
     }
     
     
