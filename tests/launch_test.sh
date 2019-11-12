@@ -224,7 +224,7 @@ if [ "$DB" = mysql ]; then
 elif [ "$DB" = pgsql ]; then
 
 	# Test Database for upgrades
-	"${MODULE_HOME}/bin/installer.sh" -c database  -b pgsql -t travistestupdate:127.0.0.1:5432:postgres: -u travistestuser -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
+	"${MODULE_HOME}/bin/installer.sh" -c database  -b pgsql -t travistestupdate:127.0.0.1:5432:postgres: -u travistestuser2 -s travistestpass -w "${MODULE_HOME}/vendor/icinga_etc"
 
 	echo "##############Creation"
 	"$PHP_BIN"  "${MODULE_HOME}/tests/db_test.php" -d "${MODULE_HOME}/vendor/icinga_etc" -v $OLD_VER -b pgsql -c create -a "${MODULE_HOME}"
