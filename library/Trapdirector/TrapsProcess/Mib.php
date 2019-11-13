@@ -116,11 +116,11 @@ class Mib
             ':name' => $this->oidDesc['name'],
             ':type' => $this->oidDesc['type'],
             ':mib' => $this->oidDesc['mib'],
-            ':tc' =>  ($this->oidDesc['textconv']==null)?'null':$this->oidDesc['textconv'] ,
-            ':display_hint' => ($this->oidDesc['dispHint']==null)?'null':$this->oidDesc['dispHint'] ,
-            ':syntax' => ($this->oidDesc['syntax']==null)?'null':$this->oidDesc['syntax'],
-            ':type_enum' => ($this->oidDesc['type_enum']==null)?'null':$this->oidDesc['type_enum'],
-            ':description' => ($this->oidDesc['description']==null)?'null':$this->oidDesc['description']
+            ':tc' =>  $this->oidDesc['textconv']??'null',
+            ':display_hint' => $this->oidDesc['dispHint']??'null',
+            ':syntax' => $this->oidDesc['syntax']??'null',
+            ':type_enum' => $this->oidDesc['type_enum']??'null',
+            ':description' => $this->oidDesc['description']??'null'
         );
         
         if ($sqlQuery->execute($sqlParam) === false) {
@@ -135,7 +135,8 @@ class Mib
                     $this->logging->log('Error getting id - pgsql - ',1,'');
                 }
                 if (! isset($inserted_id_ret['id'])) {
-                    $this->logging->log('Error getting id - pgsql - empty.',1,'');
+                    $this->logging->log('Error getting id - pgsql - empty.',ERROR);
+                    return 0;
                 }
                 $this->dbOidIndex[$this->oidDesc['oid']]['id']=$inserted_id_ret['id'];
                 break;
@@ -143,7 +144,8 @@ class Mib
                 // Get last id to insert oid/values in secondary table
                 $sql='SELECT LAST_INSERT_ID();';
                 if (($ret_code=$db_conn->query($sql)) === false) {
-                    $this->logging->log('Erreur getting id - mysql - ',1,'');
+                    $this->logging->log('Erreur getting id - mysql - ',ERROR);
+                    return 0;
                 }
                 
                 $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
@@ -151,7 +153,8 @@ class Mib
                 $this->dbOidIndex[$this->oidDesc['oid']]['id']=$inserted_id;
                 break;
             default:
-                $this->logging->log('Error SQL type Unknown : '.$this->trapsDB->trapDBType,1,'');
+                $this->logging->log('Error SQL type Unknown : '.$this->trapsDB->trapDBType,ERROR);
+                return 0;
         }
         
         // Set as newly created.
