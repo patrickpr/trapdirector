@@ -14,7 +14,7 @@ class Mib
     protected $trapsDB; //< Database class
     
     public $snmptranslate;
-    public $snmptranslate_dirs;
+    public $snmptranslateDirs;
     
     private $dbOidAll; //< All oid in database;
     private $dbOidIndex; //< Index of oid in dbOidAll
@@ -36,7 +36,7 @@ class Mib
         $this->logging=$logClass;
         $this->trapsDB=$dbClass;
         $this->snmptranslate=$snmptrans;
-        $this->snmptranslate_dirs=$snmptransdir;
+        $this->snmptranslateDirs=$snmptransdir;
 
     }
     
@@ -190,12 +190,12 @@ class Mib
         $match=$snmptrans=array();
         $retVal=0;
         $this->oidDesc['mib']=$trapmib;
-        exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+        exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
             ' -On -Td '.$this->oidDesc['mib'].'::'.$object . ' 2>/dev/null',$snmptrans,$retVal);
         if ($retVal!=0)
         {
             // Maybe not trap mib, search with IR
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
                 ' -IR '.$object . ' 2>/dev/null',$snmptrans,$retVal);
             if ($retVal != 0 || !preg_match('/(.*)::(.*)/',$snmptrans[0],$match))
             { // Not found -> continue with warning
@@ -205,7 +205,7 @@ class Mib
             $this->oidDesc['mib']=$match[1];
             
             // Do the snmptranslate again.
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
                 ' -On -Td '.$this->oidDesc['mib'].'::'.$object,$snmptrans,$retVal);
             if ($retVal!=0) {
                 $this->logging->log('Error finding trap object : '.$this->oidDesc['mib'].'::'.$object,2,'');
@@ -363,7 +363,7 @@ class Mib
     {
         $retVal=0;
         // Get all mib objects from all mibs
-        $snmpCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.' -On -Tto 2>/dev/null';
+        $snmpCommand=$this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.' -On -Tto 2>/dev/null';
         $this->logging->log('Getting all traps : '.$snmpCommand,DEBUG );
         unset($this->objectsAll);
         exec($snmpCommand,$this->objectsAll,$retVal);
@@ -463,7 +463,7 @@ class Mib
             }
             unset($snmptrans);
             $retVal=0;
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
                 ' -Td '.$this->oidDesc['oid'] . ' | grep OBJECTS ',$snmptrans,$retVal);
             if ($retVal!=0)
             {
@@ -543,7 +543,7 @@ class Mib
             // get trap objects & source MIB
             $retVal=0;
             $match=$snmptrans=array();
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslate_dirs.
+            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
                 ' -Td '.$this->oidDesc['oid'],$snmptrans,$retVal);
             if ($retVal!=0)
             {
