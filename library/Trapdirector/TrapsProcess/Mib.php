@@ -483,6 +483,44 @@ class Mib
         }
         return false;
     }
+   
+    
+    private function get_trap_mib_description()
+    {
+        $retVal=0;
+        $match=$snmptrans=array();
+        exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
+            ' -Td '.$this->oidDesc['oid'],$snmptrans,$retVal);
+        if ($retVal!=0)
+        {
+            $this->logging->log('error executing snmptranslate',ERROR);
+        }
+        
+        if (!preg_match('/^(.*)::/',$snmptrans[0],$match))
+        {
+            $this->logging->log('Error getting mib from trap '.$this->oidDesc['oid'].' : ' . $snmptrans[0],ERROR);
+        }
+        $this->oidDesc['mib']=$match[1];
+        
+        $numLine=1;
+        while (isset($snmptrans[$numLine]) && !preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$snmptrans[$numLine],$match)) $numLine++;
+        if (isset($snmptrans[$numLine]))
+        {
+            $snmptrans[$numLine] = preg_replace('/^[\t ]+DESCRIPTION[\t ]+"/','',$snmptrans[$numLine]);
+            
+            while (isset($snmptrans[$numLine]) && !preg_match('/"/',$snmptrans[$numLine]))
+            {
+                $this->oidDesc['description'].=preg_replace('/[\t ]+/',' ',$snmptrans[$numLine]);
+                $numLine++;
+            }
+            if (isset($snmptrans[$numLine])) {
+                $this->oidDesc['description'].=preg_replace('/".*/','',$snmptrans[$numLine]);
+                $this->oidDesc['description']=preg_replace('/[\t ]+/',' ',$this->oidDesc['description']);
+            }
+            
+        }
+        return $snmptrans;
+    }
     
     /**
      * Cache mib in database
@@ -541,39 +579,10 @@ class Mib
             
             //################################
             // get trap objects & source MIB
-            $retVal=0;
-            $match=$snmptrans=array();
-            exec($this->snmptranslate . ' -m ALL -M +'.$this->snmptranslateDirs.
-                ' -Td '.$this->oidDesc['oid'],$snmptrans,$retVal);
-            if ($retVal!=0)
-            {
-                $this->logging->log('error executing snmptranslate',ERROR);
-            }
             
-            if (!preg_match('/^(.*)::/',$snmptrans[0],$match))
-            {
-                $this->logging->log('Error getting mib from trap '.$this->oidDesc['oid'].' : ' . $snmptrans[0],ERROR);
-            }
-            $this->oidDesc['mib']=$match[1];
-            
-            $numLine=1;
-            while (isset($snmptrans[$numLine]) && !preg_match('/^[\t ]+DESCRIPTION[\t ]+"(.*)/',$snmptrans[$numLine],$match)) $numLine++;
-            if (isset($snmptrans[$numLine]))
-            {
-                $snmptrans[$numLine] = preg_replace('/^[\t ]+DESCRIPTION[\t ]+"/','',$snmptrans[$numLine]);
-                
-                while (isset($snmptrans[$numLine]) && !preg_match('/"/',$snmptrans[$numLine]))
-                {
-                    $this->oidDesc['description'].=preg_replace('/[\t ]+/',' ',$snmptrans[$numLine]);
-                    $numLine++;
-                }
-                if (isset($snmptrans[$numLine])) {
-                    $this->oidDesc['description'].=preg_replace('/".*/','',$snmptrans[$numLine]);
-                    $this->oidDesc['description']=preg_replace('/[\t ]+/',' ',$this->oidDesc['description']);
-                }
-                
-            }
-            
+            $snmptrans=$this->get_trap_mib_description(); // get MIB & description
+
+            //################################
             $update=$this->update_oid(); // Do update of trap.
             
             $this->timing['update_time'] += microtime(true) - $this->timing['base_time'];
@@ -589,6 +598,7 @@ class Mib
             }
             
             $synt=null;
+            $match=array();
             foreach ($snmptrans as $line)
             {
                 if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
