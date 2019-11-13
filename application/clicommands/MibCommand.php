@@ -2,6 +2,8 @@
 
 namespace Icinga\Module\Trapdirector\Clicommands;
 
+
+
 use Icinga\Application\Icinga;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
 use Icinga\Cli\Command;
@@ -116,18 +118,22 @@ class MibCommand extends Command
 	*
 	*	USAGE 
 	*
-	*	icingli trapdirector mib purge --confirm yes
+	*	icingli trapdirector mib purge --confirm
 	*	
 	*	OPTIONS
 	*	
-	*	--confirm yes : needed to execute purge
+	*	--confirm : needed to execute purge
 	*/
 	public function purgeAction()
 	{
 		$db_prefix=$this->Config()->get('config', 'database_prefix');
-		echo "Not implemented";
-		// TODO : implement
-		return;
+		
+		if (!$this->params->has('confirm'))
+		{
+		    echo "This needs confirmation with '--confirm'\n";
+		    return;
+		}
+		
 		$Config = new TrapModuleConfig($db_prefix);
 		
 		try
@@ -137,13 +143,10 @@ class MibCommand extends Command
 			echo "DB name : $dbresource\n";
 			$db = IcingaDbConnection::fromResourceName($dbresource)->getConnection();
 			
-			$query = $db->select()->from($Config->getTrapTableName(),array('COUNT(*)'));			
-			echo "Number of traps : " . $db->fetchOne($query) ."\n";
-			$query = $db->select()->from($Config->getTrapDataTableName(),array('COUNT(*)'));			
-			echo "Number of trap objects : " . $db->fetchOne($query) ."\n";
-			$query = $db->select()->from($Config->getTrapRuleName(),array('COUNT(*)'));			
-			echo "Number of rules : " . $db->fetchOne($query) ."\n";		
-			
+			$query = $db->delete(
+			    $Config->getMIBCacheTableName(),
+			    'id>0');
+            echo 'Deleted '. $query . " traps and objects\n";
 		}
 		catch (Exception $e)
 		{

@@ -6,6 +6,7 @@ use Trapdirector\Logging;
 use Trapdirector\Database;
 use PDO;
 use Exception;
+use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
 
 class Mib
 {
@@ -484,7 +485,6 @@ class Mib
         return false;
     }
    
-    
     private function get_trap_mib_description()
     {
         $retVal=0;
@@ -520,6 +520,38 @@ class Mib
             
         }
         return $snmptrans;
+    }
+
+    /**
+     * Get trap objects
+     * @param string $snmptrans : output of snmptranslate for TrapModuleConfig
+     * @return array|null : array of objects or null if not found
+    **/
+    private function get_trap_objects($snmptrans)
+    {
+        $objectName=null;
+        $match=array();
+        foreach ($snmptrans as $line)
+        {
+            if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
+            {
+                $objectName=$match[1];
+            }
+        }
+        if ($objectName == null)
+        {
+            $this->logging->log('No objects for ' . $this->oidDesc['oid'],DEBUG);
+            $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
+            return null;
+        }
+        
+        $trapObjects=array();
+        while (preg_match('/ *([^ ,]+) *,* */',$objectName,$match))
+        {
+            array_push($trapObjects,$match[1]);
+            $objectName=preg_replace('/'.$match[0].'/','',$objectName);
+        }
+        return $trapObjects;
     }
     
     /**
@@ -576,13 +608,12 @@ class Mib
             
             $this->logging->log('Found trap : '.$this->oidDesc['name'] . ' / OID : '.$this->oidDesc['oid'],INFO );
             if ($display_progress) echo '#'; // echo a # when trap found
-            
-            //################################
+
             // get trap objects & source MIB
             
             $snmptrans=$this->get_trap_mib_description(); // get MIB & description
 
-            //################################
+
             $update=$this->update_oid(); // Do update of trap.
             
             $this->timing['update_time'] += microtime(true) - $this->timing['base_time'];
@@ -597,29 +628,12 @@ class Mib
                 continue;
             }
             
-            $synt=null;
-            $match=array();
-            foreach ($snmptrans as $line)
+            $trapObjects=$this->get_trap_objects($snmptrans); // Get trap objects from snmptranslate output            
+            if ($trapObjects == null)
             {
-                if (preg_match('/OBJECTS.*\{([^\}]+)\}/',$line,$match))
-                {
-                    $synt=$match[1];
-                }
-            }
-            if ($synt == null)
-            {
-                //echo "No objects for $trapOID\n";
-                $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
                 continue;
             }
-            //echo "$synt \n";
-            $trapObjects=array();
-            while (preg_match('/ *([^ ,]+) *,* */',$synt,$match))
-            {
-                array_push($trapObjects,$match[1]);
-                $synt=preg_replace('/'.$match[0].'/','',$synt);
-            }
-            
+           
             $this->trap_objects($this->oidDesc['oid'], $this->oidDesc['mib'], $trapObjects, false);
             
             $this->timing['objects_time'] += microtime(true) - $this->timing['base_time'];
