@@ -123,7 +123,7 @@ class MIBLoader
 	}
 
 	/** translate oid in MIB::Name 
-	*	@param string oid
+	*	@param string $oid
 	*	@return array|null :  return array with index (oid -> oid, mib -> mib name, name -> oid name, type -> oid type)
 	*/
 	public function translateOID($oid)
@@ -211,7 +211,7 @@ class MIBLoader
 		}
 		if ($type !== null)
 		{
-			$where=($where != null)?' AND ':'';
+			$where=($where !== null)?' AND ':'';
 			$where.="type='$type'";
 		}
 		if ($where !== null)
