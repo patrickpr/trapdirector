@@ -13,9 +13,6 @@ class Rule
     
     protected $logging; //< logging class
     
-    private $item; //< current index of rule
-    private $rule; //< The rule
-    
     /**
      * Setup Rule Class
      * @param Logging $logClass : where to log
@@ -94,6 +91,10 @@ class Rule
     
     protected function eval_getElement($rule,&$item)
     {
+        if ($item >= strlen($rule))
+        {
+            throw new Exception("Early end of string ".$rule ." at " .$item );
+        }
         while ($rule[$item]==' ') $item++;
         if (preg_match('/[0-9\.]/',$rule[$item]))
         { // number
@@ -153,6 +154,37 @@ class Rule
         }
     }
     
+    private function check_negate_first($rule,&$item)
+    {
+        if ( $rule[$item] == '!') // If '!' found, negate next expression.
+        {
+            $item++;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private function do_compare($val1,$val2,$comp,$negate)
+    {
+        switch ($comp){
+            case '<':	$retVal= ($val1 < $val2); break;
+            case '<=':	$retVal= ($val1 <= $val2); break;
+            case '>':	$retVal= ($val1 > $val2); break;
+            case '>=':	$retVal= ($val1 >= $val2); break;
+            case '=':	$retVal= ($val1 == $val2); break;
+            case '!=':	$retVal= ($val1 != $val2); break;
+            case '~':	$retVal= (preg_match('/'.preg_replace('/"/','',$val2).'/',$val1)); break;
+            case '|':	$retVal= ($val1 || $val2); break;
+            case '&':	$retVal= ($val1 && $val2); break;
+            default:  throw new Exception("Error in expression - unknown comp : ".$comp);
+        }
+        if ($negate === true) $retVal = ! $retVal; // Inverse result if negate before expression
+        
+        return $retVal;
+    }
     
     /** Evaluation : makes token and evaluate.
      *	Public function for expressions testing
@@ -165,15 +197,7 @@ class Rule
     public function evaluation($rule,&$item)
     {
         //echo "Evaluation of ".substr($rule,$item)."\n";
-        if ( $rule[$item] == '!') // If '!' found, negate next expression.
-        {
-            $negate=true;
-            $item++;
-        }
-        else
-        {
-            $negate=false;
-        }
+        $negate=$this->check_negate_first($rule, $item);
         // First element : number, string or ()
         list($type1,$val1) = $this->eval_getElement($rule,$item);
         //echo "Elmt1: ".$val1."/".$type1." : ".substr($rule,$item)."\n";
@@ -212,19 +236,7 @@ class Rule
             throw new Exception("Cannot use boolean operators with string & number : ".$rule);
         }
         
-        switch ($comp){
-            case '<':	$retVal= ($val1 < $val2); break;
-            case '<=':	$retVal= ($val1 <= $val2); break;
-            case '>':	$retVal= ($val1 > $val2); break;
-            case '>=':	$retVal= ($val1 >= $val2); break;
-            case '=':	$retVal= ($val1 == $val2); break;
-            case '!=':	$retVal= ($val1 != $val2); break;
-            case '~':	$retVal= (preg_match('/'.preg_replace('/"/','',$val2).'/',$val1)); break;
-            case '|':	$retVal= ($val1 || $val2); break;
-            case '&':	$retVal= ($val1 && $val2); break;
-            default:  throw new Exception("Error in expression - unknown comp : ".$comp);
-        }
-        if ($negate === true) $retVal = ! $retVal; // Inverse result if negate before expression
+        $retVal = $this->do_compare($val1, $val2, $comp, $negate);
         
         if ($item==strlen($rule)) return $retVal; // End of string : return evaluation
         // check for logical operator :
@@ -249,7 +261,7 @@ class Rule
             {
                 $rule2.=$rule[$item];
                 $item++;
-                while (($rule[$item]!='"') && ($item < strlen($rule)))
+                while (($item < strlen($rule)) && ($rule[$item]!='"') )
                 {
                     $rule2.=$rule[$item];
                     $item++;
