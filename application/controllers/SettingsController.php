@@ -18,7 +18,182 @@ use Trap;
 
 class SettingsController extends TrapsController
 {
-    
+  
+  /**
+   * get param dberror or idoerror
+   * set errorDetected
+   */
+  private function get_param()
+  {
+      $dberrorMsg=$this->params->get('dberror');
+      if ($dberrorMsg != '')
+      {
+          $this->view->errorDetected=$dberrorMsg;
+      }
+      $dberrorMsg=$this->params->get('idodberror');
+      if ($dberrorMsg != '')
+      {
+          $this->view->errorDetected=$dberrorMsg;
+      }
+  }
+  
+  /**
+   * Check empty configuration (and create one if needed)
+   * Setup : configErrorDetected
+   */
+  private function check_empty_config()
+  {
+      $this->view->configErrorDetected == NULL; // Displayed error on various conifugration errors.
+      if ($this->Config()->isEmpty() == true)
+      {
+          $this->Config()->setSection('config'); // Set base config section.
+          try
+          {
+              $this->Config()->saveIni();
+              $this->view->configErrorDetected='Configuration is empty : you can run install script with parameters (see Automatic installation below)';
+              //$emptyConfig=1;
+          }
+          catch (Exception $e)
+          {
+              $this->view->configErrorDetected=$e->getMessage();
+          }
+          
+      }
+  }
+  
+  /**
+   * Check database and IDO database
+   * Setup : 
+   * db_error : numerical error (trap db) 0=OK
+   * message : message (trap db)
+   * ido_db_error : numerical error 0=OK
+   * ido_message : message
+   */
+  private function check_db()
+  {
+      $db_message=array( // index => ( message OK, message NOK, optional link if NOK )
+          0	=>	array('Database configuration OK','',''),
+          1	=>	array('Database set in config.ini','No database in config.ini',''),
+          2	=>	array('Database exists in Icingaweb2 config','Database does not exist in Icingaweb2 : ',
+              Url::fromPath('config/resource')),
+          3	=>	array('Database credentials OK','Database does not exist/invalid credentials/no schema : ',
+              Url::fromPath('trapdirector/settings/createschema')),
+          4	=>	array('Schema is set','Schema is not set for ',
+              Url::fromPath('trapdirector/settings/createschema')),
+          5	=>	array('Schema is up to date','Schema is outdated :',
+              Url::fromPath('trapdirector/settings/updateschema')),
+      );
+      
+      $dberror=$this->getDb(true); // Get DB in test mode
+      
+      $this->view->db_error=$dberror[0];
+      switch ($dberror[0])
+      {
+          case 2:
+          case 4:
+              $db_message[$dberror[0]][1] .= $dberror[1];
+              break;
+          case 3:
+              $db_message[$dberror[0]][1] .= $dberror[1] . ', Message : ' . $dberror[2];
+              break;
+          case 5:
+              $db_message[$dberror[0]][1] .= ' version '. $dberror[1] . ', version needed : ' .$dberror[2];
+              break;
+          case 0:
+          case 1:
+              break;
+          default:
+              new ProgrammingError('Out of bond result from database test');
+      }
+      $this->view->message=$db_message;
+      
+      $dberror=$this->getIdoDb(true); // Get IDO DB in test mode
+      $this->view->ido_db_error=$dberror[0];
+      $this->view->ido_message='IDO Database : ' . $dberror[1];
+  }
+  
+  /**
+   * Check API parameters
+   * Setup : 
+   * apimessage
+   */
+  private function check_api()
+  {
+      if ($this->Config()->get('config', 'icingaAPI_host') != '')
+      {
+          $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
+          $apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
+          try {
+              list($this->view->apimessageError,$this->view->apimessage)=$apitest->test($this->getModuleConfig()::getapiUserPermissions());
+              //$this->view->apimessageError=false;
+          } catch (RuntimeException $e) {
+              $this->view->apimessage='API config : ' . $e->getMessage();
+              $this->view->apimessageError=true;
+          }
+      }
+      else
+      {
+          $this->view->apimessage='API parameters not configured';
+          $this->view->apimessageError=true;
+      }
+  }
+
+  /**
+   * Check icingaweb2 etc path
+   * Setup : 
+   * icingaEtcWarn : 0 if same than in trap_in.php, 1 if not
+   * icingaweb2_etc : path 
+   */
+  private function check_icingaweb_path()
+  {
+      $this->view->icingaEtcWarn=0;
+      $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+      if ($icingaweb2_etc != "/etc/icingaweb2/" && $icingaweb2_etc != '')
+      {
+          $output=array();
+          
+          exec('cat ' . $this->module->getBaseDir() .'/bin/trap_in.php | grep "\$icingaweb2_etc=" ',$output);
+          
+          if (! preg_match('#"'. $icingaweb2_etc .'"#',$output[0]))
+          {
+              $this->view->icingaEtcWarn=1;
+              $this->view->icingaweb2_etc=$icingaweb2_etc;
+          }
+      }
+      
+  }
+  
+  /**
+   * Get db list filtered by $allowed
+   * @param array $allowed : array of allowed database
+   * @return array : resource list
+   */
+  private function get_db_list($allowed)
+  {
+      $resources = array();
+      foreach (ResourceFactory::getResourceConfigs() as $name => $resource) 
+      {
+          if ($resource->get('type') === 'db' && in_array($resource->get('db'), $allowed)) 
+          {
+              $resources[$name] = $name;
+          }
+      }
+      return $resources;
+  }
+  
+  /**
+   * Index of configuration
+   * Params setup in $this->view :
+   * errorDetected : if db or ido was detected by another page
+   * configErrorDetected : error if empty configuration (or error wrting a new one).
+   * db_error : numerical error (trap db) 0=OK
+   * message : message (trap db)
+   * ido_db_error : numerical error 0=OK
+   * ido_message : message
+   * apimessage
+   * icingaEtcWarn : 0 if same than in trap_in.php, 1 if not
+   * icingaweb2_etc : path 
+   **/
   public function indexAction()
   {
       
@@ -26,123 +201,30 @@ class SettingsController extends TrapsController
 	$this->view->configPermission=$this->checkModuleConfigPermission(1);
 	// But check read permission
 	$this->checkReadPermission();
+	
+	$this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
+	
 	// Get message : sent on configuration problems detected by controllers
-	$dberrorMsg=$this->params->get('dberror');
-	if ($dberrorMsg != '')
-	    $this->view->errorDetected=$dberrorMsg;
-    $dberrorMsg=$this->params->get('idodberror');
-    if ($dberrorMsg != '')
-        $this->view->errorDetected=$dberrorMsg;
-    
-    $this->view->configErrorDetected == NULL; // Displayed error on various conifugration errors.
+    $this->get_param();
     
     // Test if configuration exists, if not create for installer script
-	//$emptyConfig=0;
-    if ($this->Config()->isEmpty() == true)
-    {
-        $this->Config()->setSection('config'); // Set base config section.
-        try 
-        { 
-            $this->Config()->saveIni();
-            $this->view->configErrorDetected='Configuration is empty : you can run install script with parameters (see Automatic installation below)';
-			//$emptyConfig=1;
-        }
-        catch (Exception $e)
-        {
-            $this->view->configErrorDetected=$e->getMessage();
-        }
-        
-    }
+	$this->check_empty_config();
+
 	// Test Database
-	$db_message=array( // index => ( message OK, message NOK, optional link if NOK ) 
-		0	=>	array('Database configuration OK','',''),
-		1	=>	array('Database set in config.ini','No database in config.ini',''),
-		2	=>	array('Database exists in Icingaweb2 config','Database does not exist in Icingaweb2 : ',
-					Url::fromPath('config/resource')),
-		3	=>	array('Database credentials OK','Database does not exist/invalid credentials/no schema : ',
-					Url::fromPath('trapdirector/settings/createschema')),
-		4	=>	array('Schema is set','Schema is not set for ',
-					Url::fromPath('trapdirector/settings/createschema')),					
-		5	=>	array('Schema is up to date','Schema is outdated :',
-					Url::fromPath('trapdirector/settings/updateschema')),
-	);
-		
-	$dberror=$this->getDb(true); // Get DB in test mode
-	
-	$this->view->db_error=$dberror[0];
-	switch ($dberror[0]) 
-	{
-		case 2:
-		case 4:
-			$db_message[$dberror[0]][1] .= $dberror[1];
-			break;
-		case 3:
-			$db_message[$dberror[0]][1] .= $dberror[1] . ', Message : ' . $dberror[2];
-			break;
-		case 5:
-			$db_message[$dberror[0]][1] .= ' version '. $dberror[1] . ', version needed : ' .$dberror[2];
-			break;
-		case 0:
-		case 1:
-			break;
-		default:
-			new ProgrammingError('Out of bond result from database test');
-	}
-	$this->view->message=$db_message;
-	
-	$dberror=$this->getIdoDb(true); // Get IDO DB in test mode
-	$this->view->ido_db_error=$dberror[0];
-	$this->view->ido_message='IDO Database : ' . $dberror[1];
+    $this->check_db();
 	
 	//********* Test API
-	if ($this->Config()->get('config', 'icingaAPI_host') != '')
-	{
-	    $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
-    	$apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
-    	try {
-    	    list($this->view->apimessageError,$this->view->apimessage)=$apitest->test($this->getModuleConfig()::getapiUserPermissions());
-    	    //$this->view->apimessageError=false;
-    	} catch (RuntimeException $e) {
-    	    $this->view->apimessage='API config : ' . $e->getMessage();
-    	    $this->view->apimessageError=true;
-    	} 
-	}
-	else
-	{
-	    $this->view->apimessage='API parameters not configured';
-	    $this->view->apimessageError=true;
-	}
+    $this->check_api();
 	
 	//*********** Test snmptrapd alive and options
 	list ($this->view->snmptrapdError, $this->view->snmptrapdMessage) = $this->checkSnmpTrapd();
 
 	// List DB in $ressources
-	$resources = array();
-	$allowed = array('mysql', 'pgsql');
-	foreach (ResourceFactory::getResourceConfigs() as $name => $resource) {
-		if ($resource->get('type') === 'db' && in_array($resource->get('db'), $allowed)) {
-			$resources[$name] = $name;
-		}
-	}
-
-    $this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
+	$resources = $this->get_db_list(array('mysql', 'pgsql')); 
 
 	// Check standard Icingaweb2 path
-	$this->view->icingaEtcWarn=0;
-	$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	if ($icingaweb2_etc != "/etc/icingaweb2/" && $icingaweb2_etc != '')
-	{
-	    $output=array();
-	    
-	    exec('cat ' . $this->module->getBaseDir() .'/bin/trap_in.php | grep "\$icingaweb2_etc=" ',$output);
-	    
-	    if (! preg_match('#"'. $icingaweb2_etc .'"#',$output[0]))
-	    {
-    	    $this->view->icingaEtcWarn=1;
-	        $this->view->icingaweb2_etc=$icingaweb2_etc;
-	    }
-	}
-
+	$this->check_icingaweb_path();
+	
 	// Setup path for mini documentation
 	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
 	

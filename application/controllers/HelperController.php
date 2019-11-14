@@ -449,10 +449,10 @@ class HelperController extends TrapsController
 	            $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 	            $Trap = new Trap($icingaweb2_etc);
 	            // Cleanup spaces before eval
-	            $rule=$Trap->eval_cleanup($rule);
+	            $rule=$Trap->ruleClass->eval_cleanup($rule);
 	            // Eval
 	            $item=0;
-	            $rule=$Trap->evaluation($rule,$item);
+	            $rule=$Trap->ruleClass->evaluation($rule,$item);
 	        }
 	        catch (Exception $e)
 	        {

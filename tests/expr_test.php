@@ -22,10 +22,10 @@ if (! $input) {
 
 try
 {
-  $rule=$trap->eval_cleanup($rule);
+  $rule=$trap->ruleClass->eval_cleanup($rule);
   //echo 'After cleanup : #'.$rule."#\n";
   $item=0;
-  $val = $trap->evaluation($rule,$item);
+  $val = $trap->ruleClass->evaluation($rule,$item);
   if ($val==true) { printf( "true"); } else { printf( "false");}
   printf("\n");
 }
