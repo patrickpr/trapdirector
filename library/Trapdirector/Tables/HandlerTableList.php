@@ -93,7 +93,7 @@ class HandlerTableList extends TrapTable
 						break;
 						case 'trap_oid': // try to traslate oids.
 						
-							if ($this->doTranslate==true)
+							if ($this->doTranslate===true)
 							{
 								$oidName=$this->MIB->translateOID($row->$rowkey);
 								if (isset($oidName['name']))
@@ -123,14 +123,14 @@ class HandlerTableList extends TrapTable
 						default:
 							$val = $row->$rowkey;
 					}
-					if ($rowkey == 'trap_oid' && $this->doTranslate==true)
+					if ($rowkey == 'trap_oid' && $this->doTranslate===true)
 					{					
 							
 					}
 				} else {
 					$val = '-';
 				}
-				if ($firstCol == true) { // Put link in first column for trap detail.
+				if ($firstCol === true) { // Put link in first column for trap detail.
 					$htm .= '<td>' 
 							. $view->qlink(
 									$view->escape($val),  
@@ -155,7 +155,7 @@ class HandlerTableList extends TrapTable
 
     public function count()
     {
-        $db = $this->connection()->getConnection();
+        //$db = $this->connection()->getConnection();
         $query = clone($this->getBaseQuery());
         $query->reset('order')->columns(array('COUNT(*)'));
         $this->applyFiltersToQuery($query);
@@ -261,6 +261,3 @@ class HandlerTableList extends TrapTable
     }	
 
 }
-
-
-?>

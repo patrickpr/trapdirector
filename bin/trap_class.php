@@ -105,7 +105,7 @@ class Trap
 	 * @param string $option_array Array of ini file
 	 * @param string $option_category category in ini file
 	 * @param string $option_name name of option in category
-	 * @param resource $option_var variable to fill if found, left untouched if not found
+	 * @param mixed $option_var variable to fill if found, left untouched if not found
 	 * @param integer $log_level default 2 (warning)
 	 * @param string $message warning message if not found
 	 * @return boolean true if found, or false
@@ -614,7 +614,7 @@ class Trap
 	/** Get rules from rule database with ip and oid
 	*	@param $ip string ipv4 or ipv6
 	*	@param $oid string oid in numeric
-	*	@return mixed : PDO object or false
+	*	@return mixed|boolean : PDO object or false
 	*/	
 	protected function getRules($ip,$oid)
 	{

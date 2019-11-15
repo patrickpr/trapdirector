@@ -58,6 +58,255 @@ class HandlerController extends TrapsController
 	    }
 	}
 	
+	/**
+	 * Setup default veiw values for add action
+	 */
+	private function add_setup_vars()
+	{
+	    // variables to send to view
+	    $this->view->hostlist=array(); // host list to input datalist
+	    $this->view->hostname=''; // Host name in input text
+	    $this->view->serviceGet=false; // Set to true to get list of service if only one host set
+	    $this->view->serviceSet=null; // Select service in services select (must have serviceGet=true).
+	    $this->view->mainoid=''; // Trap OID
+	    $this->view->mib=''; // Trap mib
+	    $this->view->name=''; // Trap name
+	    $this->view->trapListForMIB=array(); // Trap list if mib exists for trap
+	    $this->view->objectList=array(); // objects sent with trap
+	    $this->view->display=''; // Initial display
+	    $this->view->rule=''; // rule display
+	    $this->view->revertOK=''; // revert OK in seconds
+	    $this->view->hostid=-1; // normally set by javascript serviceGet()
+	    $this->view->ruleid=-1; // Rule id in DB for update & delete
+	    $this->view->setToUpdate=false; // set form as update form
+	    $this->view->setRuleMatch=-1; // set action on rule match (default nothing)
+	    $this->view->setRuleNoMatch=-1; // set action on rule no match (default nothing)
+	    
+	    $this->view->selectGroup=false; // Select by group if true
+	    $this->view->hostgroupid=-1; // host group id
+	    $this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
+	    
+	    $this->view->modifier=null;
+	    $this->view->modified=null;
+	}
+	
+	/**
+	 * Setup new handler display from existing trap
+	 * @param integer $trapid : trap id in DB
+	 */
+	private function add_from_existing($trapid)
+	{
+	    /********** Setup from existing trap ***************/
+	    // Get the full trap info
+	    $trapDetail=$this->getTrapDetail($trapid);
+	    
+	    $hostfilter=$trapDetail->source_ip;
+	    
+	    // Get host
+	    try
+	    {
+	        $hosts=$this->getHostByIP($hostfilter);
+	    }
+	    catch (Exception $e)
+	    {
+	        $this->displayExitError('Add handler : get host by IP/Name ',$e->getMessage());
+	    }
+	    
+	    
+	    // if one unique host found -> put id text input
+	    if (count($hosts)==1) {
+	        $this->view->hostname=$hosts[0]->name;
+	        //$hostid=$hosts[0]->id;
+	        // Tell JS to get services when page is loaded
+	        $this->view->serviceGet=true;
+	        
+	    }
+	    else
+	    {
+	        foreach($hosts as $key=>$val)
+	        {
+	            array_push($this->view->hostlist,$hosts[$key]->name);
+	        }
+	    }
+	    
+	    // set up trap oid and objects received by the trap
+	    
+	    $this->view->mainoid=$trapDetail->trap_oid;
+	    if ($trapDetail->trap_name_mib != null)
+	    {
+	        $this->view->mib=$trapDetail->trap_name_mib;
+	        $this->view->name=$trapDetail->trap_name;
+	        $this->view->trapListForMIB=$this->getMIB()
+	        ->getTrapList($trapDetail->trap_name_mib);
+	    }
+	    
+	    // Get all objects that can be in trap from MIB
+	    $allObjects=$this->getMIB()->getObjectList($trapDetail->trap_oid);
+	    // Get all objects in current Trap
+	    $currentTrapObjects=$this->getTrapobjects($trapid);
+	    $oid_index=1;
+	    foreach ($currentTrapObjects as $key => $val)
+	    {
+	        $currentObjectType='Unknown';
+	        $currentObjectTypeEnum='Unknown';
+	        if (isset($allObjects[$val->oid]['type']))
+	        {
+	            $currentObjectType=$allObjects[$val->oid]['type'];
+	            $currentObjectTypeEnum=$allObjects[$val->oid]['type_enum'];
+	        }
+	        $currentObject=array(
+	            $oid_index,
+	            $val->oid,
+	            $val->oid_name_mib,
+	            $val->oid_name,
+	            $val->value,
+	            $currentObjectType,
+	            $currentObjectTypeEnum
+	        );
+	        $oid_index++;
+	        array_push($this->view->objectList,$currentObject);
+	        // set currrent object to null in allObjects
+	        if (isset($allObjects[$val->oid]))
+	        {
+	            $allObjects[$val->oid]=null;
+	        }
+	    }
+	    if ($allObjects!=null) // in case trap doesn't have objects or is not resolved
+	    {
+	        foreach ($allObjects as $key => $val)
+	        {
+	            if ($val==null) { continue; }
+	            array_push($this->view->objectList, array(
+	                $oid_index,
+	                $key,
+	                $allObjects[$key]['mib'],
+	                $allObjects[$key]['name'],
+	                '',
+	                $allObjects[$key]['type'],
+	                $allObjects[$key]['type_enum']
+	            ));
+	            $oid_index++;
+	        }
+	    }
+	    
+	    // Add a simple display
+	    $this->view->display='Trap '.$trapDetail->trap_name.' received';
+	    $this->view->create_basic_rule=true;
+	}
+
+	/**
+	 * Check if host & service still exists or set warning message
+	 * @param object $ruleDetail 
+	 */
+	private function add_check_host_exists($ruleDetail)
+	{
+	    // Check if hostname still exists
+	    $host_get=$this->getHostByName($this->view->hostname);
+	    
+	    if (count($host_get)==0)
+	    {
+	        $this->view->warning_message='Host '.$this->view->hostname. ' doesn\'t exists anymore';
+	        $this->view->serviceGet=false;
+	    }
+	    else
+	    {
+	        // Tell JS to get services when page is loaded
+	        $this->view->serviceGet=true;
+	        // get service id for form to set :
+	        $serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
+	        if (count($serviceID) ==0)
+	        {
+	            $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
+	        }
+	        else
+	        {
+	            $this->view->serviceSet=$serviceID[0]->id;
+	        }
+	    }
+	}
+
+	/**
+	 * Check if hostgroup & service still exists or set warning message
+	 * @param object $ruleDetail
+	 */
+	private function add_check_hostgroup_exists($ruleDetail)
+	{
+	    // Check if groupe exists
+	    $group_get=$this->getHostGroupByName($this->view->hostgroupname);
+	    if (count($group_get)==0)
+	    {
+	        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
+	        $this->view->serviceGroupGet=false;
+	    }
+	    else
+	    {
+	        $grpServices=$this->getServicesByHostGroupid($group_get[0]->id);
+	        $foundGrpService=0;
+	        foreach ($grpServices as $grpService)
+	        {
+	            if ($grpService[0] == $ruleDetail->service_name)
+	            {
+	                $foundGrpService=1;
+	                $this->view->serviceSet=$ruleDetail->service_name;
+	            }
+	        }
+	        
+	        // Tell JS to get services when page is loaded
+	        $this->view->serviceGroupGet=true;
+	        if ($foundGrpService==0)
+	        {
+	            $this->view->warning_message.=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
+	        }
+	    }
+	}
+	
+	/**
+	 * Create object list array with all OIDs in rule & display
+	 * Replace in rule & display by $<n>$
+	 * @param string $display
+	 * @param string $rule
+	 * @return array
+	 */
+	private function add_create_trap_object_list(&$display, &$rule)
+	{
+	    $curObjectList=array();
+	    $index=1;
+	    // check in display & rule for : OID(<oid>)
+	    $matches=array();
+	    while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
+	        preg_match('/_OID\(([\.0-9]+)\)/',$rule,$matches))
+	    {
+	        $curOid=$matches[1];
+	        if (($object=$this->getMIB()->translateOID($curOid)) != null)
+	        {
+	            array_push($curObjectList, array(
+	                $index,
+	                $curOid,
+	                $object['mib'],
+	                $object['name'],
+	                '',
+	                $object['type'],
+	                $object['type_enum']
+	            ));
+	        }
+	        else
+	        {
+	            array_push($curObjectList, array(
+	                $index,
+	                $curOid,
+	                'not found',
+	                'not found',
+	                '',
+	                'not found'
+	            ));
+	        }
+	        $display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$display);
+	        $rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$rule);
+	        $index++;
+	    }
+	    return $curObjectList;
+	}
+	
 	/** Add a handler  
 	*	Get params fromid : setup from existing trap (id of trap table)
 	*	Get param ruleid : edit from existing handler (id of rule table)
@@ -71,134 +320,17 @@ class HandlerController extends TrapsController
 			'label'		=> $this->translate('Add handler'),
 			'url'		=> Url::fromRequest()
 		));
-		// variables to send to view
-		$this->view->hostlist=array(); // host list to input datalist
-		$this->view->hostname=''; // Host name in input text
-		$this->view->serviceGet=false; // Set to true to get list of service if only one host set
-		$this->view->serviceSet=null; // Select service in services select (must have serviceGet=true).
-		$this->view->mainoid=''; // Trap OID
-		$this->view->mib=''; // Trap mib
-		$this->view->name=''; // Trap name
-		$this->view->trapListForMIB=array(); // Trap list if mib exists for trap
-		$this->view->objectList=array(); // objects sent with trap
-		$this->view->display=''; // Initial display
-		$this->view->rule=''; // rule display
-		$this->view->revertOK=''; // revert OK in seconds
-		$this->view->hostid=-1; // normally set by javascript serviceGet()
-		$this->view->ruleid=-1; // Rule id in DB for update & delete
-		$this->view->setToUpdate=false; // set form as update form
-		$this->view->setRuleMatch=-1; // set action on rule match (default nothing)
-		$this->view->setRuleNoMatch=-1; // set action on rule no match (default nothing)
+
+		$this->add_setup_vars(); // setup default $this->view variables.
 		
-		$this->view->selectGroup=false; // Select by group if true
-		$this->view->hostgroupid=-1; // host group id
-		$this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
-		
-		$this->view->modifier=null;
-		$this->view->modified=null;
-		// Get Mib List from file
+		// Get Mib List from DB
 		$this->view->mibList=$this->getMIB()->getMIBList();
 		
 		//$this->view->trapvalues=false; // Set to true to display 'value' colum in objects
 		
-		if ($this->params->get('fromid') !== null) { 
-			/********** Setup from existing trap ***************/ 
-			$trapid=$this->params->get('fromid');
-			// Get the full trap info
-			$trapDetail=$this->getTrapDetail($trapid);
-
-			$hostfilter=$trapDetail->source_ip;
-
-			// Get host
-			try
-			{
-				$hosts=$this->getHostByIP($hostfilter);
-			}
-			catch (Exception $e)
-			{
-				$this->displayExitError('Add handler : get host by IP/Name ',$e->getMessage());
-			}
-			
-			
-			// if one unique host found -> put id text input
-			if (count($hosts)==1) {
-				$this->view->hostname=$hosts[0]->name;
-				//$hostid=$hosts[0]->id;
-				// Tell JS to get services when page is loaded
-				$this->view->serviceGet=true;
-				
-			}
-			else
-			{
-				foreach($hosts as $key=>$val)
-				{
-					array_push($this->view->hostlist,$hosts[$key]->name);
-				}
-			}
-			
-			// set up trap oid and objects received by the trap
-					
-			$this->view->mainoid=$trapDetail->trap_oid;
-			if ($trapDetail->trap_name_mib != null)
-			{
-				$this->view->mib=$trapDetail->trap_name_mib; 
-				$this->view->name=$trapDetail->trap_name;
-				$this->view->trapListForMIB=$this->getMIB()
-					->getTrapList($trapDetail->trap_name_mib);
-			}
-			
-			// Get all objects that can be in trap from MIB
-			$allObjects=$this->getMIB()->getObjectList($trapDetail->trap_oid);
-			// Get all objects in current Trap
-			$currentTrapObjects=$this->getTrapobjects($trapid);
-			$oid_index=1;
-			foreach ($currentTrapObjects as $key => $val)
-			{
-				$currentObjectType='Unknown';
-				$currentObjectTypeEnum='Unknown';
-				if (isset($allObjects[$val->oid]['type']))
-				{
-					$currentObjectType=$allObjects[$val->oid]['type'];
-					$currentObjectTypeEnum=$allObjects[$val->oid]['type_enum'];
-				}
-				$currentObject=array(
-				    $oid_index,
-					$val->oid,
-					$val->oid_name_mib,
-					$val->oid_name,
-					$val->value,
-					$currentObjectType,
-					$currentObjectTypeEnum
-				);
-				$oid_index++;
-				array_push($this->view->objectList,$currentObject);
-				// set currrent object to null in allObjects
-				if (isset($allObjects[$val->oid]))
-				{
-					$allObjects[$val->oid]=null;
-				}
-			}
-			if ($allObjects!=null) // in case trap doesn't have objects or is not resolved
-			{
-				foreach ($allObjects as $key => $val)
-				{
-					if ($val==null) { continue; }
-					array_push($this->view->objectList, array(
-					    $oid_index,
-						$key,
-						$allObjects[$key]['mib'],
-						$allObjects[$key]['name'],
-						'',
-						$allObjects[$key]['type'],
-						$allObjects[$key]['type_enum']
-					));
-					$oid_index++;
-				}
-			}
-			
-			// Add a simple display
-			$this->view->display='Trap '.$trapDetail->trap_name.' received';
-			$this->view->create_basic_rule=true;
+		if (($trapid = $this->params->get('fromid')) !== null) {
+		    /********** Setup from existing trap ***************/
+            $this->add_from_existing($trapid);
 			return;
 		}
 		
@@ -225,60 +357,14 @@ class HandlerController extends TrapsController
 			{
 			    $this->view->selectGroup=false;
 			    // Check if hostname still exists
-			    $host_get=$this->getHostByName($this->view->hostname);
-			    
-			    if (count($host_get)==0)
-			    {
-			        $this->view->warning_message='Host '.$this->view->hostname. ' doesn\'t exists anymore';
-			        $this->view->serviceGet=false;
-			    }
-			    else
-			    {
-    				// Tell JS to get services when page is loaded
-    				$this->view->serviceGet=true;
-    				// get service id for form to set :			
-    				$serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
-    				if (count($serviceID) ==0)
-    				{
-    				    $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
-    				} 
-    				else
-    				{
-    				    $this->view->serviceSet=$serviceID[0]->id;
-    				}
-			    }
+			    $this->add_check_host_exists($ruleDetail);
 			}
 			else
 			{
 			    $this->view->selectGroup=true;
-			    // Check if groupe exists
-			    $group_get=$this->getHostGroupByName($this->view->hostgroupname);
-			    if (count($group_get)==0)
-			    {
-			        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
-			        $this->view->serviceGroupGet=false;
-			    }
-			    else
-			    {
-			        $grpServices=$this->getServicesByHostGroupid($group_get[0]->id);
-			        $foundGrpService=0;
-			        foreach ($grpServices as $grpService)
-			        {
-			            if ($grpService[0] == $ruleDetail->service_name)
-			            {
-			                $foundGrpService=1;
-			                $this->view->serviceSet=$ruleDetail->service_name;
-			            }
-			        }
-			        
-			        // Tell JS to get services when page is loaded
-			        $this->view->serviceGroupGet=true;
-			        if ($foundGrpService==0)
-			        {
-			            $this->view->warning_message.=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
-			        }
-			    }				
+			    $this->add_check_hostgroup_exists($ruleDetail); //  Check if groupe exists				
 			}
+			
 			$this->view->mainoid=$ruleDetail->trap_oid;
 			$oidName=$this->getMIB()->translateOID($ruleDetail->trap_oid);
 			if ($oidName != null)  // oid is found in mibs
@@ -291,41 +377,10 @@ class HandlerController extends TrapsController
 			// Create object list with : display & rules references (OID) and complete with all objects if found
 			$display=$ruleDetail->display;
 			$rule=$ruleDetail->rule;
-			$curObjectList=array();
-			$index=1; 
-			// check in display & rule for : OID(<oid>)
-			$matches=array();
-			while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
-					preg_match('/_OID\(([\.0-9]+)\)/',$rule,$matches))
-			{
-				$curOid=$matches[1];
-				if (($object=$this->getMIB()->translateOID($curOid)) != null)
-				{
-					array_push($curObjectList, array(
-					    $index,
-						$curOid,
-						$object['mib'],
-						$object['name'],
-						'',
-						$object['type'],
-						$object['type_enum']
-					));
-				}
-				else
-				{
-					array_push($curObjectList, array(
-					    $index,
-						$curOid,
-						'not found',
-						'not found',
-						'',
-						'not found'
-					));
-				}
-				$display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$display);
-				$rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$rule);
-				$index++;
-			}
+			
+			// Create object list array with all OIDs in rule & display
+			$curObjectList=$this->add_create_trap_object_list($display, $rule);
+			
 			// set display
 			$this->view->display=$display;
 			$this->view->rule=$rule;

@@ -74,7 +74,8 @@ class Icinga2API
        try
         {
             $result=$this->request('GET', "", NULL, NULL);
-        } catch (Exception $e)
+        } 
+        catch (Exception $e)
         {
             return array(true, 'Error with API : '.$e->getMessage());
         }
