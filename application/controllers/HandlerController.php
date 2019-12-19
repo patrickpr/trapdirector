@@ -227,7 +227,7 @@ class HandlerController extends TrapsController
 
 	/**
 	 * Check if hostgroup & service still exists or set warning message
-	 * @param object $ruleDetail
+	 * @param array $ruleDetail
 	 */
 	private function add_check_hostgroup_exists($ruleDetail)
 	{

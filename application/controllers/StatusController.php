@@ -120,15 +120,31 @@ class StatusController extends TrapsController
 			{
 				$name=$_FILES['mibfile']['name'];
 				$DirConf=explode(':',$this->Config()->get('config', 'snmptranslate_dirs'));
-				$destination = array_shift($DirConf) .'/'.$name; //$this->Module()->getBaseDir() . "/mibs/$name";
-				if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)===false)
+				$destDir=array_shift($DirConf);
+				if (!is_dir($destDir))
 				{
-					$this->view->uploadStatus='ERROR, file not loaded. Check mibs directory permission';
+				    $this->view->uploadStatus="ERROR : no $destDir directory, check module configuration";
 				}
 				else
 				{
-					$this->view->uploadStatus="File $name uploaded";
+				    if (!is_writable($destDir))
+				    {
+				        $this->view->uploadStatus="ERROR : $destDir directory is not writable";
+				    }
+				    else
+				    {
+				        $destination = $destDir .'/'.$name; //$this->Module()->getBaseDir() . "/mibs/$name";
+    				    if (move_uploaded_file($_FILES['mibfile']['tmp_name'],$destination)===false)
+    				    {
+    				        $this->view->uploadStatus="ERROR, file $destination not loaded. Check file and path name or selinux violations";
+    				    }
+    				    else
+    				    {
+    				        $this->view->uploadStatus="File $name uploaded in $destDir";
+    				    }
+				    }
 				}
+
 			}
 			
 		}
