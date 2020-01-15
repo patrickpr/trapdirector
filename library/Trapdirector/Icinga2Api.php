@@ -140,9 +140,10 @@ class Icinga2API
      * @param string $service : service name
      * @param int $state : state of service
      * @param string $display : service passive check output
+     * @param string $perfdata : performance data as string
      * @return array (status = true (oK) or false (nok), string message)
      */
-    public function serviceCheckResult($host,$service,$state,$display)
+    public function serviceCheckResult($host,$service,$state,$display,$perfdata='')
     {
         //Send a POST request to the URL endpoint /v1/actions/process-check-result
         //actions/process-check-result?service=example.localdomain!passive-ping6
@@ -151,7 +152,8 @@ class Icinga2API
             "filter"        => 'service.name=="'.$service.'" && service.host_name=="'.$host.'"',
             'type'          => 'Service',
             "exit_status"   => $state,
-            "plugin_output" => $display
+            "plugin_output" => $display,
+            "performance_data" => $perfdata
         );
         try 
         {

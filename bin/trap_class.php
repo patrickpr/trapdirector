@@ -708,9 +708,21 @@ class Trap
 	    }
 	    else
 	    {
+	        // Get perfdata if found
+	        $matches=array();
+	        if (preg_match('/(.*)\|(.*)/',$display,$matches) == 1)
+	        {
+	            $display=$matches[1];
+	            $perfdata=$matches[2];
+	        }
+	        else
+	        {
+	            $perfdata='';
+	        }
+	        
 	        $api = $this->getAPI();
 	        $api->setCredentials($this->api_username, $this->api_password);
-	        list($retcode,$retmessage)=$api->serviceCheckResult($host,$service,$state,$display);
+	        list($retcode,$retmessage)=$api->serviceCheckResult($host,$service,$state,$display,$perfdata);
 	        if ($retcode == false)
 	        {
 	            $this->logging->log( "Error sending result : " .$retmessage,WARN,'');
@@ -732,7 +744,7 @@ class Trap
 	}
 	
 	/** Resolve display. 
-	*	Changes OID(<oid>) to value if found or text "<not in trap>"
+	*	Changes _OID(<oid>) to value if found or text "<not in trap>"
 	*	@param $display string
 	*	@return string display
 	*/
