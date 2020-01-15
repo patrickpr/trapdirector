@@ -1,3 +1,19 @@
+Version 1.0.3
+Date : Not released
+Database update : No
+Migration path : from version > 1.0.0
+
+UPGRADE NOTES : 
+
+
+BUGS
+====
+1) Performance data was transfered in display when using API (issue#22)
+
+
+ENHANCEMENTS
+============
+
 -------------------------------------------------------------------------------------------------
 Version 1.0.2
 Date : 04 Nov 2019
