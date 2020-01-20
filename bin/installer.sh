@@ -74,7 +74,7 @@ function add_to_config()
   fi
   grep -E "^${param} *=" $iniFile > /dev/null 2>&1
   if [ $? -eq 0 ]; then
-	sed -i -r "s/^${param} *=.*/${param} = \"${val}\"/" $iniFile;
+	sed -i -r "s@^${param} *=.*@${param} = \"${val}\"@" $iniFile;
 	return 0;
   fi
   echo -e "\n${param} = \"${val}\"\n" >>  $iniFile;
