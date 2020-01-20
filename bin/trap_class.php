@@ -18,7 +18,8 @@ use Trapdirector\Rule;
 class Trap
 {
 	// Configuration files and dirs
-	protected $icingaweb2_etc; //< Icinga etc path	
+    /** @var string Icinga etc path */
+	protected $icingaweb2_etc;
 	protected $trap_module_config; //< config.ini of module	
 	protected $icingaweb2_ressources; //< resources.ini of icingaweb2
 	// Options from config.ini 
@@ -35,8 +36,10 @@ class Trap
 	protected $api_username='';
 	protected $api_password='';
 
-	// Logs 
+	// Logs
+	/** @var Logging Logging class. */
 	protected $logging;    //< Logging class.
+	/** @var bool true if log was setup in constructor */
 	protected $logSetup;   //< bool true if log was setup in constructor
 	
 	// Databases
@@ -44,17 +47,18 @@ class Trap
 	
 	// Trap received data
 	protected $receivingHost;
-	public $trap_data=array(); //< Main trap data (oid, source...)
+	/** @var array	Main trap data (oid, source...) */
+	public $trap_data=array();
 	public $trap_data_ext=array(); //< Additional trap data objects (oid/value).
 	public $trap_id=null; //< trap_id after sql insert
 	public $trap_action=null; //< trap action for final write
 	protected $trap_to_db=true; //< log trap to DB
 	
-	// Mib update data
-	public $mibClass; //< Mib class
+	/** @var Mib mib class */
+	public $mibClass;
 	
-	// Rule evaluation 
-	public $ruleClass; // Rule class
+	/** @var Rule rule class */
+	public $ruleClass;
 	
 	function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
 	{
@@ -75,10 +79,15 @@ class Trap
 		$this->logging->log('Loggin started', INFO);
 
 		// Get options from ini files
+		if (! is_file($this->trap_module_config))
+		{
+		    throw new Exception("Ini file ".$this->trap_module_config." does not exists");
+		}
 		$trapConfig=parse_ini_file($this->trap_module_config,true);
 		if ($trapConfig == false)
 		{
 		    $this->logging->log("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog');
+		    throw new Exception("Error reading ini file : ".$this->trap_module_config);
 		}
 		$this->getMainOptions($trapConfig); // Get main options from ini file
 		$this->setupDatabase($trapConfig); // Setup database class
@@ -118,7 +127,7 @@ class Trap
 	        {
 	            $message='No ' . $option_name . ' in config file: '. $this->trap_module_config;
 	        }
-	        $this->logging->log($message,$log_level,'syslog');
+	        $this->logging->log($message,$log_level);
 	        return false;
 	    }
 	    else
@@ -192,7 +201,7 @@ class Trap
 	    {
 	        $this->logging->log("No IDOdatabase in config file: ".$this->trap_module_config,ERROR,'');
 	    }
-	    $dbIdoName=$trapConfig['config']['IDOdatabase'];		
+	    $dbIdoName=$trapConfig['config']['IDOdatabase'];
 
 	    $this->logging->log("Found IDO database in config file: ".$dbIdoName,INFO );
         if (!array_key_exists($dbIdoName,$dbConfig))
@@ -322,7 +331,7 @@ class Trap
 		{
 			$vars=chop($vars);
 			$ret_code=preg_match('/^([^ ]+) (.*)$/',$vars,$matches);
-			if ($ret_code===0 || $ret_code===false) 
+			if ($ret_code===0 || $ret_code===false)
 			{
 				$this->logging->log('No match on trap data : '.$vars,WARN,'');
 			}
@@ -330,7 +339,7 @@ class Trap
 			{
 			    if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
 				{
-					$this->trap_data['trap_oid']=$matches[2];				
+					$this->trap_data['trap_oid']=$matches[2];
 				}
 				else
 				{
@@ -342,7 +351,7 @@ class Trap
 			}
 		}
 
-		if ($this->trap_data['trap_oid']=='unknown') 
+		if ($this->trap_data['trap_oid']=='unknown')
 		{
 		    $this->writeTrapErrorToDB("No trap oid found : check snmptrapd configuration (code 3/OID)",$this->trap_data['source_ip']);
 			$this->logging->log('no trap oid found',ERROR,'');

@@ -2,8 +2,6 @@
 
 namespace Trapdirector;
 
-use Trapdirector\Logging;
-
 use Exception;
 use PDO;
 use PDOException;

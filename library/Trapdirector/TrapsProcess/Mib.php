@@ -2,11 +2,10 @@
 
 namespace Trapdirector;
 
-use Trapdirector\Logging;
-use Trapdirector\Database;
+
 use PDO;
 use Exception;
-use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
+
 
 class Mib
 {

@@ -15,7 +15,7 @@ Note :
 
 When writing rules : 
 
-* Numbers are written directly : 1 .123  1.123 (negative numbers will soon be handled)
+* Numbers are written directly : 1 .123  1.123 -5 -8.23
 * Any other must have " around : "eth0" "Down" "127.0.0.1"
 
 Here is an example 
@@ -37,7 +37,7 @@ The "~" operator is for regexp :
 
 You can group with parenthesis and logical operators are : | &
 
-To test existence of object, do : ($3$)
+Every OID tested MUST be present in the trap, or it will generate an error - visible in "received" -.
 
 Spaces outside " " are ignored and comparison operators are evaluated before logical ones.
 

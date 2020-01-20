@@ -2,11 +2,7 @@
 
 namespace Trapdirector;
 
-use Trapdirector\Logging;
-use Trapdirector\Database;
-use PDO;
 use Exception;
-use Icinga\Module\TrapDirector\Config\TrapModuleConfig;
 
 class Rule
 {
@@ -32,7 +28,7 @@ class Rule
         $item2=$item+1;
         while (
             ($item2!=strlen($rule)) 
-            && (preg_match('/[0-9\.]/',$rule[$item2]))) 
+            && (preg_match('/[\-0-9\.]/',$rule[$item2]))) 
         { 
             $item2++ ;
         }
@@ -96,7 +92,7 @@ class Rule
             throw new Exception("Early end of string ".$rule ." at " .$item );
         }
         while ($rule[$item]==' ') $item++;
-        if (preg_match('/[0-9\.]/',$rule[$item]))
+        if (preg_match('/[\-0-9\.]/',$rule[$item]))
         { // number
             return $this->get_number($rule, $item);
         }
@@ -298,7 +294,7 @@ class Rule
             $found=0;
             // ** replaced by .*
             $oidR=preg_replace('/\*\*/', '.*', $oid);
-            // * replaced by [^.]*
+            // * replaced by [0-9]+ 
             $oidR=preg_replace('/\*/', '[0-9]+', $oidR);
             
             // replace * with \* in oid for preg_replace
@@ -310,7 +306,7 @@ class Rule
             {
                 if (preg_match("/^$oidR$/",$val->oid) == 1)
                 {
-                    if (!preg_match('/^[0-9]*\.?[0-9]+$/',$val->value))
+                    if (!preg_match('/^-?[0-9]*\.?[0-9]+$/',$val->value))
                     { // If not a number, change " to ' and put " around it
                         $val->value=preg_replace('/"/',"'",$val->value);
                         $val->value='"'.$val->value.'"';
