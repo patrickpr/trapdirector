@@ -219,7 +219,7 @@ expr_eval '((1=1) | (2>3)) & (("test"="test") & (3 != 2))' 0 "true"
 expr_eval '-33 != 3' 0 "true"
 expr_eval '-33 > 3' 0 "false"
 expr_eval '-33 <= 12' 0 "true"
-expr_eval '-2 = -1' 0 "true"
+expr_eval '-2 = -1' 0 "false"
 expr_eval '-2 > "t"' 1 "true"
 
 
