@@ -226,6 +226,3 @@ class TrapModuleConfig
 	// Max items in a list
 	public function itemListDisplay() { return 25; }
 }
-
-
-?>

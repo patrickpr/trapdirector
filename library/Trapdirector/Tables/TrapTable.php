@@ -234,6 +234,3 @@ abstract class TrapTable implements Paginatable
     }	
 
 }
-
-
-?>
