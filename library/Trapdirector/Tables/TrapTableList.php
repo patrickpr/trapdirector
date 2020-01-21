@@ -230,6 +230,3 @@ class TrapTableList extends TrapTable
     }	
 
 }
-
-
-?>

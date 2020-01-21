@@ -48,5 +48,3 @@ catch (Exception $e)
 //end
 
 exit(0);
-
-?>
