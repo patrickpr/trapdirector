@@ -6,7 +6,7 @@ namespace Icinga\Module\Trapdirector\Controllers;
 //use Icinga\Web\Url;
 use Exception;
 use Icinga\Module\Trapdirector\TrapsController;
-use Trap;
+use Trapdirector\Trap;
 
 class HelperController extends TrapsController
 {

@@ -1,10 +1,10 @@
 Version 1.0.3
 Date : Not released
-Database update : No
+Database update : No for version >= 1.0.2
 Migration path : from version > 1.0.0
 
 UPGRADE NOTES : 
-
+Lots of code splitting to have a better code, added continuous integration tests.
 
 BUGS
 ====
@@ -13,6 +13,8 @@ BUGS
 
 ENHANCEMENTS
 ============
+1) Added negative numbers evaluation in rules.
+2) More precise error on MIB upload errors (issue#21)
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.2

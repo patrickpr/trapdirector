@@ -16,7 +16,7 @@ use Icinga\Module\Trapdirector\Tables\TrapTableHostList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
 
-use Trap;
+use Trapdirector\Trap;
 
 use Zend_Db_Expr;
 

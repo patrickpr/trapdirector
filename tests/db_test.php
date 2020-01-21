@@ -1,6 +1,8 @@
 #!/opt/rh/rh-php71/root/bin/php
 <?php
 
+use Trapdirector\Trap;
+
 require_once 'bin/trap_class.php';
 
 $options = getopt("c:v:d:b:a:");

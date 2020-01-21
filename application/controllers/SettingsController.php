@@ -14,7 +14,7 @@ use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
 use Icinga\Module\Trapdirector\Icinga2Api;
 
-use Trap;
+use Trapdirector\Trap;
 
 class SettingsController extends TrapsController
 {

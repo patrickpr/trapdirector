@@ -7,7 +7,7 @@ use Icinga\Application\Icinga;
 use Icinga\Cli\Command;
 use Exception;
 
-use Trap;
+use Trapdirector\Trap;
 
 /**
  * Traps related actions

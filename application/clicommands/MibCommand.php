@@ -12,7 +12,7 @@ use Exception;
 
 use Icinga\Module\Trapdirector\Config\TrapModuleConfig;
 
-use Trap;
+use Trapdirector\Trap;
 
 /**
  * MIB related actions

@@ -1,6 +1,7 @@
 <?php
 
 use Trapdirector\Logging;
+use Trapdirector\Trap;
 
 // start
 $time1 = microtime(true);

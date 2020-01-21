@@ -1,6 +1,6 @@
 <?php
 
-/** @var \Icinga\Application\Modules\ $this */
+/** @var \Icinga\Application\Modules\Module $this */
 $this->providePermission('trapdirector/module_config', $this->translate('Allow to access the traps module configuration'));
 $this->providePermission('trapdirector/view', $this->translate('Allow to view traps and traps service configuration'));
 $this->providePermission('trapdirector/config', $this->translate('Allow to create and modify traps services'));
