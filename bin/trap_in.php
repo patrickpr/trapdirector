@@ -10,39 +10,40 @@ require_once ('trap_class.php');
 
 
 // Icinga etc path : need to change this on non standard icinga installation.
-$icingaweb2_etc="/etc/icingaweb2";
+$icingaweb2Etc="/etc/icingaweb2";
 
-$Trap=null;
+$trap=null;
 
 try
 {
-    //$Trap = new Trap($icingaweb2_etc);
-    //$Trap = new Trap($icingaweb2_etc,4,'display'); // For debug
-    $Trap = new Trap($icingaweb2_etc,4,'syslog'); // For debug
+       
+    $trap = new Trap($icingaweb2Etc);
+    //$Trap = new Trap($icingaweb2Etc,4,'display'); // For debug
+    //$Trap = new Trap($icingaweb2Etc,4,'syslog'); // For debug
     //$Trap->setLogging(4,'syslog'); 
     
     // TODO : tranfer this to reset_trap cli command
-    $Trap->eraseOldTraps();
+    $trap->eraseOldTraps();
 
-	$Trap->read_trap('php://stdin');
+	$trap->read_trap('php://stdin');
 
-	$Trap->applyRules();
+	$trap->applyRules();
 
-	$Trap->writeTrapToDB();
+	$trap->writeTrapToDB();
 
-	$Trap->add_rule_final(microtime(true) - $time1);
+	$trap->add_rule_final(microtime(true) - $time1);
 	
 }
 catch (Exception $e) 
 {
-    if ($Trap == null)
+    if ($trap == null)
     {  // Exception in trap creation : log in display & syslog
         $logging = new Logging();
         $logging->log("Caught exception creating Trap class",2);
     }
     else
     {
-	   $Trap->trapLog("Exception : ". $e->getMessage(),2,0);
+	   $trap->trapLog("Exception : ". $e->getMessage(),2,0);
     }
 }
 
