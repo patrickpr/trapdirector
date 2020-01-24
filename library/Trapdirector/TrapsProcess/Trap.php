@@ -30,12 +30,13 @@ class Trap
     
     // Logs
     /** @var Logging Logging class. */
-    protected $logging;    //< Logging class.
+    public $logging;    //< Logging class.
     /** @var bool true if log was setup in constructor */
     protected $logSetup;   //< bool true if log was setup in constructor
     
     // Databases
-    public $trapsDB; //< Database class
+    /** @var Database $trapsDB  Database class*/
+    public $trapsDB = null;
     
     // Trap received data
     protected $receivingHost;
@@ -47,10 +48,13 @@ class Trap
     protected $trap_to_db=true; //< log trap to DB
     
     /** @var Mib mib class */
-    public $mibClass;
+    public $mibClass = null;
     
     /** @var Rule rule class */
-    public $ruleClass;
+    public $ruleClass = null;
+    
+    /** @var Plugins plugins manager **/
+    public $pluginClass = null;
     
     function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
     {
@@ -59,7 +63,7 @@ class Trap
         $this->trap_module_config=$this->icingaweb2_etc."/modules/trapdirector/config.ini";
         $this->icingaweb2_ressources=$this->icingaweb2_etc."/resources.ini";
         
-        // Setup logging
+        //************* Setup logging
         $this->logging = new Logging();
         if ($baseLogLevel != null)
         {
@@ -67,37 +71,50 @@ class Trap
             $this->logSetup=true;
         }
         else
+        {
             $this->logSetup=false;
-            $this->logging->log('Loggin started', INFO);
+        }
+        $this->logging->log('Loggin started', INFO);
+        
+        //*************** Get options from ini files
+        if (! is_file($this->trap_module_config))
+        {
+            throw new Exception("Ini file ".$this->trap_module_config." does not exists");
+        }
+        $trapConfig=parse_ini_file($this->trap_module_config,true);
+        if ($trapConfig == false)
+        {
+            $this->logging->log("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog');
+            throw new Exception("Error reading ini file : ".$this->trap_module_config);
+        }
+        $this->getMainOptions($trapConfig); // Get main options from ini file
+        
+        //*************** Setup database class & get options
+        $this->setupDatabase($trapConfig);
+        
+        $this->getDatabaseOptions(); // Get options in database
+        
+        //*************** Setup API
+        if ($this->api_use === true) $this->getAPI(); // Setup API
+        
+        //*************** Setup MIB
+        $this->mibClass = new Mib($this->logging,$this->trapsDB,$this->snmptranslate,$this->snmptranslate_dirs); // Create Mib class
+        
+        //*************** Setup Rule
+        $this->ruleClass = new Rule($this->logging); //< Create Rule class
+        
+        $this->trap_data=array(  // TODO : put this in a reset function (DAEMON_MODE)
+            'source_ip'	=> 'unknown',
+            'source_port'	=> 'unknown',
+            'destination_ip'	=> 'unknown',
+            'destination_port'	=> 'unknown',
+            'trap_oid'	=> 'unknown'
+        );
+        
+        //*************** Setup Plugins
+        //Create plugin class. Plugins are not loaded here, but by calling registerAllPlugins
+        $this->pluginClass = new Plugins($this);
             
-            // Get options from ini files
-            if (! is_file($this->trap_module_config))
-            {
-                throw new Exception("Ini file ".$this->trap_module_config." does not exists");
-            }
-            $trapConfig=parse_ini_file($this->trap_module_config,true);
-            if ($trapConfig == false)
-            {
-                $this->logging->log("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog');
-                throw new Exception("Error reading ini file : ".$this->trap_module_config);
-            }
-            $this->getMainOptions($trapConfig); // Get main options from ini file
-            $this->setupDatabase($trapConfig); // Setup database class
-            
-            $this->getDatabaseOptions(); // Get options in database
-            if ($this->api_use === true) $this->getAPI(); // Setup API
-            
-            $this->mibClass = new Mib($this->logging,$this->trapsDB,$this->snmptranslate,$this->snmptranslate_dirs); // Create Mib class
-            
-            $this->ruleClass = new Rule($this->logging); //< Create Rule class
-            
-            $this->trap_data=array(
-                'source_ip'	=> 'unknown',
-                'source_port'	=> 'unknown',
-                'destination_ip'	=> 'unknown',
-                'destination_port'	=> 'unknown',
-                'trap_oid'	=> 'unknown',
-            );
             
     }
     
@@ -219,10 +236,14 @@ class Trap
         }
     }
     
+    /** Set $variable to value if $element found in database config table
+     * @param string $element
+     * @param string $variable
+     */
     protected function getDBConfigIfSet($element,&$variable)
     {
         $value=$this->getDBConfig($element);
-        if ($value != 'null') $variable=$value;
+        if ($value != null) $variable=$value;
     }
     
     /**
@@ -230,7 +251,7 @@ class Trap
      *	@param $element string name of param
      *	@return mixed : value (or null)
      */
-    protected function getDBConfig($element)
+    protected function getDBConfig($element)  // TODO : put this in DB class
     {
         $db_conn=$this->trapsDB->db_connect_trap();
         $sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
@@ -263,6 +284,10 @@ class Trap
         $this->logging->setLogging($debugLvl, $outputType,$outputOption);
     }
     
+    /**
+     * Returns or create new IcingaAPI object
+     * @return \Icinga\Module\Trapdirector\Icinga2API
+     */
     protected function getAPI()
     {
         if ($this->icinga2api == null)

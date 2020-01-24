@@ -10,8 +10,7 @@ use Zend_Form_Element_Submit as Submit;
 use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
-
-
+use Trapdirector\Trap;
 
 class StatusController extends TrapsController
 {
@@ -256,6 +255,55 @@ class StatusController extends TrapsController
 		$this->view->templateForm_name="trapdirector_main_template";
 		$this->view->templateForm_interval="3600";
 	}
+    
+	/**
+	 * Plugins display and activation
+	 */
+	public function pluginsAction()
+	{
+	    $this->prepareTabs()->activate('plugins');
+	    
+	    require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+	    $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+	    $Trap = new Trap($icingaweb2_etc,4);
+	    
+	    $this->view->pluginLoaded = htmlentities($Trap->pluginClass->registerAllPlugins(false));
+	    
+	    $enabledPlugins = $Trap->pluginClass->getEnabledPlugins();
+
+	    $pluginList = $Trap->pluginClass->pluginList();
+	    
+	    // Plugin list and fill function name list
+	    $functionList=array();
+	    $this->view->pluginArray=array();
+	    foreach ($pluginList as $plugin)
+	    {
+	        $pluginDetails=$Trap->pluginClass->pluginDetails($plugin);
+	        $pluginDetails->enabled =  (in_array($plugin, $enabledPlugins)) ? true : false;
+	        $pluginDetails->catchAllTraps = ($pluginDetails->catchAllTraps === true )? 'Yes' : 'No';
+	        $pluginDetails->processTraps = ($pluginDetails->processTraps === true )? 'Yes' : 'No';
+	        $pluginDetails->description = htmlentities($pluginDetails->description);
+	        $pluginDetails->description = preg_replace('/\n/','<br>',$pluginDetails->description);
+	        array_push($this->view->pluginArray, $pluginDetails);
+	        // Get functions for function details
+	        foreach ($pluginDetails->funcArray as $function)
+	        {
+	            array_push($functionList,$function);
+	        }
+	    }
+	    
+	    // Function list with details
+	    $this->view->functionList=array();
+	    foreach ($functionList as $function)
+	    {
+	        $functionDetail = $Trap->pluginClass->getFunctionDetails($function);
+	        $functionDetail->params = htmlentities($functionDetail->params);
+	        $functionDetail->description = htmlentities($functionDetail->description);
+	        $functionDetail->description = preg_replace('/\n/','<br>',$functionDetail->description);
+	        array_push($this->view->functionList, $functionDetail);
+	    }
+
+	}
 	
 	protected function prepareTabs()
 	{
@@ -268,7 +316,10 @@ class StatusController extends TrapsController
 		)->add('services', array(
 			'label' => $this->translate('Services management'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/status/services')
-		);
+	    )->add('plugins', array(
+	        'label' => $this->translate('Plugins management'),
+	        'url'   => $this->getModuleConfig()->urlPath() . '/status/plugins')
+	    );
 	} 
 }
 

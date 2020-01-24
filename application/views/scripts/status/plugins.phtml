@@ -1,0 +1,183 @@
+<?php
+use Icinga\Web\Url;
+?>
+<div class="controls">
+  <?= /** @var \Icinga\Module\Trapdirector\Controllers\StatusController $this */ $this->tabs ?>
+  <h1>Plugins management</h1>
+</div>
+
+<div class="content">
+  <h2>Plugins list</h2>
+  
+  <p>Loading plugins returned : <?= $this->pluginLoaded ?></p>
+  
+  <table class="simple common-table">
+			<thead>
+				<tr>
+					<th>Enabled</th><th>Name</th><th>All OIDs</th><th>Target</th><th>Functions</th><th>Description</th>
+				</tr>
+			</thead>
+<? 
+    $count=1;
+    foreach ($this->pluginArray as $plugin)
+    {
+?>			
+			<tbody id="plugins_table_body">
+				<tr id='plugins_table_<?= $count ?>'>
+					<td>
+						<input type="checkbox" id='plugins_table_<?= $count ?>_checkbox' onclick="click_checkbox_plugin('<?= $plugin->name ?>',this)" <?php if ($plugin->enabled === true ) { echo ' checked '; } ?> />
+					</td> 
+					<td><?= $plugin->name ?></td>
+					<td><?= $plugin->catchAllTraps ?></td>
+					<td><?= $plugin->processTraps ?></td>
+					<td><?= implode('<br>', $plugin->funcArray) ?></td>
+					<td><?= $plugin->description ?></td>
+				</tr>
+			</tbody>
+<? } ?>
+	</table>
+
+  <h2>Function list</h2>
+  
+  <table class="simple common-table">
+			<thead>
+				<tr>
+					<th>Name</th><th>Plugin</th><th>Params</th><th>description</th>
+				</tr>
+			</thead>		
+<? 
+    $count=1;
+    foreach ($this->functionList as $function)
+    {
+?>
+			<tbody id="functions_table_body">
+				<tr id='function_<?= $count ?>' onclick="click_function_line(this, '<?= $function->name ?>', '<?= $function->params ?>')">
+					<td><?= $function->name ?></td>
+					<td><?= $function->plugin ?></td>
+					<td><?= $function->params ?></td>
+					<td><?= $function->description ?></td>
+				</tr>
+			</tbody>
+<? } ?>			
+	</table>
+
+	<h2>Test function</h2>
+	
+	<p>Click on function line to fill the input box, set parameters then click check to see function result</p>
+	
+	<input type="text" name="function" id="id_function_eval" placeholder="function evaluation"
+	 value="" 
+	 size=150/>
+	 <button type="button" name="testfunction" id="id_test_function" value="evaluate" >Evaluate</button>
+	 <br>
+	 <span id="testfunction_result"></span>	
+</div>
+
+<script type='text/javascript'>
+webPath='<?= Url::fromPath("trapdirector/") ?>'
+pluginHelper=webPath + 'helper/plugin';
+functionHelper=webPath + 'helper/function';
+
+function displayWarning(message)
+{
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
+}
+function displayOK(message)
+{
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
+}
+
+function click_function_line(line,name,params)
+{
+	funcstring = '__' + name + '(' + params + ')';
+	$("#id_function_eval").val(funcstring);
+}
+
+function test_function()
+{
+	var resultText=$("#testfunction_result"); 
+	resultText.html('');// Empty result box
+
+	funcToEval=$("#id_function_eval").val();
+	// Do ajax call
+	$.ajax({
+			url: functionHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"function"	: 	funcToEval,
+				"action"	:	'evaluate'
+			},
+	        success: function (data) 
+			{
+				if (data.status == "OK") 
+				{
+					resultText.html('Status OK : ' +data.message);
+				} 
+				else 
+				{
+					resultText.html('Status KO : Error in evaluation : '+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("Error : " + data);
+			}
+	});	
+}
+
+function click_checkbox_plugin(pluginName,checkBox)
+{
+	if (checkBox.checked == true)
+	{
+		action='enable';
+	}
+	else
+	{
+		action='disable';
+	}
+
+	// Do ajax call
+	$.ajax({
+			url: pluginHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	action,
+				"name"		:	pluginName
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					displayOK("Plugin " + pluginName + " status : " + action);
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("Error" + data);
+			}
+	});	
+}
+
+
+
+$(function() {
+	$( "#id_test_function").click(function( event ) {
+		event.preventDefault();
+		test_function();
+	});
+	
+});
+
+</script>

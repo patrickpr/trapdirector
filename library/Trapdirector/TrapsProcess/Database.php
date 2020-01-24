@@ -10,7 +10,8 @@ class Database
 {
 
     // Databases
-    protected $trapDB=null; //< trap database
+    /** @var \PDO $trapDB trap database */
+    protected $trapDB=null; 
     protected $idoDB=null; //< ido database
     public $trapDBType; //< Type of database for traps (mysql, pgsql)
     public $idoDBType; //< Type of database for ido (mysql, pgsql)
@@ -91,7 +92,6 @@ class Database
      */
     public function db_connect_trap()
     {
-        
         if ($this->trapDB != null) {
             // Check if connection is still alive
             try {
@@ -136,7 +136,60 @@ class Database
         return $dsn;
     }
 
+    /** Set name=element in database config table
+     * @param string $name
+     * @param string $element
+     * @return boolean true on success, else false (error logged)
+     */
+    public function setDBConfig($name,$element)
+    {
+        $db_conn=$this->db_connect_trap();
+        $sql='SELECT id from '.$this->dbPrefix.'db_config WHERE ( name=\''.$name.'\' )';
+        if (($ret_code=$db_conn->query($sql)) === false) {
+            $this->logging->log('Error setting config element : ' . $sql,WARN,'');           
+            return false;
+        }
+        $value=$ret_code->fetch();
+        if ($value != null && isset($value['id']))
+        {   // Entry exists -> update
+            $sql='UPDATE '.$this->dbPrefix.'db_config SET value = \''.$element.'\' WHERE (id = '.$value['id'].')';
+        }
+        else
+        {   // Entry does no exists -> create
+            $sql='INSERT INTO '.$this->dbPrefix.'db_config (name,value) VALUES (\''.$name.'\' , \''.$element.'\' )';
+        }
+        if (($ret_code=$db_conn->query($sql)) === false) {
+            $this->logging->log('Error setting config element : ' . $sql,WARN,'');
+            return false;
+        }
+        $this->logging->log('Setting config '.$name.' = '.$element.' in database',INFO);
+        return true;
+    }
+
+    /**
+     *   Get data from db_config
+     *	@param $element string name of param
+     *	@return mixed : value (or null)
+     */
+    public function getDBConfig($element)
+    {
+        $db_conn=$this->db_connect_trap();
+        $sql='SELECT value from '.$this->dbPrefix.'db_config WHERE ( name=\''.$element.'\' )';
+        if (($ret_code=$db_conn->query($sql)) === false) {
+            $this->logging->log('No result in query : ' . $sql,WARN,'');
+            return null;
+        }
+        $value=$ret_code->fetch();
+        if ($value != null && isset($value['value']))
+        {
+            return $value['value'];
+        }
+        return null;
+    }
     
+    
+    //*********    Schema Management *********************/
+
     /** Create database schema
      *	@param $schema_file	string File to read schema from
      *	@param $table_prefix string to replace #PREFIX# in schema file by this

@@ -464,5 +464,110 @@ class HelperController extends TrapsController
 	    }
 	    
 	}	
+
+	/** Test a rule evaluation
+	 *	name    => name of plugin
+	 *	action  => enable | disable
+	 *	return : status=>OK/Message error
+	 */
+	public function pluginAction()
+	{
+	    $postData=$this->getRequest()->getPost();
+	    if (isset($postData['name']))
+	    {
+	        $pluginName=$postData['name'];
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No plugin name'));
+	    }
+	    if (isset($postData['action']))
+	    {
+	        $action=$postData['action'];
+	        if ($action != 'enable' && $action != 'disable')
+	        {
+	            $this->_helper->json(array('status'=>'unknown action '.$action));
+	            return;
+	        }
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No action'));
+	        return;
+	    }
+
+        try
+        {
+            require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+            $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+            $Trap = new Trap($icingaweb2_etc);
+            // Enable plugin.
+            $action=($action == 'enable') ? true : false;
+            $retVal=$Trap->pluginClass->enablePlugin($pluginName, $action);
+            
+        }
+        catch (Exception $e)
+        {
+            $this->_helper->json(array('status'=>'Action error : '.$e->getMessage() ));
+            return;
+        }
+        if ($retVal === true)
+        {
+            $this->_helper->json(array('status'=>'OK'));
+        }
+        else
+        {
+            $this->_helper->json(array('status'=>'Error, see logs'));
+        }
+	}
 	
+	/** Function evaluation
+	 *	function    => name of function
+	 *	action      => evaluate
+	 *	return : status=>OK/Message error & message : return of evaluation ('true' or 'false' )
+	 */
+	public function functionAction()
+	{
+	    $postData=$this->getRequest()->getPost();
+	    if (isset($postData['function']))
+	    {
+	        $functionString=$postData['function'];
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No function name'));
+	    }
+	    if (isset($postData['action']))
+	    {
+	        $action=$postData['action'];
+	        if ($action != 'evaluate')
+	        {
+	            $this->_helper->json(array('status'=>'unknown action '.$action));
+	            return;
+	        }
+	    }
+	    else
+	    {
+	        $this->_helper->json(array('status'=>'No action'));
+	        return;
+	    }
+	    
+	    try
+	    {
+	        require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
+	        $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
+	        $Trap = new Trap($icingaweb2_etc);
+	        // load plugins.
+	        $Trap->pluginClass->registerAllPlugins(false);
+	        $result = $Trap->pluginClass->evaluateFunctionString($functionString);	        
+	    }
+	    catch (Exception $e)
+	    {
+	        $this->_helper->json(array('status'=>'Action error : '.$e->getMessage() ));
+	        return;
+	    }
+	    
+        $result = ($result === true)?'True':'False';
+        $this->_helper->json(array('status'=>'OK','message' => $result));
+	}
 }

@@ -28,14 +28,14 @@ class Logging
     {
         if ($this->debugLevel >= $level)
         {
-            $message = '['.  date("Y/m/d H:i:s") . '] ' .
-                '[TrapDirector] ['.$this->logLevels[$level].']: ' .$message . "\n";
+            $date = '['.  date("Y/m/d H:i:s") . '] '; // no date in syslog as already there
+            $message = '[TrapDirector] ['.$this->logLevels[$level].']: ' .$message . "\n";
             
             $output = ( $destination != '' ) ? $destination : $this->outputMode;
             switch ($output)
             {
                 case 'file':
-                    file_put_contents ($this->outputFile, $message , FILE_APPEND);
+                    file_put_contents ($this->outputFile, $date.$message , FILE_APPEND);
                     break;
                 case 'syslog':
                     switch($level)
@@ -43,16 +43,16 @@ class Logging
                         case 1 : $prio = LOG_ERR;break;
                         case 2 : $prio = LOG_WARNING;break;
                         case 3 : $prio = LOG_INFO;break;
-                        case 4 : $prio = LOG_DEBUG;break;
+                        case 4 : $prio = LOG_INFO;break; // LOG_DEBUG isn't always displayed in syslog
                         default: $prio = LOG_ERR;
                     }
                     syslog($prio,$message);
                     break;
                 case 'display':
-                    echo $message;
+                    echo $date.$message;
                     break;
                 default : // nothing we can do at this point
-                    throw new Exception($message);
+                    throw new Exception($date.$message);
             }
         }
         if ($level == 1)
