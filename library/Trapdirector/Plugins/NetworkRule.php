@@ -59,7 +59,7 @@ Does not work with IPV6' // Description (can be multiline).
         $this->log('Function params : ' . print_r($params,true),DEBUG);
         if (count($params)!=3)
         {
-            throw new Exception('Invalid number of parameters : ' . array_count_values($params));
+            throw new Exception('Invalid number of parameters : ' . count($params));
         }
         
         $ip = $params[0];

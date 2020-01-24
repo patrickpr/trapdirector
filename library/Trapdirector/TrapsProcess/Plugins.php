@@ -18,7 +18,7 @@ use stdClass;
 class Plugins
 {
     /** Array of plugin objects. Keys ar plugin name
-     * @var PluginTemplate[string] $pluginsList Plugins array with name as index
+     * @var PluginTemplate[] $pluginsList Plugins array with name as index
      * $pluginsList[plugin name]['object']  : plugin object (NULL of not loaded)
      * $pluginsList[plugin name]['allOID']  : bool true if plugin catches all oid
      * $pluginsList[plugin name]['target']  : bool true if plugin can be trap processing target
@@ -169,7 +169,7 @@ class Plugins
     }
     
     /** Get enabled plugin list by name
-     * @return array[string]
+     * @return array
      */
     public function getEnabledPlugins() : array
     {
@@ -192,7 +192,7 @@ class Plugins
      */
     public function enablePlugin(string $pluginName,bool $enabled)
     {
-        if ($enabled == false)
+        if ($enabled === false)
         {
             // If plugin is defined set to disable
             if ( isset($this->pluginsList[$pluginName]))
@@ -208,7 +208,7 @@ class Plugins
             try {
                 $this->registerPlugin($pluginName);
             } catch (Exception $e) {
-                $this->logClass->log('Cannot enable plugin : ' . $e->getMessage());
+                $this->logClass->log('Cannot enable plugin : ' . $e->getMessage(),WARN);
                 return false;
             }
         }

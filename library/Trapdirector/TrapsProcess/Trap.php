@@ -7,26 +7,45 @@ use Exception;
 use stdClass as stdClass;
 use PDO;
 
+/**
+ * Main Trapdirector trap manager 
+ * 
+ * @license GPL
+ * @author Patrick Proy
+ * @package Trapdirector
+ */
 class Trap
 {
     // Configuration files and dirs
     /** @var string Icinga etc path */
-    protected $icingaweb2_etc;
-    protected $trap_module_config; //< config.ini of module
-    protected $icingaweb2_ressources; //< resources.ini of icingaweb2
-    // Options from config.ini
+    protected $icingaweb2ETC;
+    /** @var string $trapModuleConfig config.ini of module */
+    protected $trapModuleConfig;
+    /** @var string $icingaweb2Ressources resources.ini of icingaweb2 */
+    protected $icingaweb2Ressources;
+    // Options from config.ini (default values)
+    /** @var string $snmptranslate */
     protected $snmptranslate='/usr/bin/snmptranslate';
+    /** @var string $snmptranslate_dirs */
     protected $snmptranslate_dirs='/usr/share/icingaweb2/modules/trapdirector/mibs';
+    /** @var string $icinga2cmd */
     protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
-    protected $db_prefix='traps_';
+    /** @var string $dbPrefix */
+    protected $dbPrefix='traps_';
     
     // API
-    protected $api_use=false;
+    /** @var boolean $apiUse */
+    protected $apiUse=false;
+    /** @var Icinga2API $icinga2api */
     protected $icinga2api=null;
-    protected $api_hostname='';
-    protected $api_port=0;
-    protected $api_username='';
-    protected $api_password='';
+    /** @var string $apiHostname */
+    protected $apiHostname='';
+    /** @var integer $apiPort */
+    protected $apiPort=0;
+    /** @var string $apiUsername */
+    protected $apiUsername='';
+    /** @var string $apiPassword */
+    protected $apiPassword='';
     
     // Logs
     /** @var Logging Logging class. */
@@ -59,9 +78,9 @@ class Trap
     function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
     {
         // Paths of ini files
-        $this->icingaweb2_etc=$etc_dir;
-        $this->trap_module_config=$this->icingaweb2_etc."/modules/trapdirector/config.ini";
-        $this->icingaweb2_ressources=$this->icingaweb2_etc."/resources.ini";
+        $this->icingaweb2ETC=$etc_dir;
+        $this->trapModuleConfig=$this->icingaweb2ETC."/modules/trapdirector/config.ini";
+        $this->icingaweb2Ressources=$this->icingaweb2ETC."/resources.ini";
         
         //************* Setup logging
         $this->logging = new Logging();
@@ -77,15 +96,15 @@ class Trap
         $this->logging->log('Loggin started', INFO);
         
         //*************** Get options from ini files
-        if (! is_file($this->trap_module_config))
+        if (! is_file($this->trapModuleConfig))
         {
-            throw new Exception("Ini file ".$this->trap_module_config." does not exists");
+            throw new Exception("Ini file ".$this->trapModuleConfig." does not exists");
         }
-        $trapConfig=parse_ini_file($this->trap_module_config,true);
+        $trapConfig=parse_ini_file($this->trapModuleConfig,true);
         if ($trapConfig == false)
         {
-            $this->logging->log("Error reading ini file : ".$this->trap_module_config,ERROR,'syslog');
-            throw new Exception("Error reading ini file : ".$this->trap_module_config);
+            $this->logging->log("Error reading ini file : ".$this->trapModuleConfig,ERROR,'syslog');
+            throw new Exception("Error reading ini file : ".$this->trapModuleConfig);
         }
         $this->getMainOptions($trapConfig); // Get main options from ini file
         
@@ -95,7 +114,7 @@ class Trap
         $this->getDatabaseOptions(); // Get options in database
         
         //*************** Setup API
-        if ($this->api_use === true) $this->getAPI(); // Setup API
+        if ($this->apiUse === true) $this->getAPI(); // Setup API
         
         //*************** Setup MIB
         $this->mibClass = new Mib($this->logging,$this->trapsDB,$this->snmptranslate,$this->snmptranslate_dirs); // Create Mib class
@@ -134,7 +153,7 @@ class Trap
         {
             if ($message === null)
             {
-                $message='No ' . $option_name . ' in config file: '. $this->trap_module_config;
+                $message='No ' . $option_name . ' in config file: '. $this->trapModuleConfig;
             }
             $this->logging->log($message,$log_level);
             return false;
@@ -163,15 +182,15 @@ class Trap
         $this->getOptionIfSet($trapConfig,'config','icingacmd', $this->icinga2cmd);
         
         // table prefix
-        $this->getOptionIfSet($trapConfig,'config','database_prefix', $this->db_prefix);
+        $this->getOptionIfSet($trapConfig,'config','database_prefix', $this->dbPrefix);
         
         // API options
-        if ($this->getOptionIfSet($trapConfig,'config','icingaAPI_host', $this->api_hostname))
+        if ($this->getOptionIfSet($trapConfig,'config','icingaAPI_host', $this->apiHostname))
         {
-            $this->api_use=true;
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_port', $this->api_port);
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_user', $this->api_username);
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_password', $this->api_password);
+            $this->apiUse=true;
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_port', $this->apiPort);
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_user', $this->apiUsername);
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_password', $this->apiPassword);
         }
     }
     
@@ -184,38 +203,38 @@ class Trap
         // Trap database
         if (!array_key_exists('database',$trapConfig['config']))
         {
-            $this->logging->log("No database in config file: ".$this->trap_module_config,ERROR,'');
+            $this->logging->log("No database in config file: ".$this->trapModuleConfig,ERROR,'');
             return;
         }
         $dbTrapName=$trapConfig['config']['database'];
         $this->logging->log("Found database in config file: ".$dbTrapName,INFO );
         
-        if ( ($dbConfig=parse_ini_file($this->icingaweb2_ressources,true)) === false)
+        if ( ($dbConfig=parse_ini_file($this->icingaweb2Ressources,true)) === false)
         {
-            $this->logging->log("Error reading ini file : ".$this->icingaweb2_ressources,ERROR,'');
+            $this->logging->log("Error reading ini file : ".$this->icingaweb2Ressources,ERROR,'');
             return;
         }
         if (!array_key_exists($dbTrapName,$dbConfig))
         {
-            $this->logging->log("No database '.$dbTrapName.' in config file: ".$this->icingaweb2_ressources,ERROR,'');
+            $this->logging->log("No database '.$dbTrapName.' in config file: ".$this->icingaweb2Ressources,ERROR,'');
             return;
         }
         
-        $this->trapsDB = new Database($this->logging,$dbConfig[$dbTrapName],$this->db_prefix);
+        $this->trapsDB = new Database($this->logging,$dbConfig[$dbTrapName],$this->dbPrefix);
         
-        if ($this->api_use === true) return; // In case of API use, no IDO is necessary
+        if ($this->apiUse === true) return; // In case of API use, no IDO is necessary
         
         // IDO Database
         if (!array_key_exists('IDOdatabase',$trapConfig['config']))
         {
-            $this->logging->log("No IDOdatabase in config file: ".$this->trap_module_config,ERROR,'');
+            $this->logging->log("No IDOdatabase in config file: ".$this->trapModuleConfig,ERROR,'');
         }
         $dbIdoName=$trapConfig['config']['IDOdatabase'];
         
         $this->logging->log("Found IDO database in config file: ".$dbIdoName,INFO );
         if (!array_key_exists($dbIdoName,$dbConfig))
         {
-            $this->logging->log("No database '.$dbIdoName.' in config file: ".$this->icingaweb2_ressources,ERROR,'');
+            $this->logging->log("No database '.$dbIdoName.' in config file: ".$this->icingaweb2Ressources,ERROR,'');
             return;
         }
         
@@ -254,7 +273,7 @@ class Trap
     protected function getDBConfig($element)  // TODO : put this in DB class
     {
         $db_conn=$this->trapsDB->db_connect_trap();
-        $sql='SELECT value from '.$this->db_prefix.'db_config WHERE ( name=\''.$element.'\' )';
+        $sql='SELECT value from '.$this->dbPrefix.'db_config WHERE ( name=\''.$element.'\' )';
         if (($ret_code=$db_conn->query($sql)) === false) {
             $this->logging->log('No result in query : ' . $sql,WARN,'');
             return null;
@@ -292,7 +311,7 @@ class Trap
     {
         if ($this->icinga2api == null)
         {
-            $this->icinga2api = new Icinga2API($this->api_hostname,$this->api_port);
+            $this->icinga2api = new Icinga2API($this->apiHostname,$this->apiPort);
         }
         return $this->icinga2api;
     }
@@ -408,7 +427,7 @@ class Trap
         // try from database
         $db_conn=$this->trapsDB->db_connect_trap();
         
-        $sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid.'\';';
+        $sql='SELECT mib,name from '.$this->dbPrefix.'mib_cache WHERE oid=\''.$oid.'\';';
         $this->logging->log('SQL query : '.$sql,DEBUG );
         if (($ret_code=$db_conn->query($sql)) === false) {
             $this->logging->log('No result in query : ' . $sql,ERROR,'');
@@ -422,7 +441,7 @@ class Trap
         // Also check if it is an instance of OID
         $oid_instance=preg_replace('/\.[0-9]+$/','',$oid);
         
-        $sql='SELECT mib,name from '.$this->db_prefix.'mib_cache WHERE oid=\''.$oid_instance.'\';';
+        $sql='SELECT mib,name from '.$this->dbPrefix.'mib_cache WHERE oid=\''.$oid_instance.'\';';
         $this->logging->log('SQL query : '.$sql,DEBUG );
         if (($ret_code=$db_conn->query($sql)) === false) {
             $this->logging->log('No result in query : ' . $sql,ERROR,'');
@@ -463,7 +482,7 @@ class Trap
         }
         $db_conn=$this->trapsDB->db_connect_trap();
         $daysago = strtotime("-".$days." day");
-        $sql= 'delete from '.$this->db_prefix.'received where date_received < \''.date("Y-m-d H:i:s",$daysago).'\';';
+        $sql= 'delete from '.$this->dbPrefix.'received where date_received < \''.date("Y-m-d H:i:s",$daysago).'\';';
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error erasing traps : '.$sql,ERROR,'');
         }
@@ -494,7 +513,7 @@ class Trap
         $insert_col .=',status_detail';
         $insert_val .=",'". $message ."'";
         
-        $sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.')';
+        $sql= 'INSERT INTO '.$this->dbPrefix.'received (' . $insert_col . ') VALUES ('.$insert_val.')';
         
         switch ($this->trapsDB->trapDBType)
         {
@@ -568,7 +587,7 @@ class Trap
             $firstcol=0;
         }
         
-        $sql= 'INSERT INTO '.$this->db_prefix.'received (' . $insert_col . ') VALUES ('.$insert_val.')';
+        $sql= 'INSERT INTO '.$this->dbPrefix.'received (' . $insert_col . ') VALUES ('.$insert_val.')';
         switch ($this->trapsDB->trapDBType)
         {
             case 'pgsql':
@@ -629,7 +648,7 @@ class Trap
                 $firstcol=0;
             }
             
-            $sql= 'INSERT INTO '.$this->db_prefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';
+            $sql= 'INSERT INTO '.$this->dbPrefix.'received_data (' . $insert_col . ') VALUES ('.$insert_val.');';
             
             if ($db_conn->query($sql) === false) {
                 $this->logging->log('Erreur insertion data : ' . $sql,WARN,'');
@@ -646,7 +665,7 @@ class Trap
     {
         $db_conn=$this->trapsDB->db_connect_trap();
         // fetch rules based on IP in rule and OID
-        $sql='SELECT * from '.$this->db_prefix.'rules WHERE trap_oid=\''.$oid.'\' ';
+        $sql='SELECT * from '.$this->dbPrefix.'rules WHERE trap_oid=\''.$oid.'\' ';
         $this->logging->log('SQL query : '.$sql,DEBUG );
         if (($ret_code=$db_conn->query($sql)) === false) {
             $this->logging->log('No result in query : ' . $sql,WARN,'');
@@ -706,7 +725,7 @@ class Trap
     protected function add_rule_match($id, $set)
     {
         $db_conn=$this->trapsDB->db_connect_trap();
-        $sql="UPDATE ".$this->db_prefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
+        $sql="UPDATE ".$this->dbPrefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error in update query : ' . $sql,WARN,'');
         }
@@ -722,7 +741,7 @@ class Trap
      */
     public function serviceCheckResult($host,$service,$state,$display)
     {
-        if ($this->api_use === false)
+        if ($this->apiUse === false)
         {
             $send = '[' . date('U') .'] PROCESS_SERVICE_CHECK_RESULT;' .
                 $host.';' .$service .';' . $state . ';'.$display;
@@ -747,7 +766,7 @@ class Trap
             }
             
             $api = $this->getAPI();
-            $api->setCredentials($this->api_username, $this->api_password);
+            $api->setCredentials($this->apiUsername, $this->apiPassword);
             list($retcode,$retmessage)=$api->serviceCheckResult($host,$service,$state,$display,$perfdata);
             if ($retcode == false)
             {
@@ -765,7 +784,7 @@ class Trap
     public function getHostByIP($ip)
     {
         $api = $this->getAPI();
-        $api->setCredentials($this->api_username, $this->api_password);
+        $api->setCredentials($this->apiUsername, $this->apiPassword);
         return $api->getHostByIP($ip);
     }
     
@@ -928,7 +947,7 @@ class Trap
         {
             $this->trap_action='No action';
         }
-        $sql="UPDATE ".$this->db_prefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
+        $sql="UPDATE ".$this->dbPrefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error in update query : ' . $sql,WARN,'');
         }
@@ -959,7 +978,7 @@ class Trap
         $services=$services_db->fetchAll();
         
         // Get all rules
-        $sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->db_prefix."rules where revert_ok != 0;";
+        $sql_query="SELECT host_name, service_name, revert_ok FROM ".$this->dbPrefix."rules where revert_ok != 0;";
         $db_conn2=$this->trapsDB->db_connect_trap();
         if (($rules_db=$db_conn2->query($sql_query)) === false) {
             $this->logging->log('No result in query : ' . $sql_query,ERROR,'');

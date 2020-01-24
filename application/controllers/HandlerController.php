@@ -538,7 +538,11 @@ class HandlerController extends TrapsController
 				->from($this->getModuleConfig()->getTrapTableName(),$elmts)
 				->where('id=?',$trapid);
 			$trapDetail=$db->fetchRow($query);
-			if ( $trapDetail == null ) throw new Exception('No traps was found with id = '.$trapid);
+			if ( $trapDetail == null ) 
+			{
+			    $trapDetail = 'NULL';
+			    throw new Exception('No traps was found with id = '.$trapid);
+			}
 		}
 		catch (Exception $e)
 		{
@@ -585,7 +589,7 @@ class HandlerController extends TrapsController
 
 	/** Get rule detail by ruleid.
 	*	@param integer $ruleid int id of rule in rule table
-	*	@return array : column objects in db
+	*	@return object : column objects in db
 	*/
 	protected function getRuleDetail($ruleid) 
 	{

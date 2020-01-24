@@ -153,7 +153,7 @@ class TrapsController extends Controller
 			return null;
 		}
 		$retDB=$this->getDbByName($dbresource,$test,true);
-		if ($test == true) return $retDB;
+		if ($test === true) return $retDB;
 		$this->trapDB=$retDB;
 		return $this->trapDB;
 	}
