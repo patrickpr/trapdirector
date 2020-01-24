@@ -15,6 +15,7 @@ ENHANCEMENTS
 ============
 1) Added negative numbers evaluation in rules.
 2) More precise error on MIB upload errors (issue#21)
+3) Added plugins support : function (beta)
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.2
