@@ -18,7 +18,7 @@ class Trap
 {
     // Configuration files and dirs
     /** @var string Icinga etc path */
-    protected $icingaweb2ETC;
+    protected $icingaweb2Etc;
     /** @var string $trapModuleConfig config.ini of module */
     protected $trapModuleConfig;
     /** @var string $icingaweb2Ressources resources.ini of icingaweb2 */
@@ -60,11 +60,15 @@ class Trap
     // Trap received data
     protected $receivingHost;
     /** @var array	Main trap data (oid, source...) */
-    public $trap_data=array();
-    public $trap_data_ext=array(); //< Additional trap data objects (oid/value).
-    public $trap_id=null; //< trap_id after sql insert
-    public $trap_action=null; //< trap action for final write
-    protected $trap_to_db=true; //< log trap to DB
+    public $trapData=array();
+    /** @var array $trapDataExt Additional trap data objects (oid/value).*/
+    public $trapDataExt=array(); 
+    /** @var int $trapId trap_id after sql insert*/
+    public $trapId=null;
+    /** @var string $trapAction trap action for final write*/
+    public $trapAction=null;
+    /** @var boolean $trapToDb log trap to DB */
+    protected $trapToDb=true;
     
     /** @var Mib mib class */
     public $mibClass = null;
@@ -75,12 +79,12 @@ class Trap
     /** @var Plugins plugins manager **/
     public $pluginClass = null;
     
-    function __construct($etc_dir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
+    function __construct($etcDir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
     {
         // Paths of ini files
-        $this->icingaweb2ETC=$etc_dir;
-        $this->trapModuleConfig=$this->icingaweb2ETC."/modules/trapdirector/config.ini";
-        $this->icingaweb2Ressources=$this->icingaweb2ETC."/resources.ini";
+        $this->icingaweb2Etc=$etcDir;
+        $this->trapModuleConfig=$this->icingaweb2Etc."/modules/trapdirector/config.ini";
+        $this->icingaweb2Ressources=$this->icingaweb2Etc."/resources.ini";
         
         //************* Setup logging
         $this->logging = new Logging();
@@ -122,7 +126,7 @@ class Trap
         //*************** Setup Rule
         $this->ruleClass = new Rule($this->logging); //< Create Rule class
         
-        $this->trap_data=array(  // TODO : put this in a reset function (DAEMON_MODE)
+        $this->trapData=array(  // TODO : put this in a reset function (DAEMON_MODE)
             'source_ip'	=> 'unknown',
             'source_port'	=> 'unknown',
             'destination_ip'	=> 'unknown',
@@ -357,10 +361,10 @@ class Trap
         }
         else
         {
-            $this->trap_data['source_ip']=$matches[1];
-            $this->trap_data['destination_ip']=$matches[3];
-            $this->trap_data['source_port']=$matches[2];
-            $this->trap_data['destination_port']=$matches[4];
+            $this->trapData['source_ip']=$matches[1];
+            $this->trapData['destination_ip']=$matches[3];
+            $this->trapData['source_port']=$matches[2];
+            $this->trapData['destination_port']=$matches[4];
         }
         
         while (($vars=fgets($input_stream)) !==false)
@@ -375,46 +379,46 @@ class Trap
             {
                 if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
                 {
-                    $this->trap_data['trap_oid']=$matches[2];
+                    $this->trapData['trap_oid']=$matches[2];
                 }
                 else
                 {
                     $object= new stdClass;
                     $object->oid =$matches[1];
                     $object->value = $matches[2];
-                    array_push($this->trap_data_ext,$object);
+                    array_push($this->trapDataExt,$object);
                 }
             }
         }
         
-        if ($this->trap_data['trap_oid']=='unknown')
+        if ($this->trapData['trap_oid']=='unknown')
         {
-            $this->writeTrapErrorToDB("No trap oid found : check snmptrapd configuration (code 3/OID)",$this->trap_data['source_ip']);
+            $this->writeTrapErrorToDB("No trap oid found : check snmptrapd configuration (code 3/OID)",$this->trapData['source_ip']);
             $this->logging->log('no trap oid found',ERROR,'');
         }
         
         // Translate oids.
         
-        $retArray=$this->translateOID($this->trap_data['trap_oid']);
+        $retArray=$this->translateOID($this->trapData['trap_oid']);
         if ($retArray != null)
         {
-            $this->trap_data['trap_name']=$retArray['trap_name'];
-            $this->trap_data['trap_name_mib']=$retArray['trap_name_mib'];
+            $this->trapData['trap_name']=$retArray['trap_name'];
+            $this->trapData['trap_name_mib']=$retArray['trap_name_mib'];
         }
-        foreach ($this->trap_data_ext as $key => $val)
+        foreach ($this->trapDataExt as $key => $val)
         {
             $retArray=$this->translateOID($val->oid);
             if ($retArray != null)
             {
-                $this->trap_data_ext[$key]->oid_name=$retArray['trap_name'];
-                $this->trap_data_ext[$key]->oid_name_mib=$retArray['trap_name_mib'];
+                $this->trapDataExt[$key]->oid_name=$retArray['trap_name'];
+                $this->trapDataExt[$key]->oid_name_mib=$retArray['trap_name_mib'];
             }
         }
         
         
-        $this->trap_data['status']= 'waiting';
+        $this->trapData['status']= 'waiting';
         
-        return $this->trap_data;
+        return $this->trapData;
     }
     
     /**
@@ -532,7 +536,7 @@ class Trap
                 if (! isset($inserted_id_ret['id'])) {
                     $this->logging->log('Error getting id',1,'');
                 }
-                $this->trap_id=$inserted_id_ret['id'];
+                $this->trapId=$inserted_id_ret['id'];
                 break;
             case 'mysql':
                 $sql .= ';';
@@ -549,13 +553,13 @@ class Trap
                 
                 $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
                 if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
-                $this->trap_id=$inserted_id;
+                $this->trapId=$inserted_id;
                 break;
             default:
                 $this->logging->log('Error SQL type unknown  : '.$this->trapsDB->trapDBType,1,'');
         }
         
-        $this->logging->log('id found: '. $this->trap_id,INFO );
+        $this->logging->log('id found: '. $this->trapId,INFO );
     }
     
     /** Write trap data to trap database
@@ -564,7 +568,7 @@ class Trap
     {
         
         // If action is ignore -> don't send t DB
-        if ($this->trap_to_db === false) return;
+        if ($this->trapToDb === false) return;
         
         
         $db_conn=$this->trapsDB->db_connect_trap();
@@ -572,10 +576,10 @@ class Trap
         $insert_col='';
         $insert_val='';
         // add date time
-        $this->trap_data['date_received'] = date("Y-m-d H:i:s");
+        $this->trapData['date_received'] = date("Y-m-d H:i:s");
         
         $firstcol=1;
-        foreach ($this->trap_data as $col => $val)
+        foreach ($this->trapData as $col => $val)
         {
             if ($firstcol==0)
             {
@@ -605,7 +609,7 @@ class Trap
                 if (! isset($inserted_id_ret['id'])) {
                     $this->logging->log('Error getting id',ERROR,'');
                 }
-                $this->trap_id=$inserted_id_ret['id'];
+                $this->trapId=$inserted_id_ret['id'];
                 break;
             case 'mysql':
                 $sql .= ';';
@@ -622,18 +626,18 @@ class Trap
                 
                 $inserted_id=$ret_code->fetch(PDO::FETCH_ASSOC)['LAST_INSERT_ID()'];
                 if ($inserted_id==false) throw new Exception("Weird SQL error : last_insert_id returned false : open issue");
-                $this->trap_id=$inserted_id;
+                $this->trapId=$inserted_id;
                 break;
             default:
                 $this->logging->log('Error SQL type unknown : '.$this->trapsDB->trapDBType,ERROR,'');
         }
-        $this->logging->log('id found: '.$this->trap_id,INFO );
+        $this->logging->log('id found: '.$this->trapId,INFO );
         
         // Fill trap extended data table
-        foreach ($this->trap_data_ext as $value) {
+        foreach ($this->trapDataExt as $value) {
             // TODO : detect if trap value is encoded and decode it to UTF-8 for database
             $firstcol=1;
-            $value->trap_id = $this->trap_id;
+            $value->trap_id = $this->trapId;
             $insert_col='';
             $insert_val='';
             foreach ($value as $col => $val)
@@ -800,7 +804,7 @@ class Trap
         {
             $oid=$matches[1];
             $found=0;
-            foreach($this->trap_data_ext as $val)
+            foreach($this->trapDataExt as $val)
             {
                 if ($oid == $val->oid)
                 {
@@ -833,18 +837,18 @@ class Trap
      */
     public function applyRules()
     {
-        $rules = $this->getRules($this->trap_data['source_ip'],$this->trap_data['trap_oid']);
+        $rules = $this->getRules($this->trapData['source_ip'],$this->trapData['trap_oid']);
         
         if ($rules===false || count($rules)==0)
         {
             $this->logging->log('No rules found for this trap',INFO );
-            $this->trap_data['status']='unknown';
-            $this->trap_to_db=true;
+            $this->trapData['status']='unknown';
+            $this->trapToDb=true;
             return;
         }
         //print_r($rules);
         // Evaluate all rules in sequence
-        $this->trap_action=null;
+        $this->trapAction=null;
         foreach ($rules as $rule)
         {
             
@@ -852,11 +856,11 @@ class Trap
             $service_name=$rule['service_name'];
             
             $display=$this->applyDisplay($rule['display']);
-            $this->trap_action = ($this->trap_action==null)? '' : $this->trap_action . ', ';
+            $this->trapAction = ($this->trapAction==null)? '' : $this->trapAction . ', ';
             try
             {
                 $this->logging->log('Rule to eval : '.$rule['rule'],INFO );
-                $evalr=$this->ruleClass->eval_rule($rule['rule'], $this->trap_data_ext) ;
+                $evalr=$this->ruleClass->eval_rule($rule['rule'], $this->trapDataExt) ;
                 //->eval_rule($rule['rule']);
                 
                 if ($evalr == true)
@@ -868,19 +872,19 @@ class Trap
                     {
                         if ($this->serviceCheckResult($host_name,$service_name,$action,$display) == false)
                         {
-                            $this->trap_action.='Error sending status : check cmd/API';
+                            $this->trapAction.='Error sending status : check cmd/API';
                         }
                         else
                         {
                             $this->add_rule_match($rule['id'],$rule['num_match']+1);
-                            $this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+                            $this->trapAction.='Status '.$action.' to '.$host_name.'/'.$service_name;
                         }
                     }
                     else
                     {
                         $this->add_rule_match($rule['id'],$rule['num_match']+1);
                     }
-                    $this->trap_to_db=($action==-2)?false:true;
+                    $this->trapToDb=($action==-2)?false:true;
                 }
                 else
                 {
@@ -892,48 +896,48 @@ class Trap
                     {
                         if ($this->serviceCheckResult($host_name,$service_name,$action,$display)==false)
                         {
-                            $this->trap_action.='Error sending status : check cmd/API';
+                            $this->trapAction.='Error sending status : check cmd/API';
                         }
                         else
                         {
                             $this->add_rule_match($rule['id'],$rule['num_match']+1);
-                            $this->trap_action.='Status '.$action.' to '.$host_name.'/'.$service_name;
+                            $this->trapAction.='Status '.$action.' to '.$host_name.'/'.$service_name;
                         }
                     }
                     else
                     {
                         $this->add_rule_match($rule['id'],$rule['num_match']+1);
                     }
-                    $this->trap_to_db=($action==-2)?false:true;
+                    $this->trapToDb=($action==-2)?false:true;
                 }
                 // Put name in source_name
-                if (!isset($this->trap_data['source_name']))
+                if (!isset($this->trapData['source_name']))
                 {
-                    $this->trap_data['source_name']=$rule['host_name'];
+                    $this->trapData['source_name']=$rule['host_name'];
                 }
                 else
                 {
-                    if (!preg_match('/'.$rule['host_name'].'/',$this->trap_data['source_name']))
+                    if (!preg_match('/'.$rule['host_name'].'/',$this->trapData['source_name']))
                     { // only add if not present
-                        $this->trap_data['source_name'].=','.$rule['host_name'];
+                        $this->trapData['source_name'].=','.$rule['host_name'];
                     }
                 }
             }
             catch (Exception $e)
             {
                 $this->logging->log('Error in rule eval : '.$e->getMessage(),WARN,'');
-                $this->trap_action.=' ERR : '.$e->getMessage();
-                $this->trap_data['status']='error';
+                $this->trapAction.=' ERR : '.$e->getMessage();
+                $this->trapData['status']='error';
             }
             
         }
-        if ($this->trap_data['status']=='error')
+        if ($this->trapData['status']=='error')
         {
-            $this->trap_to_db=true; // Always put errors in DB for the use can see
+            $this->trapToDb=true; // Always put errors in DB for the use can see
         }
         else
         {
-            $this->trap_data['status']='done';
+            $this->trapData['status']='done';
         }
     }
     
@@ -943,11 +947,11 @@ class Trap
     public function add_rule_final($time)
     {
         $db_conn=$this->trapsDB->db_connect_trap();
-        if ($this->trap_action==null)
+        if ($this->trapAction==null)
         {
-            $this->trap_action='No action';
+            $this->trapAction='No action';
         }
-        $sql="UPDATE ".$this->dbPrefix."received SET process_time = '".$time."' , status_detail='".$this->trap_action."'  WHERE (id = '".$this->trap_id."');";
+        $sql="UPDATE ".$this->dbPrefix."received SET process_time = '".$time."' , status_detail='".$this->trapAction."'  WHERE (id = '".$this->trapId."');";
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error in update query : ' . $sql,WARN,'');
         }

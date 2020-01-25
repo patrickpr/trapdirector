@@ -15,7 +15,7 @@ use Icinga\Module\Trapdirector\Tables\TrapTable;
 
 class TrapTableList extends TrapTable
 {	
-	// Db connection : getConnection / setConnection
+	/** @var mixed $connection Db connection : getConnection / setConnection */
 	protected $connection;
 	
 	// Filters 
@@ -64,7 +64,7 @@ class TrapTableList extends TrapTable
 			
 			
 			// Render row
-			$htm .= '<tr '.' >';
+			$htm .= '<tr>';
 			foreach ( $titles as $rowkey => $title) 
 			{
 				// Check missing value
