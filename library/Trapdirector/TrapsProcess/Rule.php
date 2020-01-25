@@ -50,7 +50,15 @@ class Rule
         
     }
     
-    private function get_group($rule,&$item)
+    /**
+     * Parse elements inside () : jumps over "" and count parenthesis.
+     * Ex : ( "test" != ")test" & (1==2) ) will return "test" != ")test" & (1==2)
+     * @param string $rule : the current rule
+     * @param int $item : actual position in rule
+     * @throws Exception
+     * @return string : everything inside parenthesis
+     */
+    private function parse_parenthesis(string $rule,int &$item) : string
     {
         $item++;
         $start=$item;
@@ -79,10 +87,45 @@ class Rule
         if ($item==strlen($rule)) {throw new Exception("no closing () in ".$rule ." at " .$item);}
         $val=substr($rule,$start,$item-$start);
         $item++;
+        return $val;
+    }
+
+    
+    /**
+     * Get and eval a grouped condition - ex : (1==1)
+     * @param string $rule
+     * @param int $item
+     * @return array
+     */
+    private function get_group(string $rule,int &$item) : array
+    {
+        // gets eveything inside parenthesis
+        $val=$this->parse_parenthesis($rule, $item);
+        // Returns boolean with evaluation of all inside parenthesis
         $start=0;
-        //echo "group : ".$val."\n";
-        // returns evaluation of group as type 2 (boolean)
         return array(2,$this->evaluation($val,$start));
+    }
+
+    private function get_function(string $rule,int &$item) : array
+    {
+        // function is : __function(param1,param2...)
+        $start=$item; 
+        while (($item < strlen($rule)) && ($rule[$item] != '(' )) // Not end of string AND not opening '('
+        {
+            $item++;
+        }        
+        if ($item==strlen($rule)) {throw new Exception("no opening () for function in ".$rule ." at " .$item);}
+        
+        // get parameters between parenthesis
+        
+        $params=$this->parse_parenthesis($rule, $item);
+        
+        $val=substr($rule,$start,$item-$start);
+        
+        $this->logging->log('got function ' . $val . ' returning true for now',DEBUG);
+        
+        return array(2,true);
+        
     }
     
     protected function eval_getElement($rule,&$item)
@@ -104,6 +147,10 @@ class Rule
         if ($rule[$item] == '(')
         { // grouping
             return $this->get_group($rule, $item);
+        }
+        if ($rule[$item] == '_')
+        { // function
+            return $this->get_function($rule, $item);
         }
         throw new Exception("number/string not found in ".$rule ." at " .$item . ' : ' .$rule[$item]);
         
