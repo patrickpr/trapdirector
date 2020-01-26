@@ -260,9 +260,9 @@ class HelperController extends TrapsController
 				require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 				$icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 				$debug_level=4;
-				$Trap = new Trap($icingaweb2_etc);
-				$Trap->setLogging($debug_level,'syslog');
-				$Trap->eraseOldTraps($days);
+				$trap = new Trap($icingaweb2_etc);
+				$trap->setLogging($debug_level,'syslog');
+				$trap->eraseOldTraps($days);
 			}
 			catch (Exception $e)
 			{
@@ -283,20 +283,15 @@ class HelperController extends TrapsController
 	public function logdestinationAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['destination']))
+		
+		$destination = $this->checkPostVar($postData, 'destination', '.*');
+		$logDest=$this->getModuleConfig()->getLogDestinations();
+		if (!isset($logDest[$destination]))
 		{
-			$destination=$postData['destination'];
-			$logDest=$this->getModuleConfig()->getLogDestinations();
-			if (!isset($logDest[$destination]))
-			{
-				$this->_helper->json(array('status'=>'invalid destination : '.$destination));
-				return;
-			}
+			$this->_helper->json(array('status'=>'invalid destination : '.$destination));
+			return;
 		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No destination'));
-		}
+
 		if (isset($postData['file']))
 		{ 
 			$file=$postData['file'];
@@ -320,16 +315,8 @@ class HelperController extends TrapsController
 			}
 		}
 
-		if (isset($postData['level']))
-		{ 
-			$level=$postData['level'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No level'));
-			return;
-		}
-		
+		$level = $this->checkPostVar($postData, 'level', '[0-9]');
+				
 		try
 		{
 			$this->setDBConfigValue('log_destination',$destination);
@@ -355,40 +342,23 @@ class HelperController extends TrapsController
 	{
 	    
 	    $postData=$this->getRequest()->getPost();
-	    if (isset($postData['rule']))
-	    {
-	        $rule=$postData['rule'];
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No Rule'));
-	    }
-	    if (isset($postData['action']))
-	    {
-	        $action=$postData['action'];
-	        if ($action != 'evaluate')
-	        {
-	            $this->_helper->json(array('status'=>'unknown action '.$action));
-	            return;
-	        }
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No action'));
-	        return;
-	    }
+	   
+	    $rule = $this->checkPostVar($postData, 'rule', '.*');
+
+	    $action = $this->checkPostVar($postData, 'action', 'evaluate');
+
 	    if ($action == 'evaluate')
 	    {
 	        try
 	        {
 	            require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 	            $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	            $Trap = new Trap($icingaweb2_etc);
+	            $trap = new Trap($icingaweb2_etc);
 	            // Cleanup spaces before eval
-	            $rule=$Trap->ruleClass->eval_cleanup($rule);
+	            $rule=$trap->ruleClass->eval_cleanup($rule);
 	            // Eval
 	            $item=0;
-	            $rule=$Trap->ruleClass->evaluation($rule,$item);
+	            $rule=$trap->ruleClass->evaluation($rule,$item);
 	        }
 	        catch (Exception $e)
 	        {
@@ -409,37 +379,19 @@ class HelperController extends TrapsController
 	public function pluginAction()
 	{
 	    $postData=$this->getRequest()->getPost();
-	    if (isset($postData['name']))
-	    {
-	        $pluginName=$postData['name'];
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No plugin name'));
-	    }
-	    if (isset($postData['action']))
-	    {
-	        $action=$postData['action'];
-	        if ($action != 'enable' && $action != 'disable')
-	        {
-	            $this->_helper->json(array('status'=>'unknown action '.$action));
-	            return;
-	        }
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No action'));
-	        return;
-	    }
-
+	    
+	    $pluginName = $this->checkPostVar($postData, 'name', '.*');
+	    
+	    $action = $this->checkPostVar($postData, 'action', 'enable|disable');
+	    
         try
         {
             require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
             $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-            $Trap = new Trap($icingaweb2_etc);
+            $trap = new Trap($icingaweb2_etc);
             // Enable plugin.
             $action=($action == 'enable') ? true : false;
-            $retVal=$Trap->pluginClass->enablePlugin($pluginName, $action);
+            $retVal=$trap->pluginClass->enablePlugin($pluginName, $action);
             
         }
         catch (Exception $e)
@@ -465,40 +417,23 @@ class HelperController extends TrapsController
 	public function functionAction()
 	{
 	    $postData=$this->getRequest()->getPost();
-	    if (isset($postData['function']))
-	    {
-	        $functionString=$postData['function'];
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No function name'));
-	    }
-	    if (isset($postData['action']))
-	    {
-	        $action=$postData['action'];
-	        if ($action != 'evaluate')
-	        {
-	            $this->_helper->json(array('status'=>'unknown action '.$action));
-	            return;
-	        }
-	    }
-	    else
-	    {
-	        $this->_helper->json(array('status'=>'No action'));
-	        return;
-	    }
 	    
+	    $functionString = $this->checkPostVar($postData, 'function', '.*');
+	    
+	    $this->checkPostVar($postData, 'action', 'evaluate');
+	    
+	    // Only one action possible for now, no tests on action.
 	    try
 	    {
 	        require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 	        $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	        $Trap = new Trap($icingaweb2_etc);
+	        $trap = new Trap($icingaweb2_etc);
 	        // load all plugins in case tested function is not enabled.
-	        $Trap->pluginClass->registerAllPlugins(false);
+	        $trap->pluginClass->registerAllPlugins(false);
 	        // Clean all spaces
-	        $functionString = $Trap->ruleClass->eval_cleanup($functionString);
+	        $functionString = $trap->ruleClass->eval_cleanup($functionString);
 	        // Eval functions
-	        $result = $Trap->pluginClass->evaluateFunctionString($functionString);	        
+	        $result = $trap->pluginClass->evaluateFunctionString($functionString);	        
 	    }
 	    catch (Exception $e)
 	    {
