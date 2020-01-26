@@ -17,16 +17,9 @@ class HelperController extends TrapsController
 	public function gethostsAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['hostFilter']))
-		{
-			$hostFilter=$postData['hostFilter'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'KO'));
-			return;
-		}
-
+		
+		$hostFilter = $this->checkPostVar($postData, 'hostFilter', '.*');
+		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
 		$hosts=$this->getHostByIP($hostFilter);
@@ -37,7 +30,6 @@ class HelperController extends TrapsController
 		
 		$this->_helper->json($retHosts);
 	}
-
 	
 	/** Get hostgroup list with filter (name) : hostgroup=<hostFilter>
 	*	returns in JSON : status=>OK/NOK  hosts=>array of hosts
@@ -45,16 +37,9 @@ class HelperController extends TrapsController
 	public function gethostgroupsAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['hostFilter']))
-		{
-			$hostFilter=$postData['hostFilter'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'Error : no filter'));
-			return;
-		}
-
+		
+		$hostFilter = $this->checkPostVar($postData, 'hostfilter', '.*');
+		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
 		$hosts=$this->getHostGroupByName($hostFilter);
@@ -65,7 +50,6 @@ class HelperController extends TrapsController
 		
 		$this->_helper->json($retHosts);
 	}
-
 	
 	/** Get service list by host name ( host=<host> )
 	*	returns in JSON : 
@@ -76,6 +60,8 @@ class HelperController extends TrapsController
 	public function getservicesAction()
 	{
 		$postData=$this->getRequest()->getPost();
+		
+		$host=$this->checkPostVar($postData, 'host', '.*');
 		if (isset($postData['host']))
 		{
 			$host=$postData['host'];
@@ -120,15 +106,8 @@ class HelperController extends TrapsController
 	public function gethostgroupservicesAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['host']))
-		{
-			$host=$postData['host'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No Hosts','hostid' => -1));
-			return;
-		}
+		
+		$host = $this->checkPostVar($postData, 'host', '.*');
 		
 		$hostArray=$this->getHostGroupByName($host);
 		if (count($hostArray) > 1)
@@ -160,15 +139,9 @@ class HelperController extends TrapsController
 	public function gettrapsAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['mib']))
-		{
-			$mib=$postData['mib'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No mib'));
-			return;
-		}
+		
+		$mib = $this->checkPostVar($postData, 'mib', '.*');
+
 		try
 		{
 			$traplist=$this->getMIB()->getTrapList($mib);
@@ -189,15 +162,9 @@ class HelperController extends TrapsController
 	public function gettrapobjectsAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['trap']))
-		{
-			$trap=$postData['trap'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No trap'));
-			return;
-		}
+		
+		$trap = $this->checkPostVar($postData, 'trap', '.*');
+		
 		try
 		{
 			$objectlist=$this->getMIB()->getObjectList($trap);
@@ -234,15 +201,8 @@ class HelperController extends TrapsController
 	public function translateoidAction()
 	{
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['oid']))
-		{
-			$oid=$postData['oid'];
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No oid'));
-			return;
-		}
+		
+		$oid = $this->checkPostVar($postData, 'oid', '.*');
 		
 		// Try to get oid name from snmptranslate
 		if (($object=$this->getMIB()->translateOID($oid)) == null)
@@ -264,7 +224,6 @@ class HelperController extends TrapsController
 		}
 
 	}
-
 	
 	/** Save or execute database purge of <n> days
 	*	days=>int 
@@ -275,34 +234,11 @@ class HelperController extends TrapsController
 	{
 		
 		$postData=$this->getRequest()->getPost();
-		if (isset($postData['days']))
-		{
-			$days=$postData['days'];
-			if (!preg_match('/^[0-9]+$/',$days))
-			{
-				$this->_helper->json(array('status'=>'invalid days : '.$days));
-				return;
-			}
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No days'));
-			return;
-		}
-		if (isset($postData['action']))
-		{
-			$action=$postData['action'];
-			if ($action != 'save' && $action !='execute')
-			{
-				$this->_helper->json(array('status'=>'unknown action '.$action));
-				return;
-			}
-		}
-		else
-		{
-			$this->_helper->json(array('status'=>'No action'));
-			return;
-		}
+		
+		$days = $this->checkPostVar($postData, 'days', '^[0-9]+$');
+
+		$action = $this->checkPostVar($postData, 'action', 'save|execute');
+		
 		if ($action == 'save')
 		{
 			try
@@ -557,8 +493,11 @@ class HelperController extends TrapsController
 	        require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
 	        $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
 	        $Trap = new Trap($icingaweb2_etc);
-	        // load plugins.
+	        // load all plugins in case tested function is not enabled.
 	        $Trap->pluginClass->registerAllPlugins(false);
+	        // Clean all spaces
+	        $functionString = $Trap->ruleClass->eval_cleanup($functionString);
+	        // Eval functions
 	        $result = $Trap->pluginClass->evaluateFunctionString($functionString);	        
 	    }
 	    catch (Exception $e)
@@ -569,5 +508,22 @@ class HelperController extends TrapsController
 	    
         $result = ($result === true)?'True':'False';
         $this->_helper->json(array('status'=>'OK','message' => $result));
+	}
+
+    /**************   Utilities **********************/
+
+	private function checkPostVar(array $postData,string $postVar, string $validRegexp) : string
+	{
+	    if (!isset ($postData[$postVar]))
+	    {
+	        $this->_helper->json(array('status'=>'No ' . $postVar));
+	        return '';
+	    }
+	    if (preg_match('/'.$validRegexp.'/', $postData[$postVar]) != 1)
+	    {
+	        $this->_helper->json(array('status'=>'Unknown ' . $postVar . ' value '.$postData[$postVar]));
+	        return '';
+	    }
+	    return $postData[$postVar];
 	}
 }
