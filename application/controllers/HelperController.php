@@ -426,8 +426,8 @@ class HelperController extends TrapsController
 	    try
 	    {
 	        require_once($this->Module()->getBaseDir() .'/bin/trap_class.php');
-	        $icingaweb2_etc=$this->Config()->get('config', 'icingaweb2_etc');
-	        $trap = new Trap($icingaweb2_etc);
+	        $icingaweb2Etc=$this->Config()->get('config', 'icingaweb2_etc');
+	        $trap = new Trap($icingaweb2Etc);
 	        // load all plugins in case tested function is not enabled.
 	        $trap->pluginClass->registerAllPlugins(false);
 	        // Clean all spaces

@@ -471,8 +471,8 @@ class Plugins
     {
         $matches=array();
         // Cleanup spaces
-        $functionString = $this->trapClass->ruleClass->eval_cleanup($functionString);
-        $this->logClass->log('eval cleanup : '.$functionString,DEBUG);
+        //$functionString = $this->trapClass->ruleClass->eval_cleanup($functionString);
+        //$this->logClass->log('eval cleanup : '.$functionString,DEBUG);
         
         // Match function call
         $num=preg_match('/^__([a-zA-Z0-9]+)\((.+)\)$/', $functionString , $matches);

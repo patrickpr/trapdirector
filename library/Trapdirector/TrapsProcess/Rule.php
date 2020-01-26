@@ -7,16 +7,20 @@ use Exception;
 class Rule
 {
     
-    protected $logging; //< logging class
+    /** @var Logging $logging logging class*/
+    protected $logging;
+    
+    /** @var Trap $trapClass */
+    protected $trapClass;
     
     /**
      * Setup Rule Class
-     * @param Logging $logClass : where to log
+     * @param Trap $trapClass : To get logging class & plugin class
      */
-    function __construct($logClass)
+    function __construct($trapClass)
     {
-        $this->logging=$logClass;
-
+        $this->trapClass=$trapClass;
+        $this->logging=$trapClass->logging;
     }
 
 /**
@@ -118,13 +122,13 @@ class Rule
         
         // get parameters between parenthesis
         
-        $params=$this->parse_parenthesis($rule, $item);
+        $this->parse_parenthesis($rule, $item);
         
         $val=substr($rule,$start,$item-$start);
         
-        $this->logging->log('got function ' . $val . ' returning true for now',DEBUG);
+        $this->logging->log('got function ' . $val,DEBUG);
         
-        return array(2,true);
+        return array(2,$this->trapClass->pluginClass->evaluateFunctionString($val));
         
     }
     

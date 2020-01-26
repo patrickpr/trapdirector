@@ -37,6 +37,11 @@ test test test';
             'params'        =>  '<IP to test>,<Network IP>,<Network mask (CIDR)>', // parameters description
             'description'   =>  'Test if IP is in network, ex : __inNetwork(192.168.123.5,192.168.123.0,24) returns true
 Does not work with IPV6' // Description (can be multiline).
+        ),
+        'test' => array( // The name of the function in rules
+            'function'      =>  'testParam', // Name of the function
+            'params'        =>  '<boolean to return as string>', // parameters description
+            'description'   =>  'Returns value passed as argument' // Description (can be multiline).
         )
     );
     
@@ -103,6 +108,16 @@ Does not work with IPV6' // Description (can be multiline).
         $masq = ~ $masq;
         return ( ( $ip2 & $masq ) == ( $net2 & $masq ) );
         
+    }
+    
+    public function testParam(array $param)
+    {
+        if (count($param)!=1)
+        {
+            throw new Exception('Invalid number of parameters : ' . count($param));
+        }
+        if ($param[0] == 'true') return true;
+        return false;
     }
 }
 

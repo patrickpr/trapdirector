@@ -124,7 +124,7 @@ class Trap
         $this->mibClass = new Mib($this->logging,$this->trapsDB,$this->snmptranslate,$this->snmptranslate_dirs); // Create Mib class
         
         //*************** Setup Rule
-        $this->ruleClass = new Rule($this->logging); //< Create Rule class
+        $this->ruleClass = new Rule($this); //< Create Rule class
         
         $this->trapData=array(  // TODO : put this in a reset function (DAEMON_MODE)
             'source_ip'	=> 'unknown',
