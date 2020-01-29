@@ -38,7 +38,7 @@ class HelperController extends TrapsController
 	{
 		$postData=$this->getRequest()->getPost();
 		
-		$hostFilter = $this->checkPostVar($postData, 'hostfilter', '.*');
+		$hostFilter = $this->checkPostVar($postData, 'hostFilter', '.*');
 		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
