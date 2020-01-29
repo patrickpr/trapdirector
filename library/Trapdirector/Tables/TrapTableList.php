@@ -11,8 +11,6 @@ use Icinga\Web\Widget\Paginator;
 use Icinga\Module\Trapdirector\Tables\TrapTable;
 
 
-
-
 class TrapTableList extends TrapTable
 {	
 	/** @var mixed $connection Db connection : getConnection / setConnection */

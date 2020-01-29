@@ -152,9 +152,10 @@ class SettingsController extends TrapsController
       {
           $output=array();
           
-          exec('cat ' . $this->module->getBaseDir() .'/bin/trap_in.php | grep "\$icingaweb2_etc=" ',$output);
+          exec('cat ' . $this->module->getBaseDir() .'/bin/trap_in.php | grep "\$icingaweb2Etc=" ',$output);
           
-          if (! preg_match('#"'. $icingaweb2_etc .'"#',$output[0]))
+          
+          if (! isset($output[0]) || ! preg_match('#"'. $icingaweb2_etc .'"#',$output[0]))
           {
               $this->view->icingaEtcWarn=1;
               $this->view->icingaweb2_etc=$icingaweb2_etc;
