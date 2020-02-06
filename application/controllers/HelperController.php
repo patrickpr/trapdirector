@@ -107,7 +107,7 @@ class HelperController extends TrapsController
 	{
 		$postData=$this->getRequest()->getPost();
 		
-		$host = $this->checkPostVar($postData, 'host', '.*');
+		$host = $this->checkPostVar($postData, 'host', '.+');
 		
 		$hostArray=$this->getHostGroupByName($host);
 		if (count($hostArray) > 1)

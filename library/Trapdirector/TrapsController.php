@@ -411,7 +411,6 @@ class TrapsController extends Controller
 					's.service_object_id=a.object_id',
 					array('is_active'=>'a.is_active','name2'=>'a.name2'))
 				->where('s.host_object_id='.$id.' AND a.is_active = 1');
-
 		return $db->fetchAll($query);
 	}	
 	
@@ -435,7 +434,6 @@ class TrapsController extends Controller
 					'hostgroup_object_id')
 				->where('a.hostgroup_object_id='.$id);
 		$hosts=$db->fetchAll($query);
-		
 		$common_services=array();
 		$num_hosts=count($hosts);
 		foreach ($hosts as $key => $host)

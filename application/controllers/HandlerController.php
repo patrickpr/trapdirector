@@ -273,11 +273,13 @@ class HandlerController extends TrapsController
 	    $index=1;
 	    // check in display & rule for : OID(<oid>)
 	    $matches=array();
-	    while ( preg_match('/_OID\(([\.0-9]+)\)/',$display,$matches) ||
-	        preg_match('/_OID\(([\.0-9]+)\)/',$rule,$matches))
+	    while ( preg_match('/_OID\(([\.0-9\*]+)\)/',$display,$matches) ||
+	        preg_match('/_OID\(([\.0-9\*]+)\)/',$rule,$matches))
 	    {
 	        $curOid=$matches[1];
-	        if (($object=$this->getMIB()->translateOID($curOid)) != null)
+	        
+	        if ( (preg_match('/\*/',$curOid) == 0 ) 
+	            && ($object=$this->getMIB()->translateOID($curOid)) != null)
 	        {
 	            array_push($curObjectList, array(
 	                $index,
@@ -297,9 +299,11 @@ class HandlerController extends TrapsController
 	                'not found',
 	                'not found',
 	                '',
+	                'not found',
 	                'not found'
 	            ));
 	        }
+	        $curOid = preg_replace('/\*/','\*',$curOid);
 	        $display=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$display);
 	        $rule=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$rule);
 	        $index++;

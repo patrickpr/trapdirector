@@ -518,12 +518,17 @@ function click_button_oid_add()
 	add_oid=$("#id_trapdataNewOID").val();
 	//test_oid= new RegExp(".1[0-9\.]+");
 	if (add_oid[0] != '.') add_oid='.'+add_oid; // add starting "."
-	if ( add_oid.match(/^.1[0-9\.]+$/) == null) {
+	if ( add_oid.match(/^[0-9\.\*]+$/) == null) {
 		displayWarning("Not a valid oid");
+		return;
 	}
-	else {
+	// If not a regexp, try to translate
+	if ( add_oid.match(/\*/) == null) {
 		translateOID(add_oid,click_button_oid_add_cb);
-	}
+		return;
+	}		
+
+	click_button_oid_add_cb(count_id,add_oid,'[REGEXP]','[REGEXP]','','Unknown','This is a regexp OID');
 }
 
 function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum,description=null)

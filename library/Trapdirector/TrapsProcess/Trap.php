@@ -800,13 +800,16 @@ class Trap
     protected function applyDisplay($display)
     {
         $matches=array();
-        while (preg_match('/_OID\(([0-9\.]+)\)/',$display,$matches) == 1)
+        while (preg_match('/_OID\(([0-9\.\*]+)\)/',$display,$matches) == 1)
         {
             $oid=$matches[1];
             $found=0;
+            // Test and transform regexp
+            $oidR = $this->ruleClass->regexp_eval($oid);
+            
             foreach($this->trapDataExt as $val)
             {
-                if ($oid == $val->oid)
+                if (preg_match("/^$oidR$/",$val->oid) == 1)
                 {
                     $val->value=preg_replace('/"/','',$val->value);
                     $rep=0;

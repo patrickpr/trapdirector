@@ -325,13 +325,34 @@ class Rule
         
         return $rule2;
     }
+
+
+    /**
+     * Get '*' or '**' and transform in [0-9]+ or .* in return string
+     * @param string $oid OID in normal or regexp format. '*' will be escaped ('\*')
+     * @return string correct regexp format
+     */
+    public function regexp_eval(string &$oid)
+    {
+        // ** replaced by .*
+        $oidR=preg_replace('/\*\*/', '.*', $oid);
+        // * replaced by [0-9]+
+        $oidR=preg_replace('/\*/', '[0-9]+', $oidR);
+        
+        // replace * with \* in oid for preg_replace
+        $oid=preg_replace('/\*/', '\*', $oid);
+        
+        $this->logging->log('Regexp eval : '.$oid.' / '.$oidR,DEBUG );
+        
+        return $oidR;
+    }
+    
     
     /** Evaluation rule (uses eval_* functions recursively)
      *	@param string $rule : rule ( _OID(.1.3.6.1.4.1.8072.2.3.2.1)=_OID(.1.3.6.1.2.1.1.3.0) )
      *  @param array $oidList : OIDs values to sustitute.
      *	@return bool : true : rule match, false : rule don't match , throw exception on error.
-     */
-    
+     */   
     public function eval_rule($rule,$oidList)
     {
         if ($rule==null || $rule == '') // Empty rule is always true
@@ -343,15 +364,8 @@ class Rule
         {
             $oid=$matches[1];
             $found=0;
-            // ** replaced by .*
-            $oidR=preg_replace('/\*\*/', '.*', $oid);
-            // * replaced by [0-9]+ 
-            $oidR=preg_replace('/\*/', '[0-9]+', $oidR);
-            
-            // replace * with \* in oid for preg_replace
-            $oid=preg_replace('/\*/', '\*', $oid);
-            
-            $this->logging->log('OID in rule : '.$oid.' / '.$oidR,DEBUG );
+            // Test and transform regexp
+            $oidR = $this->regexp_eval($oid);
             
             foreach($oidList as $val)
             {
