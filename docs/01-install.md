@@ -202,10 +202,11 @@ Edit the launch options of snmptrapd
 * For RH7/CenOS7 and other systems using systemd : 
 
 In : `/usr/lib/systemd/system/snmptrapd.service`
+or `/lib/systemd/system/snmptrapd.service` 
 
 If you have a line like `EnvironmentFile=-/etc/sysconfig/snmptrapd` change this file instead (see below for RH6)
 
-Change : `Environment=OPTIONS="-Lsd"`
+if not, change : `Environment=OPTIONS="-Lsd"`
 
 To : `Environment=OPTIONS="-Lsd -n -t -Oen"`
 
