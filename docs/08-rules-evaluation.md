@@ -34,7 +34,7 @@ For example, if the system location can be .1.3.6.1.2.1.1.6.`1` or .1.3.6.1.2.1.
 
 ![rulelogic-2b](img/rule-logic-2b.jpg)
 
-`*` means 1 number and can be placed anywhere : it like a [0-9]+ regexp.
+`*` means 1 number and can be placed anywhere : it is like a [0-9]+ regexp.
 
 - .1.3.*.1.1 will match .1.3.`6`.1.1 or .1.3.`7`.1.1 but NOT .1.3.`6.6.`1
 
