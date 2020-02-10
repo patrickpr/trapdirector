@@ -50,6 +50,7 @@ Writing rules
 
 * Numbers are written directly : 1 .123  1.123 -5 -8.23
 * Any other must have " around : "eth0" "Down" "127.0.0.1"
+* To create your own function, have a look here : [API and functions](50-api-functions.md)
 
 Here is an example 
 ![rulelogic-1](img/rule-logic-1.jpg)
