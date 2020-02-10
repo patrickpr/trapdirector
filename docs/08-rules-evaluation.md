@@ -10,10 +10,43 @@ These variable are substituted with the value in the received trap and the rule 
 Note : 
 * An empty rule is always evaluated as "true"
 * If an OID is missing in the trap, the evaluation stops and the trap is in "error" state
-* Internally, the variables are stored as `_OID(<oid>)`, so one OID does not always the same variable name (the variable name is only used in creation/update web forms)
+* Internally, the variables are stored as `_OID(<oid>)`, so one OID does not always the same `$<n>$` variable name as the variable name is only used in creation/update web forms.
+
+OID selection
+-------------
+
+In a trap you will find the trap OID and additional informations which will be labeled by OID : see the mib of the trap for full description.
+
+Ex : 
+```
+.1.3.6.1.2.1.1.6.0 Just here
+.1.3.6.1.2.1.2.2.1.7 1
+```
+
+So, in this example : _OID(.1.3.6.1.2.1.1.6.0) = "Just here"
+
+If you add these OID manually in the "Trap Objects Definition", you will get `$<n>$` variables to use in rules.
+
+![rulelogic-2a](img/rule-logic-2a.jpg)
+
+If the OID inside the trap can change, you can use regexp like OID.
+For example, if the system location can be .1.3.6.1.2.1.1.6.`1` or .1.3.6.1.2.1.1.6.`2` etc... you can enter .1.3.6.1.2.1.1.6.* :
+
+![rulelogic-2b](img/rule-logic-2b.jpg)
+
+`*` means 1 number and can be placed anywhere : it like a [0-9]+ regexp.
+
+- .1.3.*.1.1 will match .1.3.`6`.1.1 or .1.3.`7`.1.1 but NOT .1.3.`6.6.`1
+
+`**` means anything : 
+
+- .1.3.6.1.** will match any OID starting with .1.3.6.1.
+- .1.3.6.1.**.5 will match any OID starting with .1.3.6.1. and ending with 5
 
 
-When writing rules : 
+
+Writing rules
+-------------
 
 * Numbers are written directly : 1 .123  1.123 -5 -8.23
 * Any other must have " around : "eth0" "Down" "127.0.0.1"
