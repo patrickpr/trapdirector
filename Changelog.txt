@@ -1,5 +1,5 @@
 Version 1.0.3
-Date : Not released
+Date : 11 Feb 2020
 Database update : No for version >= 1.0.2
 Migration path : from version > 1.0.0
 
