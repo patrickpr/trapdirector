@@ -32,9 +32,9 @@ Functions are freely added in a plugin (you can use existing one to just add one
 
 Add the function parameters in the plugin->functions array : 
 
--  $functions[<name>]['function'] : Name of the function to be called in this class
--  $functions[<name>]['params'] : Description of input parameters of function.
--  $functions[<name>]['description'] : Description. Can be multiline.
+-  $functions[name]['function'] : Name of the function to be called in this class
+-  $functions[name]['params'] : Description of input parameters of function.
+-  $functions[name]['description'] : Description. Can be multiline.
 
 Create in the plugin class a new function : 
 
@@ -42,9 +42,9 @@ Create in the plugin class a new function :
 
 where 
 
-- functionName = $functions[<name>]['function']
+- functionName = $functions[name]['function']
 - $params = params passed by rule. The function MUST check params and throw exception on error.
-- return an evaluation 
+- return an evaluation as boolean
 
 Example with inNetwork function
 -------------------------------
