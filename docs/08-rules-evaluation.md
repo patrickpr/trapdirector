@@ -4,13 +4,13 @@ Rules logic and evaluation
 Rule syntax
 -----------
 
-Rules are defined using variables, which are in $<n>$ format.
+Rules are defined using variables, which are in `$<n>$` format.
 These variable are substituted with the value in the received trap and the rule is evaluated : each variable is linked with an OID that must be found in the trap data.
 
 Note : 
 * An empty rule is always evaluated as "true"
 * If an OID is missing in the trap, the evaluation stops and the trap is in "error" state
-* Internally, the variables are stored as _OID(<oid>), so one OID does not always the same variable name (the variable name is only used in creation/update web forms)
+* Internally, the variables are stored as `_OID(<oid>)`, so one OID does not always the same variable name (the variable name is only used in creation/update web forms)
 
 
 When writing rules : 
