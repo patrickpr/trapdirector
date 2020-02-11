@@ -7,9 +7,7 @@ use Exception;
 
 /**
  * Network functions plugin
- * This class is declaring functions : 
- * 	- inNetwork 
- * 	- 
+ * This class is declaring a single function : inNetwork
  * If something goes wrong, just throw exception as it will be catched by caller
  * Logging is provided with $this->log(<message>,<level>) with level = DEBUG|INFO|WARN|CRIT.
  * A CRIT level throws an exception from the log function.
@@ -24,7 +22,8 @@ use Exception;
 class NetworkRule extends PluginTemplate
 {        
     /** @var string $description Description of plugin */
-    public $description='Network functions to use into rules';
+    public $description='Network functions to use into rules
+test test test';
     
     /** @var array[] $functions Functions of this plugin for rule eval. 
      * If no functions are declared, set to empty array

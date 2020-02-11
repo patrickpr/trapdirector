@@ -19,18 +19,29 @@ use Icinga\Module\Trapdirector\Config\MIBLoader;
 use Trapdirector\Trap;
 
 use Zend_Db_Expr;
+use Icinga\Data\ConfigObject;
 
 class TrapsController extends Controller
 {
-	protected $moduleConfig;  	//< TrapModuleConfig instance
-	protected $trapTableList; 	//< TrapTableList (by date)
-	protected $trapTableHostList; 	//< TrapTableList (by hosts)
-	protected $handlerTableList; 	//< HandlerTableList instance
-	protected $trapDB;			//< Trap database
-	protected $icingaDB;		//< Icinga IDO database;
-	protected $MIBData; 		//< MIBLoader class
-	protected $trapClass;		//< Trap class for bin/trap_class.php
-		
+	/** @var TrapModuleConfig $moduleConfig TrapModuleConfig instance */
+	protected $moduleConfig;
+	/** @var TrapTableList $trapTableList (by date)*/
+	protected $trapTableList;
+	/** @var TrapTableHostList $trapTableHostList TrapTableList (by hosts)*/
+	protected $trapTableHostList;
+	/** @var HandlerTableList $handlerTableList HandlerTableList instance*/
+	protected $handlerTableList;
+	/** @var ConfigObject $trapDB Trap database */
+	protected $trapDB;
+	/** @var ConfigObject $icingaDB Icinga IDO database */
+	protected $icingaDB;
+	/** @var MIBLoader $MIBData MIBLoader class */
+	protected $MIBData;
+	/** @var Trap $trapClass Trap class for bin/trap_class.php */
+	protected $trapClass;
+	
+	
+	
 	/** Get instance of TrapModuleConfig class
 	*	@return TrapModuleConfig
 	*/
@@ -48,6 +59,10 @@ class TrapsController extends Controller
 		return $this->moduleConfig;
 	}
 	
+	/**
+	 * Get instance of TrapTableList
+	 * @return \Icinga\Module\Trapdirector\Tables\TrapTableList
+	 */
 	public function getTrapListTable() {
 		if ($this->trapTableList == Null) {
 			$this->trapTableList = new TrapTableList();
