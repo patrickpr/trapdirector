@@ -4,6 +4,43 @@ use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
 
 /**
+ * Exception for Database test
+ *
+ * @license GPL
+ * @author Patrick Proy
+ * @package trapdirector
+ * @subpackage UI
+ *
+ */
+class DBException extends Exception
+{
+    /** @var array $returnArray */
+    private $returnArray;
+    
+    /**
+     * Buil DBException
+     * @param array $retarray
+     * @param string $message
+     * @param int $code
+     * @param Exception $previous
+     */
+    public function __construct(array $retarray, string $message = null, int $code = 0, Exception $previous = null)
+    {
+        parent::__construct($message,$code,$previous);
+        $this->returnArray = $retarray;
+    }
+    
+    /**
+     * Get exception array
+     * @return array
+     */
+    public function getArray()
+    {
+        return $this->returnArray;
+    }
+}
+
+/**
  * Database functions for user interface
  * 
  * @license GPL
@@ -40,7 +77,7 @@ class UIDatabase
      * @param int $min Minimum version
      * @param bool $test Test mode
      * @param string $DBname Name of DB
-     * @return NULL|array 
+     * @throws DBException if test = true
      */
     protected function testDbVersion($dbAdapter,int $min,bool $test, string $DBname)
     {
@@ -52,23 +89,32 @@ class UIDatabase
             $version=$dbAdapter->fetchRow($query);
             if ( ($version == null) || ! property_exists($version,'value') )
             {
-                if ($test) return array(4,$DBname);
+                if ($test === true) 
+                {
+                    throw new DBException(array(4,$DBname));
+                }
                 $this->trapController->redirectNow('trapdirector/settings?dberror=4');
-                return null;
+                exit(0);
             }
             if ($version->value < $min)
             {
-                if ($test) return array(5,$version->value,$min);
+                if ($test === true) 
+                {
+                    throw new DBException(array(5,$version->value,$min));
+                }
                 $this->trapController->redirectNow('trapdirector/settings?dberror=5');
-                return null;
+                exit(0);
             }
         }
         catch (Exception $e)
         {
-            if ($test) return array(3,$DBname,$e->getMessage());
+            if ($test === true) 
+            {
+                throw new DBException(array(3,$DBname,$e->getMessage()));
+            }
             $this->trapController->redirectNow('trapdirector/settings?dberror=4');
         }
-        return null;
+        return;
     }
     
     /**	Get Database connexion
@@ -127,7 +173,7 @@ class UIDatabase
         if ( ! $dbresource )
         {
             if ($test) return array(1,'');
-            $this->redirectNow('trapdirector/settings?dberror=1');
+            $this->trapController->redirectNow('trapdirector/settings?dberror=1');
             return null;
         }
         $retDB=$this->getDbByName($dbresource,$test,true);
@@ -147,7 +193,7 @@ class UIDatabase
     {
         if ($this->idoDB != null && $test = false) return $this->idoDB;
         // TODO : get ido database directly from icingaweb2 config -> (or not if using only API)
-        $dbresource=$this->Config()->get('config', 'IDOdatabase');;
+        $dbresource=$this->trapController->Config()->get('config', 'IDOdatabase');;
         
         if ( ! $dbresource )
         {
@@ -167,7 +213,7 @@ class UIDatabase
             return null;
         }
         
-        if ($test == false)
+        if ($test === false)
         {
             $this->idoDB = $dbconn->getDbAdapter();
             return $this->idoDB;
