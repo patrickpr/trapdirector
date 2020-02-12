@@ -61,6 +61,9 @@ class UIDatabase
     /** @var Zend_Db_Adapter_Abstract $trapDB Icinga IDO database*/
     private $idoDB;
     
+    /** @var array $testResult */
+    private $testResult;
+    
     /**
      * 
      * @param TrapsController $trapCtrl
@@ -77,7 +80,8 @@ class UIDatabase
      * @param int $min Minimum version
      * @param bool $test Test mode
      * @param string $DBname Name of DB
-     * @throws DBException if test = true
+     * @return bool true if OK, false if version < min version
+     * @throws Exception if error and test = true
      */
     protected function testDbVersion($dbAdapter,int $min,bool $test, string $DBname)
     {
@@ -91,39 +95,44 @@ class UIDatabase
             {
                 if ($test === true) 
                 {
-                    throw new DBException(array(4,$DBname));
+                    $this->testResult = array(4,$DBname);
+                    return false;
                 }
                 $this->trapController->redirectNow('trapdirector/settings?dberror=4');
-                exit(0);
+                return false;
             }
             if ($version->value < $min)
             {
                 if ($test === true) 
                 {
-                    throw new DBException(array(5,$version->value,$min));
+                    $this->testResult = array(5,$version->value,$min);
+                    return false;
                 }
                 $this->trapController->redirectNow('trapdirector/settings?dberror=5');
-                exit(0);
+                return false;
             }
         }
         catch (Exception $e)
         {
             if ($test === true) 
             {
-                throw new DBException(array(3,$DBname,$e->getMessage()));
+                $this->testResult = array(3,$DBname,$e->getMessage());
+                return false;
             }
             $this->trapController->redirectNow('trapdirector/settings?dberror=4');
+            return false;
         }
-        return;
+        return true;
     }
     
     /**	Get Database connexion
      *	@param $DBname string DB name in resource.ini_ge
      *	@param $test bool if set to true, returns error code and not database
      *	@param $test_version bool if set to flase, does not test database version of trapDB
-     *	@return Zend_Db_Adapter_Abstract|array|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
+     *  @throws DBException if test = true and error
+     *	@return Zend_Db_Adapter_Abstract|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
      */
-    protected function getDbByName($DBname,$test=false,$test_version=true)
+    protected function getDbByName($DBname , $test = false , $test_version = true)
     {
         try
         {
@@ -131,7 +140,10 @@ class UIDatabase
         }
         catch (Exception $e)
         {
-            if ($test) return array(2,$DBname);
+            if ($test === true) 
+            {
+                throw new DBException(array(2,$DBname));
+            }
             $this->trapController->redirectNow('trapdirector/settings?dberror=2');
             return null;
         }
@@ -143,19 +155,22 @@ class UIDatabase
         }
         catch (Exception $e)
         {
-            if ($test) return array(3,$DBname,$e->getMessage());
+            if ($test === true)
+            {
+                throw new DBException(array(3,$DBname,$e->getMessage()));
+            }
             $this->trapController->redirectNow('trapdirector/settings?dberror=3');
             return null;
         }
         
         if ($test_version == true) {
             $testRet=$this->testDbVersion($dbAdapter, $this->trapController->getModuleConfig()->getDbMinVersion(), $test, $DBname);
-            if ($testRet != null) 
+            if ($testRet !== true) 
             {
-                return $testRet;
+                throw new DBException($this->testResult);
             }
         }
-        if ($test) return array(0,'');
+ 
         return $dbAdapter;
     }
 
@@ -172,15 +187,16 @@ class UIDatabase
         
         if ( ! $dbresource )
         {
-            if ($test) return array(1,'');
+            if ($test === true) 
+            {
+                throw new DBException(array(1,''));
+            }
             $this->trapController->redirectNow('trapdirector/settings?dberror=1');
             return null;
         }
-        $retDB=$this->getDbByName($dbresource,$test,true);
+
+        $this->trapDB = $this->getDbByName($dbresource,$test,true);
         
-        if ($test === true) return $retDB;
-        
-        $this->trapDB=$retDB;
         return $this->trapDB;
     }
     
@@ -191,13 +207,16 @@ class UIDatabase
      */
     public function getIdoDb($test=false)
     {
-        if ($this->idoDB != null && $test = false) return $this->idoDB;
+        if ($this->idoDB != null && $test === false) return $this->idoDB;
         // TODO : get ido database directly from icingaweb2 config -> (or not if using only API)
         $dbresource=$this->trapController->Config()->get('config', 'IDOdatabase');;
         
         if ( ! $dbresource )
         {
-            if ($test) return array(1,'No database in config.ini');
+            if ($test === true) 
+            {
+                throw new DBException(array(1,'No database in config.ini'));
+            }
             $this->redirectNow('trapdirector/settings?idodberror=1');
             return null;
         }
@@ -208,7 +227,10 @@ class UIDatabase
         }
         catch (Exception $e)
         {
-            if ($test) return array(2,"Database $dbresource does not exists in IcingaWeb2");
+            if ($test === true)
+            {
+                throw new DBException( array(2,"Database $dbresource does not exists in IcingaWeb2") );
+            }
             $this->redirectNow('trapdirector/settings?idodberror=2');
             return null;
         }
@@ -231,10 +253,10 @@ class UIDatabase
         }
         catch (Exception $e)
         {
-            return array(3,"Error connecting to $dbresource : " . $e->getMessage());
+            throw new DBException( array(3,"Error connecting to $dbresource : " . $e->getMessage()));
         }
         
-        return array(0,'');
+        return $this->idoDB;
     }
     
 }
