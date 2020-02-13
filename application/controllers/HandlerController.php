@@ -428,7 +428,7 @@ class HandlerController extends TrapsController
 		{
 			try
 			{
-				$this->deleteRule($postData[$params['db_rule']['post']]);
+			    $this->getUIDatabase()->deleteRule($postData[$params['db_rule']['post']]);
 			}
 			catch (Exception $e)
 			{
@@ -504,11 +504,11 @@ class HandlerController extends TrapsController
 			// echo '<br>';	print_r($dbparams);echo '<br>';
 			if ($params['db_rule']['val'] == -1 ) 
 			{
-				$ruleID=$this->addHandlerRule($dbparams);
+			    $ruleID=$this->getUIDatabase()->addHandlerRule($dbparams);
 			}
 			else
 			{
-				$this->updateHandlerRule($dbparams,$params['db_rule']['val']);
+			    $this->getUIDatabase()->updateHandlerRule($dbparams,$params['db_rule']['val']);
 				$ruleID=$params['db_rule']['val'];
 			}
 		}

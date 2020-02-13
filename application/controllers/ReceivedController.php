@@ -217,12 +217,12 @@ class ReceivedController extends TrapsController
 		}
 		if ($action =="count")
 		{
-			$this->_helper->json(array('status'=>'OK','count'=>$this->countTrap($ip,$oid)));
+			$this->_helper->json(array('status'=>'OK','count'=>$this->getUIDatabase()->countTrap($ip,$oid)));
 			return;
 		}
 		if ($action =="delete")
 		{
-			$this->_helper->json(array('status'=>'OK','count'=>$this->deleteTrap($ip,$oid)));
+		    $this->_helper->json(array('status'=>'OK','count'=>$this->getUIDatabase()->deleteTrap($ip,$oid)));
 			return;
 		}		
 		$this->_helper->json(array('status'=>'unknown action'));

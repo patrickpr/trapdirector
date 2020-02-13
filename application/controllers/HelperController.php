@@ -243,7 +243,7 @@ class HelperController extends TrapsController
 		{
 			try
 			{
-				$this->setDBConfigValue('db_remove_days',$days);
+			    $this->getUIDatabase()->setDBConfigValue('db_remove_days',$days);
 			}
 			catch (Exception $e)
 			{
@@ -319,9 +319,9 @@ class HelperController extends TrapsController
 				
 		try
 		{
-			$this->setDBConfigValue('log_destination',$destination);
-			$this->setDBConfigValue('log_file',$file);
-			$this->setDBConfigValue('log_level',$level);
+		    $this->getUIDatabase()->setDBConfigValue('log_destination',$destination);
+		    $this->getUIDatabase()->setDBConfigValue('log_file',$file);
+		    $this->getUIDatabase()->setDBConfigValue('log_level',$level);
 		}
 		catch (Exception $e)
 		{

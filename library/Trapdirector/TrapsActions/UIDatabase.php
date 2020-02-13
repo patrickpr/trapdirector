@@ -54,7 +54,7 @@ class DBException extends Exception
  * @subpackage UI
  *
  */
-class UIDatabase
+class UIDatabase extends TrapDBQuery
 {
     
     /** @var TrapsController $trapController TrapController 'parent' class */
@@ -76,6 +76,11 @@ class UIDatabase
     function __construct(TrapsController $trapCtrl)
     {
         $this->trapController=$trapCtrl;
+    }
+    
+    protected function getTrapCtrl()
+    {
+        return $this->trapController;
     }
     
     /**

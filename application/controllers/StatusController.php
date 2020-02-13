@@ -39,7 +39,7 @@ class StatusController extends TrapsController
 			);			
 			$this->view->rule_count=$dbConn->fetchOne($query);			
  			
-			$this->view->trap_days_delete=$this->getDBConfigValue('db_remove_days');
+			$this->view->trap_days_delete=$this->getUIDatabase()->getDBConfigValue('db_remove_days');
 			
 		}
 		catch (Exception $e)
@@ -51,11 +51,11 @@ class StatusController extends TrapsController
 		
 		try
 		{		
-			$this->view->currentLogDestination=$this->getDBConfigValue('log_destination');
+		    $this->view->currentLogDestination=$this->getUIDatabase()->getDBConfigValue('log_destination');
 			$this->view->logDestinations=$this->getModuleConfig()->getLogDestinations();
-			$this->view->currentLogFile=$this->getDBConfigValue('log_file');
+			$this->view->currentLogFile=$this->getUIDatabase()->getDBConfigValue('log_file');
 			$this->view->logLevels=$this->getModuleConfig()->getlogLevels();
-			$this->view->currentLogLevel=$this->getDBConfigValue('log_level');
+			$this->view->currentLogLevel=$this->getUIDatabase()->getDBConfigValue('log_level');
 		}
 		catch (Exception $e)
 		{
