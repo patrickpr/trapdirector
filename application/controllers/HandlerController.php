@@ -612,12 +612,13 @@ class HandlerController extends TrapsController
 		    $query = $dbConn->select()
 				->from($this->getModuleConfig()->getTrapRuleName(),$queryArray)
 				->where('id=?',$ruleid);
-				$ruleDetail=$dbConn->fetchRow($query);
+			$ruleDetail=$dbConn->fetchRow($query);
 			if ( $ruleDetail == null ) throw new Exception('No rule was found with id = '.$ruleid);
 		}
 		catch (Exception $e)
 		{
 			$this->displayExitError('Update handler : get rule detail',$e->getMessage());
+			throw new Exception('Error : ',$e->getMessage());
 		}
 
 		return $ruleDetail;

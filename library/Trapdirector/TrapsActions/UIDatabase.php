@@ -249,7 +249,7 @@ class UIDatabase
         
         if ( ! $dbresource )
         {
-            $this->redirectNow('trapdirector/settings?idodberror=1');
+            $this->trapController->redirectNow('trapdirector/settings?idodberror=1');
             return null;
         }
         
@@ -259,7 +259,7 @@ class UIDatabase
         }
         catch (Exception $e)
         {
-            $this->redirectNow('trapdirector/settings?idodberror=2');
+            $this->trapController->redirectNow('trapdirector/settings?idodberror=2');
             return null;
         }
 
