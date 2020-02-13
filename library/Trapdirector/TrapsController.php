@@ -5,8 +5,6 @@ namespace Icinga\Module\Trapdirector;
 use Icinga\Web\Controller;
 
 use Icinga\Data\Paginatable;
-use Icinga\Data\Db\DbConnection as IcingaDbConnection;
-
 
 use Exception;
 
@@ -15,6 +13,7 @@ use Icinga\Module\Trapdirector\Tables\TrapTableList;
 use Icinga\Module\Trapdirector\Tables\TrapTableHostList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
+use Icinga\Module\Trapdirector\TrapsActions\UIDatabase;
 
 use Trapdirector\Trap;
 
@@ -39,6 +38,8 @@ class TrapsController extends Controller
 	protected $MIBData;
 	/** @var Trap $trapClass Trap class for bin/trap_class.php */
 	protected $trapClass;
+	/** @var UIDatabase $UIDatabase */
+	protected $UIDatabase;
 	
 	
 	
@@ -71,6 +72,9 @@ class TrapsController extends Controller
 		return $this->trapTableList;
 	}
 	
+	/**
+	 * @return \Icinga\Module\Trapdirector\Tables\TrapTableHostList
+	 */
 	public function getTrapHostListTable()
 	{
 	    if ($this->trapTableHostList == Null) 
@@ -81,6 +85,9 @@ class TrapsController extends Controller
 	    return $this->trapTableHostList;
 	}
 	
+	/**
+	 * @return \Icinga\Module\Trapdirector\Tables\HandlerTableList
+	 */
 	public function getHandlerListTable() 
 	{
 		if ($this->handlerTableList == Null) 
@@ -90,135 +97,18 @@ class TrapsController extends Controller
 		}
 		return $this->handlerTableList;
 	}	
-	
-	/**	Get Database connexion
-	*	@param $DBname string DB name in resource.ini_ge
-	*	@param $test bool if set to true, returns error code and not database
-	*	@param $test_version bool if set to flase, does not test database version of trapDB
-	*	@return array<integer,mixed>|mixed : if test=false, returns DB connexion, else array(error_num,message) or null on error.
-	*/
-	public function getDbByName($DBname,$test=false,$test_version=true)
-	{
-		try 
-		{
-			$dbconn = IcingaDbConnection::fromResourceName($DBname);
-		} 
-		catch (Exception $e)
-		{
-			if ($test) return array(2,$DBname);
-			$this->redirectNow('trapdirector/settings?dberror=2');
-			return null;
-		}
-		if ($test_version == true) {
-			try 
-			{
-				$db=$dbconn->getConnection();
-			}
-			catch (Exception $e) 
-			{
-				if ($test) return array(3,$DBname,$e->getMessage());
-				$this->redirectNow('trapdirector/settings?dberror=3');
-				return null;
-			}
-			try
-			{
-				$query = $db->select()
-					->from($this->getModuleConfig()->getDbConfigTableName(),'value')
-					->where('name=\'db_version\'');
-				$version=$db->fetchRow($query);
-				if ( ($version == null) || ! property_exists($version,'value') )
-				{
-					if ($test) return array(4,$DBname);
-					$this->redirectNow('trapdirector/settings?dberror=4');
-					return null;
-				}
-				if ($version->value < $this->getModuleConfig()->getDbMinVersion()) 
-				{
-					if ($test) return array(5,$version->value,$this->getModuleConfig()->getDbMinVersion());
-					$this->redirectNow('trapdirector/settings?dberror=5');
-					return null;
-				}
-			}
-			catch (Exception $e) 
-			{
-				if ($test) return array(3,$DBname,$e->getMessage());
-				$this->redirectNow('trapdirector/settings?dberror=4');
-				return null;
-			}
-		}
-		if ($test) return array(0,'');
-		return $dbconn;
-	}
 
 	/**
-	 * 
-	 * @param boolean $test
-	 * @return array<integer,mixed>|mixed|number[]|string[]|NULL
+	 * @return UIDatabase
 	 */
-	public function getDb($test=false)
+	public function getUIDatabase()
 	{
-		if ($this->trapDB != null && $test = false) return $this->trapDB;
-		
-		$dbresource=$this->Config()->get('config', 'database');
-		
-		if ( ! $dbresource )
-		{	
-			if ($test) return array(1,'');
-			$this->redirectNow('trapdirector/settings?dberror=1');
-			return null;
-		}
-		$retDB=$this->getDbByName($dbresource,$test,true);
-		if ($test === true) return $retDB;
-		$this->trapDB=$retDB;
-		return $this->trapDB;
-	}
-	
-	public function getIdoDb($test=false)
-	{
-		if ($this->icingaDB != null && $test = false) return $this->icingaDB;
-		// TODO : get ido database directly from icingaweb2 config -> (or not if using only API)
-		$dbresource=$this->Config()->get('config', 'IDOdatabase');;
-
-		if ( ! $dbresource )
-		{
-		    if ($test) return array(1,'No database in config.ini');
-		    $this->redirectNow('trapdirector/settings?idodberror=1');
-		    return null;
-		}
-		
-		try
-		{
-		    $dbconn = IcingaDbConnection::fromResourceName($dbresource);
-		}
-		catch (Exception $e)
-		{
-		    if ($test) return array(2,"Database $dbresource does not exists in IcingaWeb2");
-		    $this->redirectNow('trapdirector/settings?idodberror=2');
-		    return null;
-		}
-		
-		if ($test == false) 
-		{ 
-			$this->icingaDB = $dbconn; 
-			return $this->icingaDB;
-		}
-		
-		try
-		{
-		    $query = $dbconn->select()
-		    ->from('icinga_dbversion',array('version'));
-		    $version=$dbconn->fetchRow($query);
-		    if ( ($version == null) || ! property_exists($version,'version') )
-		    {
-		        return array(4,"$dbresource does not look like an IDO database");
-		    }
-		}
-		catch (Exception $e)
-		{
-			return array(3,"Error connecting to $dbresource : " . $e->getMessage());
-		}
-		
-		return array(0,'');
+	    if ($this->UIDatabase == Null)
+	    {
+	        $this->UIDatabase = new UIDatabase($this);
+	       
+	    }
+	    return $this->UIDatabase;
 	}
 	
     protected function applyPaginationLimits(Paginatable $paginatable, $limit = 25, $offset = null)
@@ -290,10 +180,12 @@ class TrapsController extends Controller
 	{
 		if ($this->MIBData == null)
 		{
+		    $dbConn = $this->getUIDatabase()->getDbConn();
+		    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 			$this->MIBData=new MIBLoader(
 				$this->Config()->get('config', 'snmptranslate'),
 				$this->Config()->get('config', 'snmptranslate_dirs'),
-				$this->getDb(),
+			    $dbConn,
 				$this->getModuleConfig()
 			);
 		}
@@ -309,9 +201,11 @@ class TrapsController extends Controller
 	protected function getHostByIP($ip) 
 	{
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
-		$db = $this->getIdoDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getIdoDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
 		// TODO : check for SQL injections
-		$query=$db->select()
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name' => 'a.name1','id' => 'object_id'))
@@ -320,7 +214,7 @@ class TrapsController extends Controller
 					'b.host_object_id=a.object_id',
 					array('display_name' => 'b.display_name'))
 				->where("(b.address LIKE '%".$ip."%' OR b.address6 LIKE '%".$ip."%' OR a.name1 LIKE '%".$ip."%' OR b.display_name LIKE '%".$ip."%') and a.is_active = 1");
-		return $db->fetchAll($query);
+		return $dbConn->fetchAll($query);
 	}
 
 	/** Get host(s) by name in IDO database
@@ -330,9 +224,11 @@ class TrapsController extends Controller
 	protected function getHostByName($name) 
 	{
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
-		$db = $this->getIdoDb()->getConnection();
-		// TODO : check for SQL injections
-		$query=$db->select()
+	    $dbConn = $this->getUIDatabase()->getIdoDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
+	    // TODO : check for SQL injections
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name' => 'a.name1','id' => 'object_id'))
@@ -341,7 +237,7 @@ class TrapsController extends Controller
 					'b.host_object_id=a.object_id',
 					array('display_name' => 'b.display_name'))
 				->where("a.name1 = '$name'");
-		return $db->fetchAll($query);
+		return $dbConn->fetchAll($query);
 	}	
 	
 	/** Get host groups by  name in IDO database
@@ -351,9 +247,10 @@ class TrapsController extends Controller
 	protected function getHostGroupByName($ip) 
 	{
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
-		$db = $this->getIdoDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getIdoDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// TODO : check for SQL injections
-		$query=$db->select()
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name' => 'a.name1','id' => 'object_id'))
@@ -362,7 +259,7 @@ class TrapsController extends Controller
 					'b.hostgroup_object_id=a.object_id',
 					array('display_name' => 'b.alias'))
 				->where("(a.name1 LIKE '%".$ip."%' OR b.alias LIKE '%".$ip."%') and a.is_active = 1");
-		return $db->fetchAll($query);
+		return $dbConn->fetchAll($query);
 	}
 
 	
@@ -373,8 +270,9 @@ class TrapsController extends Controller
 	protected function getHostInfoByID($id) 
 	{
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
-		$db = $this->getIdoDb()->getConnection();
-		$query=$db->select()
+		$dbConn = $this->getUIDatabase()->getIdoDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name' => 'a.name1'))
@@ -383,7 +281,7 @@ class TrapsController extends Controller
 					'b.host_object_id=a.object_id',
 					array('ip4' => 'b.address', 'ip6' => 'b.address6', 'display_name' => 'b.display_name'))
 				->where("a.object_id = '".$id."'");
-		return $db->fetchRow($query);
+		return $dbConn->fetchRow($query);
 	}
 
 	
@@ -394,8 +292,9 @@ class TrapsController extends Controller
 	protected function getHostByObjectID($id) // TODO : duplicate of getHostInfoByID above
 	{
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
-		$db = $this->getIdoDb()->getConnection();
-		$query=$db->select()
+		$dbConn = $this->getUIDatabase()->getIdoDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name' => 'a.name1','id' => 'a.object_id'))
@@ -404,7 +303,7 @@ class TrapsController extends Controller
 					'b.host_object_id=a.object_id',
 					array('display_name' => 'b.display_name' , 'ip' => 'b.address', 'ip6' => 'b.address6'))
 				->where('a.object_id = ?',$id);
-		return $db->fetchRow($query);
+		return $dbConn->fetchRow($query);
 	}	
 	
 	/** Get services from object ( host_object_id) in IDO database
@@ -416,8 +315,9 @@ class TrapsController extends Controller
 	{
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
-		$db = $this->getIdoDb()->getConnection();
-		$query=$db->select()
+		$dbConn = $this->getUIDatabase()->getIdoDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		$query=$dbConn->select()
 				->from(
 					array('s' => 'icinga_services'),
 					array('name' => 's.display_name','id' => 's.service_object_id'))
@@ -426,7 +326,7 @@ class TrapsController extends Controller
 					's.service_object_id=a.object_id',
 					array('is_active'=>'a.is_active','name2'=>'a.name2'))
 				->where('s.host_object_id='.$id.' AND a.is_active = 1');
-		return $db->fetchAll($query);
+		return $dbConn->fetchAll($query);
 	}	
 	
 	/** Get services from hostgroup object id ( hostgroup_object_id) in IDO database
@@ -438,8 +338,9 @@ class TrapsController extends Controller
 	protected function getServicesByHostGroupid($id) 
 	{		
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
-		$db = $this->getIdoDb()->getConnection();
-		$query=$db->select()
+		$dbConn = $this->getUIDatabase()->getIdoDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		$query=$dbConn->select()
 				->from(
 					array('s' => 'icinga_hostgroup_members'),
 					array('host_object_id' => 's.host_object_id'))
@@ -448,7 +349,7 @@ class TrapsController extends Controller
 					's.hostgroup_id=a.hostgroup_id',
 					'hostgroup_object_id')
 				->where('a.hostgroup_object_id='.$id);
-		$hosts=$db->fetchAll($query);
+		$hosts=$dbConn->fetchAll($query);
 		$common_services=array();
 		$num_hosts=count($hosts);
 		foreach ($hosts as $key => $host)
@@ -489,13 +390,15 @@ class TrapsController extends Controller
 	*/
 	protected function getServiceIDByName($hostname,$name) 
 	{
-		$db = $this->getIdoDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getIdoDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
 		if ($name == null)
 		{
 			return array();
 		}
 
-		$query=$db->select()
+		$query=$dbConn->select()
 				->from(
 					array('s' => 'icinga_services'),
 					array('name' => 's.display_name','id' => 's.service_object_id'))
@@ -505,7 +408,7 @@ class TrapsController extends Controller
 					'is_active')
 				->where('a.name2=\''.$name.'\' AND a.name1=\''.$hostname.'\' AND a.is_active = 1');
 
-		return $db->fetchAll($query);
+		return $dbConn->fetchAll($query);
 	}
 	
 	/** Get object name from object_id  in IDO database
@@ -517,14 +420,16 @@ class TrapsController extends Controller
 	{
 		// select a.name1, b.display_name from icinga.icinga_objects AS a , icinga.icinga_hosts AS b WHERE (b.address = '192.168.56.101' OR b.address6= '123456') and b.host_object_id=a.object_id
 		if (!preg_match('/^[0-9]+$/',$id)) { throw new Exception('Invalid id');  }
-		$db = $this->getIdoDb()->getConnection();
-		$query=$db->select()
+		$dbConn = $this->getUIDatabase()->getIdoDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		
+		$query=$dbConn->select()
 				->from(
 					array('a' => 'icinga_objects'),
 					array('name1' => 'a.name1','name2' => 'a.name2'))
 				->where('a.object_id='.$id.' AND a.is_active = 1');
 
-		return $db->fetchRow($query);
+		return $dbConn->fetchRow($query);
 	}		
 
 	/** Add handler rule in traps DB
@@ -534,13 +439,14 @@ class TrapsController extends Controller
 	protected function addHandlerRule($params)
 	{
 		// TODO Check for rule consistency
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// Add last modified date = creation date and username
 		$params['created'] = new Zend_Db_Expr('NOW()');
 		$params['modified'] = new 	Zend_Db_Expr('NOW()');
 		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
-		$query=$db->insert(
+		$query=$dbConn->insert(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$params
 		);
@@ -548,7 +454,7 @@ class TrapsController extends Controller
 		{
 		  return null;
 		}
-		return $db->lastInsertId();
+		return $dbConn->lastInsertId();
 	}	
 
 	/** Update handler rule in traps DB
@@ -559,12 +465,13 @@ class TrapsController extends Controller
 	protected function updateHandlerRule($params,$ruleID)
 	{
 		// TODO Check for rule consistency
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// Add last modified date = creation date and username
 		$params['modified'] = new 	Zend_Db_Expr('NOW()');
 		$params['modifier'] = $this->Auth()->getUser()->getUsername();
 		
-		$numRows=$db->update(
+		$numRows=$dbConn->update(
 			$this->getModuleConfig()->getTrapRuleName(),
 			$params,
 			'id='.$ruleID
@@ -578,9 +485,11 @@ class TrapsController extends Controller
 	protected function deleteRule($ruleID)
 	{
 		if (!preg_match('/^[0-9]+$/',$ruleID)) { throw new Exception('Invalid id');  }
-		$db = $this->getDb()->getConnection();
+
+		$dbConn = $this->getUIDatabase()->getDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
-		$query=$db->delete(
+		$query=$dbConn->delete(
 			$this->getModuleConfig()->getTrapRuleName(),
 			'id='.$ruleID
 		);
@@ -594,7 +503,8 @@ class TrapsController extends Controller
 	protected function deleteTrap($ip,$oid)
 	{
 		
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		$condition=null;
 		if ($ip != null)
 		{
@@ -606,7 +516,7 @@ class TrapsController extends Controller
 			$condition.="trap_oid='$oid'";
 		}
 		if($condition === null) return null;
-		$query=$db->delete(
+		$query=$dbConn->delete(
 			$this->getModuleConfig()->getTrapTableName(),
 			$condition
 		);
@@ -622,7 +532,9 @@ class TrapsController extends Controller
 	protected function countTrap($ip,$oid)
 	{
 		
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
 		$condition=null;
 		if ($ip != null)
 		{
@@ -634,12 +546,12 @@ class TrapsController extends Controller
 			$condition.="trap_oid='$oid'";
 		}
 		if($condition === null) return 0;
-		$query=$db->select()
+		$query=$dbConn->select()
 			->from(
 				$this->getModuleConfig()->getTrapTableName(),
 				array('num'=>'count(*)'))
 			->where($condition);
-		$return_row=$db->fetchRow($query);
+		$return_row=$dbConn->fetchRow($query);
 		return $return_row->num;
 	}		
 	
@@ -649,14 +561,15 @@ class TrapsController extends Controller
 	protected function getDBConfigValue($element)
 	{
 	
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
-		$query=$db->select()
+	    $query=$dbConn->select()
 			->from(
 				$this->getModuleConfig()->getDbConfigTableName(),
 				array('value'=>'value'))
 			->where('name=?',$element);
-		$return_row=$db->fetchRow($query);
+		$return_row=$dbConn->fetchRow($query);
 		if ($return_row==null)  // value does not exists
 		{
 			$default=$this->getModuleConfig()->getDBConfigDefaults();
@@ -683,9 +596,10 @@ class TrapsController extends Controller
 	protected function addDBConfigValue($element,$value)
 	{
 	
-		$db = $this->getDb()->getConnection();
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
-		$query=$db->insert(
+	    $query=$dbConn->insert(
 				$this->getModuleConfig()->getDbConfigTableName(),
 				array(
 					'name' => $element,
@@ -702,8 +616,10 @@ class TrapsController extends Controller
 	protected function setDBConfigValue($element,$value)
 	{
 	
-		$db = $this->getDb()->getConnection();
-		$query=$db->update(
+	    $dbConn = $this->getUIDatabase()->getDbConn();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
+	    $query=$dbConn->update(
 				$this->getModuleConfig()->getDbConfigTableName(),
 				array('value'=>$value),
 				'name=\''.$element.'\''

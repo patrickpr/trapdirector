@@ -160,7 +160,7 @@ abstract class TrapTable implements Paginatable
 
     protected function db()
     {
-        return $this->connection()->getConnection();
+        return $this->connection()->getDbAdapter();
     }
 	
 	protected function getTable()

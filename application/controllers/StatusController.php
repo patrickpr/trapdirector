@@ -21,22 +21,23 @@ class StatusController extends TrapsController
 		/************  Trapdb ***********/
 		try
 		{
-			$db = $this->getDb()->getConnection();
-			$query = $db->select()->from(
+		    $dbConn = $this->getUIDatabase()->getDbConn();
+		    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+			$query = $dbConn->select()->from(
 				$this->getModuleConfig()->getTrapTableName(),
 				array('COUNT(*)')
 			);			
-			$this->view->trap_count=$db->fetchOne($query);
-			$query = $db->select()->from(
+			$this->view->trap_count=$dbConn->fetchOne($query);
+			$query = $dbConn->select()->from(
 				$this->getModuleConfig()->getTrapDataTableName(),
 				array('COUNT(*)')
 			);			
-			$this->view->trap_object_count=$db->fetchOne($query);
-			$query = $db->select()->from(
+			$this->view->trap_object_count=$dbConn->fetchOne($query);
+			$query = $dbConn->select()->from(
 				$this->getModuleConfig()->getTrapRuleName(),
 				array('COUNT(*)')
 			);			
-			$this->view->rule_count=$db->fetchOne($query);			
+			$this->view->rule_count=$dbConn->fetchOne($query);			
  			
 			$this->view->trap_days_delete=$this->getDBConfigValue('db_remove_days');
 			

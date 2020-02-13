@@ -1,7 +1,12 @@
 <?php
 
+namespace Icinga\Module\Trapdirector\TrapsActions;
+
 use Icinga\Module\Trapdirector\TrapsController;
+use Exception;
 use Icinga\Data\Db\DbConnection as IcingaDbConnection;
+use Icinga\Data\Selectable;
+
 
 /**
  * Exception for Database test
@@ -53,13 +58,13 @@ class UIDatabase
 {
     
     /** @var TrapsController $trapController TrapController 'parent' class */
-    protected  $trapController;
+    protected  $trapController=null;
     
-    /** @var Zend_Db_Adapter_Abstract $trapDB Trap Database*/
-    protected $trapDB;
+    /** @var Selectable $trapDB Trap Database*/
+    protected $trapDB=null;
  
-    /** @var Zend_Db_Adapter_Abstract $trapDB Icinga IDO database*/
-    protected $idoDB;
+    /** @var Selectable $trapDB Icinga IDO database*/
+    protected $idoDB=null;
     
     /** @var array $testResult */
     protected $testResult;
@@ -130,7 +135,7 @@ class UIDatabase
      *	@param $test bool if set to true, returns error code and not database
      *	@param $test_version bool if set to flase, does not test database version of trapDB
      *  @throws DBException if test = true and error
-     *	@return Zend_Db_Adapter_Abstract|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
+     *	@return Selectable|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
      */
     protected function getDbByName($DBname , $test = false , $test_version = true)
     {
@@ -147,7 +152,7 @@ class UIDatabase
             $this->trapController->redirectNow('trapdirector/settings?dberror=2');
             return null;
         }
-
+        
         try
         {
             $dbAdapter=$dbconn->getDbAdapter();
@@ -170,18 +175,18 @@ class UIDatabase
                 throw new DBException($this->testResult);
             }
         }
- 
-        return $dbAdapter;
+        
+        return $dbconn;
     }
 
     /**
      * Get Trap database
-     * @param boolean $test
-     * @return Zend_Db_Adapter_Abstract|array|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
+     * @return Selectable|null : returns DB connexion or null on error.
      */
     public function getDb()
     {
         if ( $this->trapDB != null ) return $this->trapDB;
+        
         
         $dbresource=$this->trapController->Config()->get('config', 'database');
         
@@ -197,14 +202,26 @@ class UIDatabase
             return null; // Should not happen as test = false
         }
         
+        //$this->trapDB->getConnection();
+        
         return $this->trapDB;
     }
 
     /**
+     * Get Zend adapter of DB.
+     * @return \Zend_Db_Adapter_Abstract|null
+     */
+    public function getDbConn()
+    {
+        if ($this->getDb() == null) return null;
+        return $this->getDb()->getConnection();
+    }
+    
+    /**
      * Test Trap database
      * @param boolean $test
      * @throws DBException on error.
-     * @return Zend_Db_Adapter_Abstract|array|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
+     * @return \Zend_Db_Adapter_Abstract|array|null : if test=false, returns DB connexion, else array(error_num,message) or null on error.
      */
     public function testGetDb()
     {       
@@ -219,14 +236,14 @@ class UIDatabase
         return;
     }
     
+
     /**
-     * Get IDO Database 
-     * @param boolean $test
-     * @return Zend_Db_Adapter_Abstract|NULL  returns DB connexion or null on error.
+     * Get IDO Database
+     * @return \Zend_Db_Adapter_Abstract|NULL  returns DB connexion or null on error.
      */
-    public function getIdoDb($test=false)
+    public function getIdoDb()
     {
-        if ($this->idoDB != null && $test === false) return $this->idoDB;
+        if ( $this->idoDB != null ) return $this->idoDB;
         // TODO : get ido database directly from icingaweb2 config -> (or not if using only API)
         $dbresource=$this->trapController->Config()->get('config', 'IDOdatabase');;
         
@@ -246,10 +263,21 @@ class UIDatabase
             return null;
         }
 
-        $this->idoDB = $dbconn->getDbAdapter();
+        $this->idoDB = $dbconn;
         return $this->idoDB;
     }
 
+
+    /**
+     * Get Zend adapter of DB.
+     * @return \Zend_Db_Adapter_Abstract|null
+     */
+    public function getIdoDbConn()
+    {
+        if ($this->getIdoDb() == null) return null;
+        return $this->getIdoDb()->getConnection();
+    }
+    
     /**
      * Get IDO Database
      * @param boolean $test

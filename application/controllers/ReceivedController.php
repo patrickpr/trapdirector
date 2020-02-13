@@ -20,8 +20,9 @@ class ReceivedController extends TrapsController
 		$this->checkReadPermission();
 		$this->prepareTabs()->activate('traps');
 
-		$db = $this->getDb();
-		$this->getTrapListTable()->setConnection($db);
+		$dbConn = $this->getUIDatabase()->getDb();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		$this->getTrapListTable()->setConnection($dbConn);
 		
 		// Apply pagination limits
 		$this->view->table=$this->applyPaginationLimits($this->getTrapListTable(),$this->getModuleConfig()->itemListDisplay());		
@@ -56,7 +57,8 @@ class ReceivedController extends TrapsController
 		$this->view->trapid=$trapid;
 		$queryArray=$this->getModuleConfig()->trapDetailQuery();
 		
-		$db = $this->getDb()->getConnection();
+		$dbConn = $this->getUIDatabase()->getDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
 		// URL to add a handler
 		$this->view->addHandlerUrl=Url::fromPath(
@@ -72,10 +74,10 @@ class ReceivedController extends TrapsController
 		// Do DB query for trap. 
 		try
 		{
-			$query = $db->select()
+		    $query = $dbConn->select()
 				->from($this->moduleConfig->getTrapTableName(),$elmts)
 				->where('id=?',$trapid);
-			$trapDetail=$db->fetchRow($query);
+				$trapDetail=$dbConn->fetchRow($query);
 			if ( $trapDetail == null) throw new Exception('No traps was found with id = '.$trapid);
 		}
 		catch (Exception $e)
@@ -105,10 +107,10 @@ class ReceivedController extends TrapsController
 		}
 		try
 		{		
-			$query = $db->select()
+		    $query = $dbConn->select()
 				->from($this->moduleConfig->getTrapDataTableName(),$data_elmts)
 				->where('trap_id=?',$trapid);
-			$trapDetail=$db->fetchAll($query);
+			$trapDetail=$dbConn->fetchAll($query);
 		}
 		catch (Exception $e)
 		{
@@ -145,8 +147,10 @@ class ReceivedController extends TrapsController
 	    $this->checkReadPermission();
 	    $this->prepareTabs()->activate('hosts');
 	    
-	    $db = $this->getDb();
-	    $this->getTrapHostListTable()->setConnection($db);
+	    $dbConn = $this->getUIDatabase()->getDb();
+	    if ($dbConn === null) throw new \ErrorException('uncatched db error');
+	    
+	    $this->getTrapHostListTable()->setConnection($dbConn);
 	    
 	    // Apply pagination limits
 	    $this->view->table=$this->applyPaginationLimits($this->getTrapHostListTable(),$this->getModuleConfig()->itemListDisplay());

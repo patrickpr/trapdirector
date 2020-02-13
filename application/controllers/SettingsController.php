@@ -6,13 +6,13 @@ use Icinga\Data\ResourceFactory;
 use Icinga\Web\Url;
 use Icinga\Application\Icinga;
 use Icinga\Exception\ProgrammingError;
-use Icinga\Exception\ConfigurationError;
 use RunTimeException;
 use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
 use Icinga\Module\Trapdirector\Icinga2Api;
+use Icinga\Module\Trapdirector\TrapsActions\DBException;
 
 use Trapdirector\Trap;
 
@@ -84,7 +84,12 @@ class SettingsController extends TrapsController
               Url::fromPath('trapdirector/settings/updateschema')),
       );
       
-      $dberror=$this->getDb(true); // Get DB in test mode
+      try {
+          $this->getUIDatabase()->testGetDb(); // Get DB in test mode
+          $dberror=array(0,'');
+      } catch (DBException $e) {
+          $dberror = $e->getArray();
+      }
       
       $this->view->db_error=$dberror[0];
       switch ($dberror[0])
@@ -107,7 +112,13 @@ class SettingsController extends TrapsController
       }
       $this->view->message=$db_message;
       
-      $dberror=$this->getIdoDb(true); // Get IDO DB in test mode
+      try {
+          $this->getUIDatabase()->testGetIdoDb(); // Get DB in test mode
+          $dberror=array(0,'');
+      } catch (DBException $e) {
+          $dberror = $e->getArray();
+      }
+      
       $this->view->ido_db_error=$dberror[0];
       $this->view->ido_message='IDO Database : ' . $dberror[1];
   }
@@ -262,37 +273,34 @@ class SettingsController extends TrapsController
 	));
 	// check if needed
 	
-	$dberror=$this->getDb(true); // Get DB in test mode
-	
-	if ($dberror[0] == 0)
+	try 
 	{
-		printf('Schema already exists');
-	}
-	else
+	    $this->getUIDatabase()->testGetDb(); // Get DB in test mode
+	    printf('Schema already exists');
+	    
+	} 
+	catch (DBException $e) 
 	{
+
 		printf('Creating schema : <br>');
 
 		// Get module database name
 		$dbName=$this->Config()->get('config', 'database');
 
-		try {
-		  $dbResource = ResourceFactory::getResourceConfig($dbName);
-		  $dbType=$dbResource->get('db');
-		  switch ($dbType) {
-		      case 'mysql':
-		          $dbFileExt='sql';
-		          break;
-		      case 'pgsql':
-		          $dbFileExt='pgsql';
-		          break;
-		      default:
-		          throw new ConfigurationError('Unsuported database : '.$dbType);
-		  }
-		} catch (ConfigurationError $e )
-		{
-		    printf("Database configuration error : %s",$e->getMessage());
-		    return;
-		}
+        $dbResource = ResourceFactory::getResourceConfig($dbName);
+        $dbType=$dbResource->get('db');
+        switch ($dbType) {
+          case 'mysql':
+              $dbFileExt='sql';
+              break;
+          case 'pgsql':
+              $dbFileExt='pgsql';
+              break;
+          default:
+              printf("Database configuration error : Unsuported DB");
+              return;
+        } 
+
 		printf('<pre>');
 		require_once $this->Module()->getBaseDir() .'/bin/trap_class.php';
 		
@@ -315,22 +323,26 @@ class SettingsController extends TrapsController
   public function updateschemaAction()
   {
 	  $this->checkModuleConfigPermission();
-    	$this->getTabs()->add('get',array(
+      $this->getTabs()->add('get',array(
     		'active'	=> true,
     		'label'		=> $this->translate('Update Schema'),
     		'url'		=> Url::fromRequest()
     	));
 	  // check if needed
-	  
-	  $dberror=$this->getDb(true); // Get DB in test mode
+	  $dberror=array();
+      try
+      {
+          $this->getUIDatabase()->testGetDb(); // Get DB in test mode
+          echo 'Schema already exists and is up to date<br>';
+          return;
+      }
+      catch (DBException $e)
+      {
+          $dberror=$e->getArray(); 
+      }
 	  
 	  echo 'Return to <a href="' . Url::fromPath('trapdirector/settings') .'" class="link-button icon-wrench"> settings page </a><br><br>';
 	  
-	  if ($dberror[0] == 0)
-	  {
-	      echo 'Schema already exists and is up to date<br>';
-	      return;
-	  }
 	  if ($dberror[0] != 5)
 	  {
 	      echo 'Database does not exists or is not setup correctly<br>';

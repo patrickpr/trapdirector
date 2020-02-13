@@ -23,8 +23,10 @@ class HandlerController extends TrapsController
 		$this->checkReadPermission();
 		$this->prepareTabs()->activate('status');
 
-		$db = $this->getDb();
-		$this->getHandlerListTable()->setConnection($db);
+		$dbConn = $this->getUIDatabase()->getDb();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
+		
+		$this->getHandlerListTable()->setConnection($dbConn);
 		$this->getHandlerListTable()->setMibloader($this->getMIB());
 		// Apply pagination limits 
 		$this->view->table=$this->applyPaginationLimits($this->getHandlerListTable(),$this->getModuleConfig()->itemListDisplay());		
@@ -46,7 +48,6 @@ class HandlerController extends TrapsController
 	        'url'		=> Url::fromRequest()
 	    ));
 	    
-	    //$db = $this->getDb();
 
 	    if ($this->params->get('rule') !== null) 
 	    {
@@ -529,7 +530,8 @@ class HandlerController extends TrapsController
 		if (!preg_match('/^[0-9]+$/',$trapid)) { throw new Exception('Invalid id');  }
 		$queryArray=$this->getModuleConfig()->trapDetailQuery();
 		
-		$db = $this->getDb()->getConnection();
+		$dbConn = $this->getUIDatabase()->getDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// ***************  Get main data
 		// extract columns and titles;
 		$elmts=NULL;
@@ -538,10 +540,10 @@ class HandlerController extends TrapsController
 		}
 		try
 		{		
-			$query = $db->select()
+		    $query = $dbConn->select()
 				->from($this->getModuleConfig()->getTrapTableName(),$elmts)
 				->where('id=?',$trapid);
-			$trapDetail=$db->fetchRow($query);
+				$trapDetail=$dbConn->fetchRow($query);
 			if ( $trapDetail == null ) 
 			{
 			    $trapDetail = 'NULL';
@@ -567,7 +569,8 @@ class HandlerController extends TrapsController
 		if (!preg_match('/^[0-9]+$/',$trapid)) { throw new Exception('Invalid id');  }
 		$queryArrayData=$this->getModuleConfig()->trapDataDetailQuery();
 		
-		$db = $this->getDb()->getConnection();
+		$dbConn = $this->getUIDatabase()->getDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// ***************  Get object data
 		// extract columns and titles;
 		$data_elmts=NULL;
@@ -576,10 +579,10 @@ class HandlerController extends TrapsController
 		}
 		try
 		{		
-			$query = $db->select()
+		    $query = $dbConn->select()
 				->from($this->moduleConfig->getTrapDataTableName(),$data_elmts)
 				->where('trap_id=?',$trapid);
-			$trapDetail=$db->fetchAll($query);
+				$trapDetail=$dbConn->fetchAll($query);
 			// if ( $trapDetail == null ) throw new Exception('No traps was found with id = '.$trapid);
 		}
 		catch (Exception $e)
@@ -593,27 +596,28 @@ class HandlerController extends TrapsController
 
 	/** Get rule detail by ruleid.
 	*	@param integer $ruleid int id of rule in rule table
-	*	@return object : column objects in db
+	*	@return object : column objects in db 
+	*
 	*/
 	protected function getRuleDetail($ruleid) 
 	{
 		if (!preg_match('/^[0-9]+$/',$ruleid)) { throw new Exception('Invalid id');  }
 		$queryArray=$this->getModuleConfig()->ruleDetailQuery();
 		
-		$db = $this->getDb()->getConnection();
+		$dbConn = $this->getUIDatabase()->getDbConn();
+		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		// ***************  Get main data
 		try
 		{		
-			$query = $db->select()
+		    $query = $dbConn->select()
 				->from($this->getModuleConfig()->getTrapRuleName(),$queryArray)
 				->where('id=?',$ruleid);
-			$ruleDetail=$db->fetchRow($query);
+				$ruleDetail=$dbConn->fetchRow($query);
 			if ( $ruleDetail == null ) throw new Exception('No rule was found with id = '.$ruleid);
 		}
 		catch (Exception $e)
 		{
 			$this->displayExitError('Update handler : get rule detail',$e->getMessage());
-			return array();
 		}
 
 		return $ruleDetail;

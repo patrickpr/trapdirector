@@ -18,7 +18,7 @@ class MIBLoader
 	 * 
 	 * @param string $snmptranslate snmptranslate binary
 	 * @param string $snmptranslate_dirs dirs to add to snmptranslate
-	 * @param string $db current database
+	 * @param \Zend_Db_Adapter_Abstract $db current database
 	 * @param TrapModuleConfig $config TrapModuleConfig class instance
 	 */
 	public function __construct($snmptranslate,$snmptranslate_dirs,$db,$config)
@@ -38,7 +38,7 @@ class MIBLoader
 	
 	public function getMIBList()
 	{
-		$dbconn = $this->db->getConnection();
+		$dbconn = $this->db;
 		$query=$dbconn->select()
 				->distinct()
 				->from(
@@ -64,7 +64,7 @@ class MIBLoader
 	public function getTrapList($mib)
 	{
 		$traps=array();
-		$dbconn = $this->db->getConnection();
+		$dbconn = $this->db;
 		$query=$dbconn->select()
 				->from(
 					$this->config->getMIBCacheTableName(),
@@ -87,7 +87,7 @@ class MIBLoader
 		$objects=array();
 		
 		// Get trap id in DB
-		$dbconn = $this->db->getConnection();
+		$dbconn = $this->db;
 		$query=$dbconn->select()
 				->from(
 					$this->config->getMIBCacheTableName(),
@@ -130,7 +130,7 @@ class MIBLoader
 	{
 	    if (!preg_match('/^\./',$oid)) $oid = '.' . $oid; // Add a leading '.'
 		$retArray=array('oid' => $oid, 'mib' => null, 'name'=>null,'type'=>null);
-		$dbconn = $this->db->getConnection();
+		$dbconn = $this->db;
 
 		$query=$dbconn->select()
 				->from(
@@ -199,7 +199,7 @@ class MIBLoader
 	 */
 	public function countObjects($mib=null,$type=null)
 	{
-		$dbconn = $this->db->getConnection();
+		$dbconn = $this->db;
 		$query=$dbconn->select()
 				->from(
 					$this->config->getMIBCacheTableName(),
@@ -238,14 +238,14 @@ class MIBLoader
 	    {
 	        $where="c.oid = '$oid'";
 	    }
-	    $query=$this->db->getConnection()->select()
+	    $query=$this->db->select()
            ->from(
             array('c' => $this->config->getMIBCacheTableName()),
             array('name' => 'c.name','mib' => 'c.mib','oid' => 'c.oid','type_enum'=>'c.type_enum',
                 'type' => 'c.syntax', 'text_conv' => 'c.textual_convention', 'disp' => 'display_hint',
                 'description' => 'c.description'))
             ->where($where);
-        $trap=$this->db->getConnection()->fetchRow($query);
+        $trap=$this->db->fetchRow($query);
         
         return $trap;
 	}
