@@ -3,6 +3,8 @@
 namespace Icinga\Module\Trapdirector\TrapsActions;
 
 use Exception;
+use Icinga\Module\Trapdirector\TrapsController;
+use Zend_Db_Adapter_Abstract;
 
 /**
  * Database queries for UI (on IDO database)
@@ -16,6 +18,12 @@ use Exception;
 trait IdoDBQuery
 {
 
+    /** @return TrapsController */
+    abstract protected function getTrapCtrl();
+    
+    /** @return Zend_Db_Adapter_Abstract : returns DB connexion or null on error */
+    abstract public function getIdoDbConn();
+    
     /** Get host(s) by IP (v4 or v6) or by name in IDO database
      *	does not catch exceptions
      *	@return array of objects ( name, id (object_id), display_name)
@@ -83,8 +91,7 @@ trait IdoDBQuery
                 ->where("(a.name1 LIKE '%".$ip."%' OR b.alias LIKE '%".$ip."%') and a.is_active = 1");
                 return $dbConn->fetchAll($query);
     }
-    
-    
+ 
     /** Get host IP (v4 and v6) by name in IDO database
      *	does not catch exceptions
      *	@return array ( name, display_name, ip4, ip6)
@@ -105,8 +112,7 @@ trait IdoDBQuery
                 ->where("a.object_id = '".$id."'");
                 return $dbConn->fetchRow($query);
     }
-    
-    
+        
     /** Get host by objectid  in IDO database
      *	does not catch exceptions
      *	@return array of objects ( id, name, display_name, ip, ip6,  )

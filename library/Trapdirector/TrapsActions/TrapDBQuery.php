@@ -4,6 +4,8 @@ namespace Icinga\Module\Trapdirector\TrapsActions;
 
 use Exception;
 use Zend_Db_Expr;
+use Zend_Db_Adapter_Abstract;
+use Icinga\Module\Trapdirector\TrapsController;
 
 /**
  * Database queries for UI (on Trap database)
@@ -16,6 +18,12 @@ use Zend_Db_Expr;
  */
 trait TrapDBQuery
 {
+    
+    /** @return TrapsController */
+    abstract protected function getTrapCtrl();
+
+    /** @return Zend_Db_Adapter_Abstract : returns DB connexion or null on error */
+    abstract public function getDbConn();
     
     /** Add handler rule in traps DB
      *	@param array $params : array(<db item>=><value>)
@@ -30,7 +38,7 @@ trait TrapDBQuery
         // Add last modified date = creation date and username
         $params['created'] = new Zend_Db_Expr('NOW()');
         $params['modified'] = new 	Zend_Db_Expr('NOW()');
-        $params['modifier'] = $this->Auth()->getUser()->getUsername();
+        $params['modifier'] = $this->getTrapCtrl()->Auth()->getUser()->getUsername();
         
         $query=$dbConn->insert(
             $this->getTrapCtrl()->getModuleConfig()->getTrapRuleName(),

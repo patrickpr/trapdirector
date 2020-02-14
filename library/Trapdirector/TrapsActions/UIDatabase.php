@@ -79,6 +79,10 @@ class UIDatabase //extends TrapDBQuery
         $this->trapController=$trapCtrl;
     }
     
+    /**
+     * Get TrapsController instance
+     * @return TrapsController
+     */
     protected function getTrapCtrl()
     {
         return $this->trapController;
