@@ -7,19 +7,15 @@ use Zend_Db_Expr;
 
 /**
  * Database queries for UI (on Trap database)
- *
+ * Calling class must implement : getTrapCtrl , getDbConn
  * @license GPL
  * @author Patrick Proy
  * @package trapdirector
  * @subpackage UI
  *
  */
-abstract class TrapDBQuery
+trait TrapDBQuery
 {
-
-
-    abstract protected function getTrapCtrl();
-    abstract public function getDbConn();
     
     /** Add handler rule in traps DB
      *	@param array $params : array(<db item>=><value>)
@@ -87,18 +83,18 @@ abstract class TrapDBQuery
     }
     
     /** Delete trap by ip & oid
-     *	@param $ip string source IP (v4 or v6)
+     *	@param $ipAddr string source IP (v4 or v6)
      *	@param $oid string oid
      */
-    public function deleteTrap($ip,$oid)
+    public function deleteTrap($ipAddr,$oid)
     {
         
         $dbConn = $this->getDbConn();
         if ($dbConn === null) throw new \ErrorException('uncatched db error');
         $condition=null;
-        if ($ip != null)
+        if ($ipAddr != null)
         {
-            $condition="source_ip='$ip'";
+            $condition="source_ip='$ipAddr'";
         }
         if ($oid != null)
         {
@@ -116,19 +112,19 @@ abstract class TrapDBQuery
     
     
     /** count trap by ip & oid
-     *	@param $ip string source IP (v4 or v6)
+     *	@param $ipAddr string source IP (v4 or v6)
      *	@param $oid string oid
      */
-    public function countTrap($ip,$oid)
+    public function countTrap($ipAddr,$oid)
     {
         
         $dbConn = $this->getDbConn();
         if ($dbConn === null) throw new \ErrorException('uncatched db error');
         
         $condition=null;
-        if ($ip != null)
+        if ($ipAddr != null)
         {
-            $condition="source_ip='$ip'";
+            $condition="source_ip='$ipAddr'";
         }
         if ($oid != null)
         {
@@ -137,12 +133,12 @@ abstract class TrapDBQuery
         }
         if($condition === null) return 0;
         $query=$dbConn->select()
-        ->from(
-            $this->getTrapCtrl()->getModuleConfig()->getTrapTableName(),
-            array('num'=>'count(*)'))
+            ->from(
+                $this->getTrapCtrl()->getModuleConfig()->getTrapTableName(),
+                array('num'=>'count(*)'))
             ->where($condition);
-            $return_row=$dbConn->fetchRow($query);
-            return $return_row->num;
+        $returnRow=$dbConn->fetchRow($query);
+        return $returnRow->num;
     }
     
     /** get configuration value
@@ -159,8 +155,8 @@ abstract class TrapDBQuery
             $this->getTrapCtrl()->getModuleConfig()->getDbConfigTableName(),
             array('value'=>'value'))
             ->where('name=?',$element);
-            $return_row=$dbConn->fetchRow($query);
-            if ($return_row==null)  // value does not exists
+            $returnRow=$dbConn->fetchRow($query);
+            if ($returnRow==null)  // value does not exists
             {
                 $default=$this->getTrapCtrl()->getModuleConfig()->getDBConfigDefaults();
                 if ( ! isset($default[$element])) return null; // no default and not value
@@ -168,14 +164,14 @@ abstract class TrapDBQuery
                 $this->addDBConfigValue($element,$default[$element]);
                 return $default[$element];
             }
-            if ($return_row->value == null) // value id empty
+            if ($returnRow->value == null) // value id empty
             {
                 $default=$this->getTrapCtrl()->getModuleConfig()->getDBConfigDefaults();
                 if ( ! isset($default[$element])) return null; // no default and not value
                 $this->setDBConfigValue($element,$default[$element]);
                 return $default[$element];
             }
-            return $return_row->value;
+            return $returnRow->value;
     }
     
     /** add configuration value

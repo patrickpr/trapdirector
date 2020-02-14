@@ -54,8 +54,9 @@ class DBException extends Exception
  * @subpackage UI
  *
  */
-class UIDatabase extends TrapDBQuery
+class UIDatabase //extends TrapDBQuery
 {
+    use TrapDBQuery;
     
     /** @var TrapsController $trapController TrapController 'parent' class */
     protected  $trapController=null;
