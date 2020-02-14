@@ -106,7 +106,7 @@ class HandlerController extends TrapsController
 	    // Get host
 	    try
 	    {
-	        $hosts=$this->getHostByIP($hostfilter);
+	        $hosts=$this->getUIDatabase()->getHostByIP($hostfilter);
 	    }
 	    catch (Exception $e)
 	    {
@@ -202,7 +202,7 @@ class HandlerController extends TrapsController
 	private function add_check_host_exists($ruleDetail)
 	{
 	    // Check if hostname still exists
-	    $host_get=$this->getHostByName($this->view->hostname);
+	    $host_get=$this->getUIDatabase()->getHostByName($this->view->hostname);
 	    
 	    if (count($host_get)==0)
 	    {
@@ -214,7 +214,7 @@ class HandlerController extends TrapsController
 	        // Tell JS to get services when page is loaded
 	        $this->view->serviceGet=true;
 	        // get service id for form to set :
-	        $serviceID=$this->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
+	        $serviceID=$this->getUIDatabase()->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
 	        if (count($serviceID) ==0)
 	        {
 	            $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
@@ -233,7 +233,7 @@ class HandlerController extends TrapsController
 	private function add_check_hostgroup_exists($ruleDetail)
 	{
 	    // Check if groupe exists
-	    $group_get=$this->getHostGroupByName($this->view->hostgroupname);
+	    $group_get=$this->getUIDatabase()->getHostGroupByName($this->view->hostgroupname);
 	    if (count($group_get)==0)
 	    {
 	        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
@@ -241,7 +241,7 @@ class HandlerController extends TrapsController
 	    }
 	    else
 	    {
-	        $grpServices=$this->getServicesByHostGroupid($group_get[0]->id);
+	        $grpServices=$this->getUIDatabase()->getServicesByHostGroupid($group_get[0]->id);
 	        $foundGrpService=0;
 	        foreach ($grpServices as $grpService)
 	        {
@@ -465,7 +465,7 @@ class HandlerController extends TrapsController
 			$isHostGroup=($params['hostgroup']['val'] == 1)?true:false;
 			if (! $isHostGroup ) 
 			{  // checks if selection by host 
-				$hostAddr=$this->getHostInfoByID($params['hostid']['val']);
+			    $hostAddr=$this->getUIDatabase()->getHostInfoByID($params['hostid']['val']);
 				$params['ip4']['val']=$hostAddr->ip4;
 				$params['ip6']['val']=$hostAddr->ip6;
 				$checkHostName=$hostAddr->name;
@@ -474,7 +474,7 @@ class HandlerController extends TrapsController
 					$this->_helper->json(array('status'=>"Invalid host id : Please re enter host name"));
 					return;
 				}
-				$serviceName=$this->getObjectNameByid($params['serviceid']['val']);
+				$serviceName=$this->getUIDatabase()->getObjectNameByid($params['serviceid']['val']);
 				if ($params['service_name']['val'] != $serviceName->name2)
 				{
 					$this->_helper->json(array('status'=>"Invalid service id : Please re enter service"));
@@ -483,7 +483,7 @@ class HandlerController extends TrapsController
 			}
 			else
 			{
-				$object=$this->getObjectNameByid($params['hostid']['val']);
+			    $object=$this->getUIDatabase()->getObjectNameByid($params['hostid']['val']);
 				if ($params['host_name']['val'] != $object->name1)
 				{
 					$this->_helper->json(array('status'=>"Invalid object group id : Please re enter service"));

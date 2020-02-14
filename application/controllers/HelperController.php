@@ -22,7 +22,7 @@ class HelperController extends TrapsController
 		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
-		$hosts=$this->getHostByIP($hostFilter);
+		$hosts=$this->getUIDatabase()->getHostByIP($hostFilter);
 		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
@@ -42,7 +42,7 @@ class HelperController extends TrapsController
 		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
-		$hosts=$this->getHostGroupByName($hostFilter);
+		$hosts=$this->getUIDatabase()->getHostGroupByName($hostFilter);
 		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
@@ -72,7 +72,7 @@ class HelperController extends TrapsController
 			return;
 		}
 		
-		$hostArray=$this->getHostByName($host);
+		$hostArray=$this->getUIDatabase()->getHostByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one host matches','hostid' => -1));
@@ -83,7 +83,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No host matches','hostid' => -1));
 			return;
 		}
-		$services=$this->getServicesByHostid($hostArray[0]->id);
+		$services=$this->getUIDatabase()->getServicesByHostid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for host','hostid' => $hostArray[0]->id));
@@ -109,7 +109,7 @@ class HelperController extends TrapsController
 		
 		$host = $this->checkPostVar($postData, 'host', '.+');
 		
-		$hostArray=$this->getHostGroupByName($host);
+		$hostArray=$this->getUIDatabase()->getHostGroupByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one hostgroup matches','hostid' => -1));
@@ -120,7 +120,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No hostgroup matches','hostid' => -1));
 			return;
 		}
-		$services=$this->getServicesByHostGroupid($hostArray[0]->id);
+		$services=$this->getUIDatabase()->getServicesByHostGroupid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for hostgroup','hostid' => $hostArray[0]->id));

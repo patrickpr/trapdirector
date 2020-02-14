@@ -56,7 +56,7 @@ class DBException extends Exception
  */
 class UIDatabase //extends TrapDBQuery
 {
-    use TrapDBQuery;
+    use TrapDBQuery,IdoDBQuery;
     
     /** @var TrapsController $trapController TrapController 'parent' class */
     protected  $trapController=null;
