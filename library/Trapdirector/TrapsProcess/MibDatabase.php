@@ -1,14 +1,22 @@
 <?php
 
 
-
+/**
+ * MIB DB queries and update
+ *
+ * @license GPL
+ * @author Patrick Proy
+ * @package trapdirector
+ * @subpackage Processing
+ *
+ */
 trait MibDatabase
 {   
     /** @var array $oidDesc MUST be overide by calling class */
-    protected $oidDesc;
+    //protected $oidDesc;
     
     /** @var array $dbOidIndex MUST be overide by calling class */
-    protected $dbOidIndex;
+    //protected $dbOidIndex;
     
     /** @return \Trapdirector\Logging */
     abstract public function getLogging();
