@@ -163,37 +163,6 @@ class Rule
         }
     }
     
-    // Remove all whitespaces (when not quoted)
-    public function eval_cleanup($rule)
-    {
-        $item=0;
-        $rule2='';
-        while ($item < strlen($rule))
-        {
-            if ($rule[$item]==' ') { $item++; continue; }
-            if ($rule[$item]=='"')
-            {
-                $rule2.=$rule[$item];
-                $item++;
-                while (($item < strlen($rule)) && ($rule[$item]!='"') )
-                {
-                    $rule2.=$rule[$item];
-                    $item++;
-                }
-                if ($item == strlen ($rule)) throw new Exception("closing '\"' not found in ".$rule ." at " .$item);
-                $rule2.=$rule[$item];
-                $item++;
-                continue;
-            }
-            
-            $rule2.=$rule[$item];
-            $item++;
-        }
-        
-        return $rule2;
-    }
-
-
     /**
      * Get '*' or '**' and transform in [0-9]+ or .* in return string
      * @param string $oid OID in normal or regexp format. '*' will be escaped ('\*')

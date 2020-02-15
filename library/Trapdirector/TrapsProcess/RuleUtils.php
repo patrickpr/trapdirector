@@ -177,5 +177,39 @@ trait RuleUtils
             return false;
         }
     }
+
+    /** Remove all whitespaces (when not quoted)
+     * @param string $rule
+     * @throws Exception
+     * @return string
+     */
+    public function eval_cleanup($rule)
+    {
+        $item=0;
+        $rule2='';
+        while ($item < strlen($rule))
+        {
+            if ($rule[$item]==' ') { $item++; continue; }
+            if ($rule[$item]=='"')
+            {
+                $rule2.=$rule[$item];
+                $item++;
+                while (($item < strlen($rule)) && ($rule[$item]!='"') )
+                {
+                    $rule2.=$rule[$item];
+                    $item++;
+                }
+                if ($item == strlen ($rule)) throw new Exception("closing '\"' not found in ".$rule ." at " .$item);
+                $rule2.=$rule[$item];
+                $item++;
+                continue;
+            }
+            
+            $rule2.=$rule[$item];
+            $item++;
+        }
+        
+        return $rule2;
+    }
     
 }
