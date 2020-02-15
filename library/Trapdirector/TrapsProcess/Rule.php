@@ -54,20 +54,6 @@ class Rule
         
     }
     
-    protected function eval_getNext($rule,$item,$tok)
-    {
-        while (
-            ($rule[$item] != $tok ) 
-            && ($item < strlen($rule))) 
-        { 
-            $item++;
-        }
-        if ($item==strlen($rule)) {
-            throw new Exception("closing '".$tok."' not found in ".$rule ." at " .$item);
-        }
-        return $item+1;
-    }
-    
     protected function eval_getOper($rule,&$item)
     {
         while ($rule[$item]==' ') $item++;
@@ -95,19 +81,6 @@ class Rule
         }
     }
     
-    private function check_negate_first($rule,&$item)
-    {
-        if ( $rule[$item] == '!') // If '!' found, negate next expression.
-        {
-            $item++;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     private function do_compare($val1,$val2,$comp,$negate)
     {
         switch ($comp){

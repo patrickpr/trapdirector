@@ -11,11 +11,17 @@
  */
 trait RuleUtils
 {
+    
+    /** rule eval starting from $token
+     * @param string $rule
+     * @param int $item
+     */
+    abstract public function evaluation($rule,&$item);
 
     /**
      * Get full number
      * @param string $rule Rule as string
-     * @param int item current eval position
+     * @param int $item current eval position
      * @return array<int,string>
      */
     private function get_number(string $rule,int &$item)
@@ -37,7 +43,7 @@ trait RuleUtils
     /**
      * Get a string (between ") 
      * @param string $rule Rule as string
-     * @param int item current eval position
+     * @param int $item current eval position
      * @return array<int,string>
      */
     private function get_string(string $rule,int &$item)
@@ -63,26 +69,25 @@ trait RuleUtils
     {
         $item++;
         $start=$item;
-        $parenthesis_count=0;
+        $parenthesisCount=0;
         while (($item < strlen($rule)) // Not end of string AND
-            && ( ($rule[$item] != ')' ) || $parenthesis_count > 0) ) // Closing ')' or embeded ()
+            && ( ($rule[$item] != ')' ) || $parenthesisCount > 0) ) // Closing ')' or embeded ()
         {
             if ($rule[$item] == '"' )
             { // pass through string
                 $item++;
                 $item=$this->eval_getNext($rule,$item,'"');
+                continue;
             }
-            else{
-                if ($rule[$item] == '(')
-                {
-                    $parenthesis_count++;
-                }
-                if ($rule[$item] == ')')
-                {
-                    $parenthesis_count--;
-                }
-                $item++;
+            if ($rule[$item] == '(')
+            {
+                $parenthesisCount++;
             }
+            if ($rule[$item] == ')')
+            {
+                $parenthesisCount--;
+            }
+            $item++;
         }
         
         if ($item==strlen($rule)) {throw new Exception("no closing () in ".$rule ." at " .$item);}
@@ -132,6 +137,45 @@ trait RuleUtils
         
         return array(2,$this->trapClass->pluginClass->evaluateFunctionString($val));
         
+    }
+
+    /** Find next token $tok in $rule starting at $item 
+     * @param string $rule
+     * @param int $item
+     * @param string $tok : token to search for
+     * @throws Exception
+     * @return array<int,string>
+     */
+    protected function eval_getNext(string $rule,int $item,string $tok)
+    {
+        while (
+            ($rule[$item] != $tok )
+            && ($item < strlen($rule)))
+        {
+            $item++;
+        }
+        if ($item==strlen($rule)) {
+            throw new Exception("closing '".$tok."' not found in ".$rule ." at " .$item);
+        }
+        return $item+1;
+    }
+
+    /** get negate (!) and return true if found - and pass it with item++ - 
+     * @param string $rule
+     * @param int $item
+     * @return boolean
+     */
+    private function check_negate_first(string $rule,int &$item)
+    {
+        if ( $rule[$item] == '!') // If '!' found, negate next expression.
+        {
+            $item++;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     
 }
