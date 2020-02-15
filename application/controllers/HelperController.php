@@ -236,6 +236,7 @@ class HelperController extends TrapsController
 		$postData=$this->getRequest()->getPost();
 		
 		$days = $this->checkPostVar($postData, 'days', '^[0-9]+$');
+		$days=intval($days);
 
 		$action = $this->checkPostVar($postData, 'action', 'save|execute');
 		

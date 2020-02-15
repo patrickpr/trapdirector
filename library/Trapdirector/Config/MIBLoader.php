@@ -79,7 +79,7 @@ class MIBLoader
 	}
 	
 	/** Get objects a trap can have
-	*	@param int $trap oid of trap
+	*	@param string $trap oid of trap
 	*	@return array|null : null if trap not found, or array ( <oid> => name/mib/type )
 	*/
 	public function getObjectList($trap)

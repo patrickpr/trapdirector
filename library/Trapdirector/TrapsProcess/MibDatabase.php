@@ -3,7 +3,13 @@
 
 
 trait MibDatabase
-{
+{   
+    /** @var array $oidDesc MUST be overide by calling class */
+    protected $oidDesc;
+    
+    /** @var array $dbOidIndex MUST be overide by calling class */
+    protected $dbOidIndex;
+    
     /** @return \Trapdirector\Logging */
     abstract public function getLogging();
     

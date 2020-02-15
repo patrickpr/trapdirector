@@ -127,8 +127,8 @@ class Icinga2API
     protected function curl() {
         if ($this->curl === null) {
             $this->curl = curl_init(sprintf('https://%s:%d', $this->host, $this->port));
-            if (!$this->curl) {
-                throw new Exception('CURL INIT ERROR: ' . curl_error($this->curl));
+            if ($this->curl === false) {
+                throw new Exception('CURL INIT ERROR');
             }
         }
         return $this->curl;

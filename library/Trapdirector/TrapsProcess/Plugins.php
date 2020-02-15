@@ -506,7 +506,7 @@ abstract class PluginTemplate
     /** @var string $description Description of plugin */
     public $description='Default plugin description';
     
-    /** @var array[string] $functions Functions of this plugin for rule eval*/
+    /** @var array $functions Functions of this plugin for rule eval*/
     public $functions=array();
     
     /** @var boolean $catchAllTraps Set to true if all traps will be sent to the plugin */

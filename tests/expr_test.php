@@ -18,6 +18,10 @@ $input=array_key_exists('r',$options);
 
 if (! $input) {
   $inputStream=fopen('php://stdin', 'r');
+  if ($inputStream === false)
+  {
+      exit(1);
+  }
   $rule=chop(fgets($inputStream));
 } else
   $rule=$options['r'];
@@ -34,4 +38,3 @@ try
 catch (Exception $e) { printf("%s\n",$e->getMessage()); exit(1);}
 
 exit(0);
-?>

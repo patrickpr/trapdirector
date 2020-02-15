@@ -474,6 +474,11 @@ class HandlerController extends TrapsController
 					$this->_helper->json(array('status'=>"Invalid host id : Please re enter host name"));
 					return;
 				}
+				if (!is_numeric($params['serviceid']['val']))
+				{
+				    $this->_helper->json(array('status'=>"Invalid service id ". $params['serviceid']['val']));
+				    return;
+				}
 				$serviceName=$this->getUIDatabase()->getObjectNameByid($params['serviceid']['val']);
 				if ($params['service_name']['val'] != $serviceName->name2)
 				{
@@ -596,7 +601,7 @@ class HandlerController extends TrapsController
 
 	/** Get rule detail by ruleid.
 	*	@param integer $ruleid int id of rule in rule table
-	*	@return object : column objects in db 
+	*	@return object|array : column objects in db 
 	*
 	*/
 	protected function getRuleDetail($ruleid) 
@@ -618,7 +623,7 @@ class HandlerController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->displayExitError('Update handler : get rule detail',$e->getMessage());
-			throw new Exception('Error : ',$e->getMessage());
+			throw new Exception('Error : ' . $e->getMessage());
 		}
 
 		return $ruleDetail;
