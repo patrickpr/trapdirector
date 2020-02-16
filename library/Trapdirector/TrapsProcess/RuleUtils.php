@@ -144,7 +144,7 @@ trait RuleUtils
      * @param int $item
      * @param string $tok : token to search for
      * @throws Exception
-     * @return array<int,string>
+     * @return int Position after next token
      */
     protected function eval_getNext(string $rule,int $item,string $tok)
     {

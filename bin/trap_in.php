@@ -43,7 +43,7 @@ catch (Exception $e)
     }
     else
     {
-	   $trap->trapLog("Exception : ". $e->getMessage(),2,0);
+	   $trap->logging->log("Exception : ". $e->getMessage(),2,0);
     }
 }
 

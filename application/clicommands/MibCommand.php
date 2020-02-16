@@ -88,7 +88,7 @@ class MibCommand extends Command
                 }
                 catch (Exception $e)
                 {
-                    $trap->trapLog('Error in updating : ' . $e->getMessage(),2);
+                    $trap->logging->log('Error in updating : ' . $e->getMessage(),2);
                 }
                 unlink($background);
                 return 0;
