@@ -529,6 +529,7 @@ function click_button_oid_add()
 	}		
 
 	click_button_oid_add_cb(count_id,add_oid,'[REGEXP]','[REGEXP]','','Unknown','This is a regexp OID');
+	count_id++;
 }
 
 function click_button_oid_add_cb(index_oid,oid,mib,name,value,type,type_enum,description=null)
@@ -606,12 +607,12 @@ function translateOID(oid,callback)
 				{
 					//alert(data.type_enum);
 					callback(count_id,oid,data.mib,data.name,'',data.type,data.type_enum);
-					count_id++;				
+					count_id++;
 				} 
 				else 
 				{
 					callback(count_id,oid,'not found','not found');
-					count_id++;		
+					count_id++;
 				}
 			},
 			error: function (data)
