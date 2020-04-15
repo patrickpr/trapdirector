@@ -41,10 +41,12 @@ First, click on "Save Config" to save default parameters the setting page has di
 
 Enter this a a super user (like root) :
 
-Note : if you use postgreSQL, add "-b pgsql" to the script.
+Note : 
+- if you use postgreSQL, add "-b pgsql" to the script.
+- Web page detects php binary from web server. If you get a command line with php-fpm instead of php, find php binary and replace in script.
 
 ```
-[root@icinga trapdirector]# /usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /opt/rh/rh-php71/root/usr/sbin/php-fpm -a apache -w /etc/icingaweb2
+[root@icinga trapdirector]# /usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /usr/bin/php -a apache -w /etc/icingaweb2
 
 ```
 
