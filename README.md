@@ -5,7 +5,7 @@ Icingaweb2 module for receiving and handling snmp traps
 
 [![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 
-Projet features : 
+Features : 
 
 -  Receive and handle traps using only net-snmp trapd daemon
 -  Update icinga services based on rules fot host or hostgroups : traps data updates service status.
@@ -13,10 +13,11 @@ Projet features :
 -  Write your own evaluation function in PHP for specific traps OID.
 -  OID decode to human readable name, possible to add mib files via icingaweb GUI
 
-
-Project status : Stable release 1.0.2
+Project status : [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
 
 Module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
+
+In case of problem or feature request, [open a case](https://github.com/patrickpr/trapdirector/issues/new/choose)
 
 Help wanted : 
 
