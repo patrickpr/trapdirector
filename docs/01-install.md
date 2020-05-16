@@ -4,36 +4,34 @@ Installation
 Requirements
 ---------------
 
-* Icingaweb2 and php7
-* net-snmp for snmptrapd
-* net-snmp-utils for snmptranslate
-* mysql/mariadb or postgresql database 
+* `icingaweb2`
+* `php7` or later
+* `net-snmp` for `snmptrapd`
+* `net-snmp-utils` for `snmptranslate`
+* `MySQL/MariaDB` or `PostgreSQL` as DB backend 
 
-Better with
+Optional
 ---------------
 
-* Director : to set up services, templates (only one template for now).
+* Icinga Director : for centralized service and template management.
 
 
-Install files
+Get installation files
 ---------------
 
 1. Download latest release and unzip in a temporary directory.
-2. Move the 'trapdirector' directory to the /usr/share/icingaweb2/modules directory (or modules directory if not standard installation)
-3. trapdirector/mibs/ must be writable by icinga web user to upload mibs from web GUI
+2. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
+3. `trapdirector/mibs/` directory must be writable by icinga web user for web GUI MIB upload to function.
 
 Automatic installation
 -----------------
 
-There is an install script which can help you if not familiar with database creation etc... : ![Auto install](30-install-auto.md)
-
-It will execute the manual tasks described below.
+There is an install script which can help you with creating backend database and users with proper permissions for it: ![Auto install](30-install-auto.md)
 
 Non standard IcingaWeb2 installation
 ------------------------------------
 
-If IcingaWeb2 configuration directory is not "/etc/icingaweb2", you must set up manually the path in the file : 
-[...]/modules/trapdirector/bin/trap_in.php 
+If IcingaWeb2 configuration directory is not `/etc/icingaweb2`, you must set it up manually in the `/trapdirector/bin/trap_in.php` file by modifying this string:
 ```
 [....]
 // Icinga etc path : need to change this on non standard icinga installation.
@@ -41,28 +39,27 @@ $icingaweb2_etc="/etc/icingaweb2";
 [....]
 ```
 
-Create Database
+Database Preparation
 -----------------
 
-* mysql / mariadb
+* MySQL / MariaDB
 
-Set up a new (or use existing) database in icingaweb 2 :
-Note : following commands must be run as root or database admin.
+Set up a new (or use existing) database (these commands should be run as root or database admin):
 
-Create database :
+Create new database:
 
 `mysql -u root -e "create database <database name>;"`
 
-Create user and assign rights :
+Create user with required privileges:
 
 ```
 mysql -u root -e "grant usage on *.* to <user>@localhost identified by '<password>';"
 mysql -u root -e "grant all privileges on <database name>.* to <user>@localhost ;"
 ```
 
-* postgresql
+* PostgreSQL
 
-Create user if needed : 
+Create user: 
 
 ````
 su - postgres
@@ -75,57 +72,56 @@ or
 createuser -U <admin login> -W <new user> -P 
 ````
 
-Create database if needed : 
+Create database: 
 
 ````
 createdb -O <database user> <database name>
 ````
 
+Create database in IcingaWeb2 web GUI on `/icingaweb2/config/resource` (trapdirector configuration page URL, available after module activation).
 
-Create database on Icingaweb2 in /icingaweb2/config/resource (direct link on trapdirector configuration page).
 
-
-Activate module
+Module activation
 ---------------
 
-Log in to icingaweb2 go to Configuration -> modules  and activate the trapdirector modules
+Log in to IcingaWeb2 web GUI and activate trapdirector module in Configuration -> modules.
 
-Go to the configuration tab, it should look like this : 
+After that, configuration tab should look like this: 
 
 ![install-1](img/install-1.jpg)
 
-The options are
+The options are:
 
-* Database : the DB where traps will be stored
-* Prefix : the prefix for all database tables
-* IDO Database : the IDO database set up with IcingaWeb2
-* Icingaweb2 config dir : configuration directory in case of uncommon installation of icingaweb2
-* snmptranslate binary : default should be OK, test in in mib&status page.
-* Path for mibs : local mibs (default /usr/share/icingaweb2/modules/trapdirector/mibs). You can add directories with ':' separators : the mib upload will then be in the first one 
-* icingacmd path : default should be OK
-* API server/port/user : see the API section.
+* Database : backend database of trapdirector.
+* Prefix : the prefix for all trapdirector-related database tables.
+* IDO Database : the IDO database of IcingaWeb2.
+* icingaweb2 config dir : configuration directory of IcingaWeb2.
+* snmptranslate binary : path to binary, can be tested in MIB&status page.
+* Path for mibs : Directory for trapdirector local MIBs (default `/usr/share/icingaweb2/modules/trapdirector/mibs`). You can add directories with `:` separators. MIBs will then be uploaded in the first one listed. 
+* icingacmd path : path to `icinga2` command file.
+* API server/port/username/password : see the API section.
 
-Create schema
+Schema creation
 ---------------
 
-After setting the database (1) and ido database (2), save the config page : 
+After setting the database (1) and IDO database (2), save the configuration: 
 
 ![install-2](img/install-2.jpg)
 
-Click on (3) to create schema
+Click on (3) to create required database schema:
 
 ![install-3](img/install-3.jpg)
 
-Then go back to module configuration, database should be OK :
+Then go back to module configuration, database check should be showing OK status:
 
 ![install-4](img/install-4.jpg)
 
-Setup API user
+API user setup
 ---------------
 
-API user allows the module to use Icinga2 API to submit check results, in case icinga2 is not on the same server than the module.
+API user allows the module to use Icinga2 API to submit check results instead of command file or in case `icinga2` is installed on the server different from module.
 
-To setup a user in icinga2, edit the "/etc/icinga2/conf.d/api-users.conf" file and add a user or use existing one : 
+To create an API user in `icinga2`, edit it's API users file (`/etc/icinga2/conf.d/api-users.conf` by default) and add a user or use existing one : 
 
 ```
 object ApiUser "trapdirector" {
@@ -133,60 +129,55 @@ object ApiUser "trapdirector" {
   permissions = [ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
 }
 ```
-Note : Permissions will maybe change in near future (but the module will check for this, see below).
+Note: These permissions are sufficient as of now but may be subject to change (module will check for this, see below).
 
-Then reload icinga2 (systemctl reload icinga2)
+Reload `icinga2` with `systemctl reload icinga2` command.
 
-Then setup in the module configuration.
-
-Note : If no IP/hostname is set, API usage is disabled : 
+Then configure API usage in the module starting with setting IP/hostname.
 
 ![install-10](img/install-10.jpg)
 
-Set : 
-* icinga2 host IP : IP or hostname of icinga2 server
-* Port : by default 5665
-* API username
-* API password
+Fill following fields: 
+* icinga2 host IP: IP or hostname of icinga2 server
+* Port: Port of icinga2 API (5665 by default)
+* API username: Name of the user in icinga2 `api_users.conf` file. 
+* API password: Password of the API user.
 
-Then, the module will test connection and report OK if all is fine : 
+Then, the module will test connection and report OK if everything is fine : 
 
 ![install-11](img/install-11.jpg)
 
-Or show an error (here missing permission) : 
+Else it will show a relevant error (missing permission in the example) : 
 
 ![install-12](img/install-12.jpg)
 
 Snmptrapd configuration
 ------------------------
 
-Now, you must tell snmptrapd to send all traps to the module.
+Next, snmptrapd must be configured to relay all SNMP traps to the module.
 
-Edit the /etc/snmp/snmptrapd file and add : 
+Edit the `/etc/snmp/snmptrapd.conf` file and add this line to it (assuming default file locations): 
 
 ```
 traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-Note : on bottom of trapdirector configuration page, you will have the php and module directories adapted to your system. If it shows 'php-fpm' instead of php, you are using php-fpm and need to replace /sbin/php-fpm with something like bin/php .
+At the bottom of trapdirector configuration page, you will have list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/sbin/php-fpm` path with something like `bin/php`.
 
-In any case, it must be the php binary of php version > 7. You can check version on command line doing `php -v` 
-
-
-Set up the community (still in snmptrapd.conf) : here with "public" 
+Next, set up the community in `snmptrapd.conf` (`public` in example):
 
 ```
 authCommunity log,execute,net public
 ```
 
-With a v3 user :
+Or, for SNMPv3 user :
 
 ```
 createUser -e 0x8000000001020304 trapuser SHA "UserPassword" AES "EncryptionKey"
 authUser log,execute,net trapuser 
 ```
 
-So here is what your snmptrapd.conf should look like : 
+So here is what your `snmptrapd.conf` should look like : 
 
 ```
 authCommunity log,execute,net public
@@ -201,31 +192,25 @@ Edit the launch options of snmptrapd
 
 * For RH7/CenOS7 and other systems using systemd : 
 
-In : `/usr/lib/systemd/system/snmptrapd.service`
-or `/lib/systemd/system/snmptrapd.service` 
+In `/usr/lib/systemd/system/snmptrapd.service` or `/lib/systemd/system/snmptrapd.service` 
 
-If you have a line like `EnvironmentFile=-/etc/sysconfig/snmptrapd` change this file instead (see below for RH6)
+If you have a line like `EnvironmentFile=-/etc/sysconfig/snmptrapd` change that file instead (as you would in RH6 example below).
 
-if not, change : `Environment=OPTIONS="-Lsd"`
+If not, change `Environment=OPTIONS="-Lsd"` to `Environment=OPTIONS="-Lsd -n -t -Oen"`
 
-To : `Environment=OPTIONS="-Lsd -n -t -Oen"`
-
-Note : if you have a weird 204 error on startup (happened on one centOS7 system), change ExecStart instead : 
+If you have a weird 204 error on startup (happened on CentOS7 system), change `ExecStart` line instead to 
 
 `ExecStart=/usr/sbin/snmptrapd -n -t -Oen $OPTIONS -f`
 
+
 * For RH6/CenOS6 and other /etc/init.d system services 
 
-In : `/etc/sysconfig/snmptrapd`
+In `/etc/sysconfig/snmptrapd` file change `# OPTIONS="-Lsd -p /var/run/snmptrapd.pid"` line to `OPTIONS="-Lsd -n -t -Oen -p /var/run/snmptrapd.pid"`
 
-Change : `# OPTIONS="-Lsd -p /var/run/snmptrapd.pid"`
-
-To : `OPTIONS="-Lsd -n -t -Oen -p /var/run/snmptrapd.pid"`
-
-Enable & start snmptrad service : 
+Enable & start snmptrap service : 
 ------------------------
 
-* On systemd 
+* On systemd:
 
 ```
 systemctl daemon-reload
@@ -235,7 +220,7 @@ systemctl enable snmptrapd
 systemctl start snmptrapd
 ```
 
-* on init.d systems
+* on init.d systems:
 
 ```
 chkconfig --level 345 snmptrapd on
@@ -246,25 +231,21 @@ service snmptrapd start
 
 Now all traps received by the system will be redirected to the trapdirector module.
 
-Set up mibs : 
+Set up MIBs
 ------------------------
 
-The system mibs should be set by net-snmp package. Check the defaults mibs are set by testing `snmptranslate 1.3.6.1.2.1.1.1` -> `SNMPv2-MIB::sysDescr` 
+The system MIBs should be set by `net-snmp` package. Test the default MIBs status by `snmptranslate 1.3.6.1.2.1.1.1` with a required result of `SNMPv2-MIB::sysDescr` 
 
-Mib you can upload will be in (default) `/usr/share/icingaweb2/modules/trapdirector/mibs` : you must check the directory is writable by the user of the web server.
+Uploaded MIBs will be in `/usr/share/icingaweb2/modules/trapdirector/mibs` directory by default: you must check if the directory is writable by the user of the web server.
 For example (as root) : 
 ```
 chown apache:apache /usr/share/icingaweb2/modules/trapdirector/mibs
 chmod 755 /usr/share/icingaweb2/modules/trapdirector/mibs
 ```
 
-After this, you can create the first mib database (from system mibs) with the following command line : 
+After this, you can add first MIBs into MIB database with the `icingacli trapdirector mib update` command
 
-```
-icingacli trapdirector mib update
-```
+Ready to go!
 
-Ready to go !
-
-Now have a look at the doc : [Traps](02-userguide.md)
+Now have a look at the next part of module's user guide documentation: [Traps](02-userguide.md)
  
