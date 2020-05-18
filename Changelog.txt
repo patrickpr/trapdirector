@@ -13,7 +13,7 @@ BUGS
 
 ENHANCEMENTS
 ============
-1) 
+1) Changed the php detection for install script (issues #30 & #31)
 
 -------------------------------------------------------------------------------------------------
 

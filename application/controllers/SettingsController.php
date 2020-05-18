@@ -194,6 +194,31 @@ class SettingsController extends TrapsController
   }
   
   /**
+   * Get php binary with path or NULL if not found.
+   * @return string|NULL
+   */
+  private function get_php_binary()
+  {
+      $phpBinary= array( PHP_BINARY, PHP_BINDIR . "/php", '/usr/bin/php');
+
+      foreach ($phpBinary as $phpBin )
+      {
+          $output=array();
+          $retCode=255;
+          $input="154865134987aaaa";
+          exec("$phpBin -r \"echo '$input';\"",$output,$retCode);
+          
+          if (! isset($output[0])) $output[0]="NO OUT";
+          
+          if ($retCode == 0 && preg_match("/$input/",$output[0]) == 1)
+          {
+              return $phpBin;
+          }          
+      }
+      return NULL;
+  }
+  
+  /**
    * Index of configuration
    * Params setup in $this->view :
    * errorDetected : if db or ido was detected by another page
@@ -236,14 +261,21 @@ class SettingsController extends TrapsController
 
 	// Check standard Icingaweb2 path
 	$this->check_icingaweb_path();
+
+	$phpBinary = $this->get_php_binary();
+	if ($phpBinary == null)
+	{
+	    $phpBinary = ' PHP BINARY NOT FOUND ';
+	    
+	}
 	
 	// Setup path for mini documentation
-	$this->view->traps_in_config= PHP_BINARY . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
+	$this->view->traps_in_config= $phpBinary . ' ' . $this->Module()->getBaseDir() . '/bin/trap_in.php';
 	
 	$this->view->installer= $this->Module()->getBaseDir() . '/bin/installer.sh '
 	    . ' -c all ' 
 	    . ' -d ' . $this->Module()->getBaseDir()
-	    . ' -p ' . PHP_BINARY
+	    . ' -p ' . $phpBinary
 	    . ' -a ' . exec('whoami')
 	    . ' -w ' . Icinga::app()->getConfigDir();
 	        

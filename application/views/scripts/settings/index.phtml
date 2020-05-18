@@ -85,11 +85,12 @@
 	
 	<h2> Automatic installation</h2>
 	
-	As user root, execute this script : <br>
+	As user root, execute this script : <br><br>
 	<em>
 	<?= $this->installer ?>
 	</em>
-	<br>
+	<br><br>
+	Note : if you see PHP BINARY NOT FOUND, go for manual installation and check online docs.<br>
 	If you use postgreSQL, add "-b pgsql"
 	<h2> Manuel installation instructions </h2>
 	<ul>
@@ -127,6 +128,7 @@ object ApiUser "trapdirector" {
 		<em>
 		traphandle default <?= $this->traps_in_config ?> <br><br>
 		</em>
+		Note : if you see PHP BINARY NOT FOUND, go for manual installation and check online docs.<br><br>
 		Also set up community that will be accepted (here 'public'): <br><br>
 		<em>
 		authCommunity   log,execute,net public 
