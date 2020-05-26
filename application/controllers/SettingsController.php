@@ -427,7 +427,7 @@ class SettingsController extends TrapsController
       {
           return array(1,"Can not execute $sspath");
       }
-      exec("$sspath -luna | grep ':162 '",$psOutput);
+      exec("$sspath -lun | grep ':162 '",$psOutput);
       if (count($psOutput) == 0)
       {
           return array(1,'Port UDP/162 is not open : is snmptrapd running?');
