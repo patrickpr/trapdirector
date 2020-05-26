@@ -422,13 +422,18 @@ class SettingsController extends TrapsController
   {
       $psOutput=array();
       // First check is someone is listening to port 162. As not root, we can't have pid... 
-      exec('netstat -an |grep -E "udp.*:162"',$psOutput);
+      $sspath = '/usr/sbin/ss';
+      if(!is_executable("$sspath"))
+      {
+          return array(1,"Can not execute $sspath");
+      }
+      exec("$sspath -lun | grep ':162 '",$psOutput);
       if (count($psOutput) == 0)
       {
-          return array(1,'Port UDP/162 is not open : snmptrapd must not be started');
+          return array(1,'Port UDP/162 is not open : is snmptrapd running?');
       }
       $psOutput=array();
-      exec('ps fax |grep snmptrapd |grep -v grep',$psOutput);
+      exec('ps --no-headers -o command -C snmptrapd',$psOutput);
       if (count($psOutput) == 0)
       {
           return array(1,"UDP/162 : OK, but no snmptrapd process (?)");
