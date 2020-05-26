@@ -244,7 +244,7 @@ function check_snmptrapd_run() {
 	fi
 	
 	# get pid 
-	snmpPid=$( echo $port | grep -oP '(?<=pid=)[0-9]+' );
+	snmpPid=$( echo $port | sed -r 's/.*pid=([0-9]+).*/\1/' );
 	snmpName=$( echo $port | grep -oP '(?<=")[\w]+' );
 	echo "Found process $snmpName with pid $snmpPid"
 
