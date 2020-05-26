@@ -225,7 +225,7 @@ function check_snmptrapd_run() {
 	echo
 	
 	# Check port 
-	port=$(ss -pluna | grep ':162 ' 2>&1)
+	port=$(ss -plun | grep ':162 ' | head -1 2>&1)
 	if [ $? -ne 0 ]; then
 		echo 'No process is listening on port 162, trying to start it.'
 		ret=$(systemctl start snmptrapd)
