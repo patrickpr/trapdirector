@@ -85,7 +85,7 @@ function get_icinga_etc()
 {
 	icinga2 -V > /dev/null 2>&1
 	if [ $? -ne 0 ]; then echo ""; return 1; fi
-	icingaEtc=$(icinga2 -V | grep "Config directory:" | cut -d ":" -f 2)
+	icingaEtc=$(icinga2 -V | grep "Config directory:" | awk -F ': ' '{print $2}')
 	echo "$icingaEtc";
 	return 0;
 }
@@ -225,7 +225,7 @@ function check_snmptrapd_run() {
 	echo
 	
 	# Check port 
-	port=$(netstat -apn |grep -E "^udp.*:162" 2>&1)
+	port=$(ss -pluna | grep ':162 ' 2>&1)
 	if [ $? -ne 0 ]; then
 		echo 'No process is listening on port 162, trying to start it.'
 		ret=$(systemctl start snmptrapd)
@@ -236,7 +236,7 @@ function check_snmptrapd_run() {
 		echo "Returned : $ret"
 		echo "Waiting 5 sec to come up"
 		sleep 5
-		port=$(netstat -apn |grep -E "^udp.*:162" 2>&1)
+		port=$(ss -pluna | grep ':162 ' 2>&1)
 		if [ $? -ne 0 ]; then
 			echo 'snmptrapd started but not listening to udp/162.... Exiting...'
 			return 0;
@@ -244,10 +244,10 @@ function check_snmptrapd_run() {
 	fi
 	
 	# get pid 
-	snmpPid=$(echo $port | cut -d ' ' -f 6 | cut -d '/' -f1);
-	snmpName=$(echo $port | cut -d ' ' -f 6 | cut -d '/' -f2);
+	snmpPid=$( echo $port | grep -oP '(?<=pid=)[0-9]+' );
+	snmpName=$( echo $port | grep -oP '(?<=")[\w]+' );
 	echo "Found process $snmpName with pid $snmpPid"
-	
+
 	# get options
 	options=$(ps  --pid $snmpPid  -f | grep ${snmpName} | sed -r "s/.*${snmpName}//")
 	
