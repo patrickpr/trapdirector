@@ -236,7 +236,7 @@ function check_snmptrapd_run() {
 		echo "Returned : $ret"
 		echo "Waiting 5 sec to come up"
 		sleep 5
-		port=$(ss -pluna | grep ':162 ' 2>&1)
+		port=$(ss -plun | grep ':162 ' | head -1 2>&1)
 		if [ $? -ne 0 ]; then
 			echo 'snmptrapd started but not listening to udp/162.... Exiting...'
 			return 0;
