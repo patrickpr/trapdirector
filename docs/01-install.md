@@ -19,14 +19,14 @@ Optional
 Get installation files
 ---------------
 
-1. Download the latest release and unzip in a temporary directory.
+1. Download the latest release and unzip it in a temporary directory.
 2. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
 3. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
 
 Automatic installation
 -----------------
 
-There is an optional install script which can help you with creating backend database and users with proper permissions. See [Automatic Installation](30-install-auto.md) for more information.
+There is an optional install script which helps create the backend database and users with proper permissions. See [Automatic Installation](30-install-auto.md) for more information.
 
 Non standard IcingaWeb2 installation
 ------------------------------------
@@ -44,7 +44,7 @@ Database Preparation
 
 * MySQL / MariaDB
 
-Set up a new (or use existing) database (these commands should be run as root or a database admin):
+Set up a new (or use an existing) database (these commands should be run as root or a database admin):
 
 Create new database:
 
@@ -112,7 +112,7 @@ Click on (3) to create required database schema:
 
 ![install-3](img/install-3.jpg)
 
-Then go back to module configuration, database check should be showing OK status:
+Then go back to the module configuration. The database check should be showing OK status:
 
 ![install-4](img/install-4.jpg)
 
@@ -143,7 +143,7 @@ Fill in the following fields:
 * icinga2 API username: Name of the user in icinga2 `api_users.conf` file. 
 * icinga2 API password: Password of the API user.
 
-Then, the module will test connection and report OK if everything is fine : 
+Then, the module will test the API connection and report OK if everything is fine : 
 
 ![install-11](img/install-11.jpg)
 
@@ -162,9 +162,9 @@ Edit the `/etc/snmp/snmptrapd.conf` file and add this line to it (assuming defau
 traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-At the bottom of trapdirector configuration page, you will see a list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/usr/bin/php` with something like `/sbin/php-fpm` in the above traphandle line.
+At the bottom of the trapdirector configuration page, you will see a list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/usr/bin/php` with something like `/sbin/php-fpm` in the above traphandle line.
 
-Next, set up the community in `snmptrapd.conf` (`public` in example):
+Next, set up the community string in `snmptrapd.conf` (`public` in example):
 
 ```
 authCommunity log,execute,net public
@@ -189,7 +189,7 @@ authUser log,execute,net trapuser
 
 Edit the launch options of snmptrapd
 ------------------------
-snmptrapd should be launched with options `-Lsd -n -t -Oen`. The additional options are required for trapdirector to receive traps in the correct format. Following are examples for enabling these options on various systems:
+snmptrapd should be launched with options `-Lsd -n -t -Oen`. The additional options are required for trapdirector to receive traps in the correct format. Here are examples for enabling these options on various systems:
 
 On RHEL6 based distros, `/etc/sysconfig/snmptrapd` should contain:
 ```
