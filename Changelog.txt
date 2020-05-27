@@ -14,6 +14,7 @@ BUGS
 ENHANCEMENTS
 ============
 1) Changed the php detection for install script (issues #30 & #31)
+2) Updated snmptrapd detection in config / installer (pr #34 & #35)
 
 -------------------------------------------------------------------------------------------------
 
