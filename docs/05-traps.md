@@ -78,14 +78,14 @@ The form is divided into four sections
 
 3) Trap objects definition
 
-This section lists all objects that will be used in the display and rules as $N$ variables.
+This section lists all objects that will be used in the display and rules as `$<n>$` variables.
 
 As you selected a trap, the objects sent with the trap are automaticaly added in here
 
 ![add-from-trap-2](img/add-from-trap-2.jpg)
 
 * 1 : Enter an OID here to manually add objects
-* 2 : Shortcuts are $N$ variables that will be used in rules
+* 2 : Shortcuts are `$<n>$` variables that will be used in rules
 * 3 : Value sent by the trap selected earlier
 * 4 : Type of trap as described in MIB
 
@@ -103,7 +103,7 @@ Here you can configure :
 
 ![add-from-trap-3](img/add-from-trap-3.jpg)
 
-* 1 : The display string which will be sent along with a status to the service. You can use all the $N$ variables defined above.
+* 1 : The display string which will be sent along with a status to the service. You can use all the `$<n>$` variables defined above.
 
 Here, the display will be for example : "Trap linkUP received for 3"
 (if interface index in object is 3).
@@ -127,5 +127,5 @@ Testing a rule
 See "Rule testing" in : [Rules evaluation](08-rules-evaluation.md)
 
 
-Go back to the [User Guide](02-userguide.md)
+Go back to the [user guide](02-userguide.md)
 
