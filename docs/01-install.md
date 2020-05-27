@@ -189,46 +189,71 @@ authUser log,execute,net trapuser
 
 Edit the launch options of snmptrapd
 ------------------------
+snmptrapd should be launched with options `-Lsd -n -t -Oen`. The additional options are required for trapdirector to receive traps in the correct format. Following are examples for enabling these options on various systems:
 
-* For RH7/CenOS7 and other systems using systemd : 
+On RHEL6 based distros, `/etc/sysconfig/snmptrapd` should contain:
+```
+OPTIONS="-Lsd -n -t -Oen -p /var/run/snmptrapd.pid"
+```
 
-In `/usr/lib/systemd/system/snmptrapd.service` or `/lib/systemd/system/snmptrapd.service` 
+On newer RHEL based distros, `/etc/sysconfig/snmptrapd` should contain:
+```
+OPTIONS="-Lsd -n -t -Oen"
+```
 
-If you have a line like `EnvironmentFile=-/etc/sysconfig/snmptrapd` change that file instead (as you would in RH6 example below).
+On Debian based distros with systemd:
+1. Copy the systemd snmptrapd service:
+```
+cp -v /lib/systemd/system/snmptrapd.service /etc/systemd/system/
+```
+2. Edit `/etc/systemd/system/snmptrapd.service` to contain:
+```
+ExecStart=/usr/sbin/snmptrapd -Lsd -n -t -Oed -f
+```
 
-If not, change `Environment=OPTIONS="-Lsd"` to `Environment=OPTIONS="-Lsd -n -t -Oen"`
+On Debian based distros with System V-style init, `/etc/default/snmptrapd` should contain:
+```
+TRAPDRUN=yes
 
-If you have a weird 204 error on startup (happened on CentOS7 system), change `ExecStart` line instead to 
+TRAPDOPTS='-Lsd -n -t -Oen -p /run/snmptrapd.pid'
+```
 
-`ExecStart=/usr/sbin/snmptrapd -n -t -Oen $OPTIONS -f`
+On other systems, check:
+* `/etc/sysconfig/snmptrapd`
+* `/etc/default/snmptrapd`
+* `/etc/init.d/snmptrapd`
+* `Environment` line in `/usr/lib/systemd/system/snmptrapd.service` or `/lib/systemd/system/snmptrapd.service`
+* `ExecStart` line in `/usr/lib/systemd/system/snmptrapd.service` or `/lib/systemd/system/snmptrapd.service`
 
-
-* For RH6/CenOS6 and other /etc/init.d system services 
-
-In `/etc/sysconfig/snmptrapd` file change `# OPTIONS="-Lsd -p /var/run/snmptrapd.pid"` line to `OPTIONS="-Lsd -n -t -Oen -p /var/run/snmptrapd.pid"`
+If you can't find any of these files, it's likely you need to install the `net-snmp` or `snmptrapd` package.
 
 Enable & start snmptrap service : 
 ------------------------
 
 * On systemd:
-
 ```
 systemctl daemon-reload
 
 systemctl enable snmptrapd
 
-systemctl start snmptrapd
+systemctl restart snmptrapd
 ```
 
-* on init.d systems:
-
+* On System V-like init systems:
 ```
 chkconfig --level 345 snmptrapd on
 
-service snmptrapd start
+service snmptrapd restart
 ```
 
 Now all traps received by the system will be redirected to the trapdirector module.
+
+
+Troubleshooting:
+* Check the runtime arguments with `ps -f -C snmptrapd`
+* Ensure you are su (sudo)
+* Ensure the config lines in the previous section are not commented out.
+* If you experience a 204 error, try changing the `ExecStart` line to `ExecStart=/usr/sbin/snmptrapd -n -t -Oen $OPTIONS -f` in the previous section.
 
 Set up MIBs
 ------------------------
