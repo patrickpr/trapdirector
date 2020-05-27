@@ -19,14 +19,14 @@ Optional
 Get installation files
 ---------------
 
-1. Download latest release and unzip in a temporary directory.
+1. Download the latest release and unzip in a temporary directory.
 2. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
-3. `trapdirector/mibs/` directory must be writable by icinga web user for web GUI MIB upload to function.
+3. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
 
 Automatic installation
 -----------------
 
-There is an install script which can help you with creating backend database and users with proper permissions for it: ![Auto install](30-install-auto.md)
+There is an optional install script which can help you with creating backend database and users with proper permissions. See [Automatic Installation](30-install-auto.md) for more information.
 
 Non standard IcingaWeb2 installation
 ------------------------------------
@@ -44,7 +44,7 @@ Database Preparation
 
 * MySQL / MariaDB
 
-Set up a new (or use existing) database (these commands should be run as root or database admin):
+Set up a new (or use existing) database (these commands should be run as root or a database admin):
 
 Create new database:
 
@@ -84,22 +84,22 @@ Create database in IcingaWeb2 web GUI on `/icingaweb2/config/resource` (trapdire
 Module activation
 ---------------
 
-Log in to IcingaWeb2 web GUI and activate trapdirector module in Configuration -> modules.
+Log in to the IcingaWeb2 web GUI and activate the trapdirector module in Configuration -> Modules.
 
-After that, configuration tab should look like this: 
+After that, the trapdirector configuration tab should look like this: 
 
 ![install-1](img/install-1.jpg)
 
 The options are:
 
 * Database : backend database of trapdirector.
-* Prefix : the prefix for all trapdirector-related database tables.
+* Trapdirector table prefix : the prefix for all trapdirector-related database tables.
 * IDO Database : the IDO database of IcingaWeb2.
 * icingaweb2 config dir : configuration directory of IcingaWeb2.
-* snmptranslate binary : path to binary, can be tested in MIB&status page.
+* snmptranslate binary with path : path to binary, can be tested in MIB&status page.
 * Path for mibs : Directory for trapdirector local MIBs (default `/usr/share/icingaweb2/modules/trapdirector/mibs`). You can add directories with `:` separators. MIBs will then be uploaded in the first one listed. 
-* icingacmd path : path to `icinga2` command file.
-* API server/port/username/password : see the API section.
+* icingacmd with path : path to `icinga2` command file.
+* icinga2 API host/port/username/password : see the API section.
 
 Schema creation
 ---------------
@@ -119,9 +119,9 @@ Then go back to module configuration, database check should be showing OK status
 API user setup
 ---------------
 
-API user allows the module to use Icinga2 API to submit check results instead of command file or in case `icinga2` is installed on the server different from module.
+An API user allows the module to use the Icinga2 API to submit check results, instead of via a command file, or where `icinga2` and icingaweb2 are running on separate hosts.
 
-To create an API user in `icinga2`, edit it's API users file (`/etc/icinga2/conf.d/api-users.conf` by default) and add a user or use existing one : 
+To create an `icinga2` API user, edit the API config file (`/etc/icinga2/conf.d/api-users.conf` by default) and add a section as per the following example: 
 
 ```
 object ApiUser "trapdirector" {
@@ -129,19 +129,19 @@ object ApiUser "trapdirector" {
   permissions = [ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]
 }
 ```
-Note: These permissions are sufficient as of now but may be subject to change (module will check for this, see below).
+Note: These permissions are sufficient as of now, but may be subject to change in a future version of trapdirector (the module will check for this, see below).
 
 Reload `icinga2` with `systemctl reload icinga2` command.
 
-Then configure API usage in the module starting with setting IP/hostname.
+Then configure the API settings in the trapdirector module:
 
 ![install-10](img/install-10.jpg)
 
-Fill following fields: 
-* icinga2 host IP: IP or hostname of icinga2 server
-* Port: Port of icinga2 API (5665 by default)
-* API username: Name of the user in icinga2 `api_users.conf` file. 
-* API password: Password of the API user.
+Fill in the following fields: 
+* icinga2 API Host IP: IP or hostname of icinga2 server
+* icinga2 API TCP Port: Port of icinga2 API (5665 by default)
+* icinga2 API username: Name of the user in icinga2 `api_users.conf` file. 
+* icinga2 API password: Password of the API user.
 
 Then, the module will test connection and report OK if everything is fine : 
 
@@ -162,7 +162,7 @@ Edit the `/etc/snmp/snmptrapd.conf` file and add this line to it (assuming defau
 traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-At the bottom of trapdirector configuration page, you will have list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/sbin/php-fpm` path with something like `bin/php`.
+At the bottom of trapdirector configuration page, you will have list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/usr/bin/php` with something like `/sbin/php-fpm` in the above traphandle line.
 
 Next, set up the community in `snmptrapd.conf` (`public` in example):
 
@@ -233,7 +233,7 @@ Now all traps received by the system will be redirected to the trapdirector modu
 Set up MIBs
 ------------------------
 
-The system MIBs should be set by `net-snmp` package. Test the default MIBs status by `snmptranslate 1.3.6.1.2.1.1.1` with a required result of `SNMPv2-MIB::sysDescr` 
+The system MIBs should be set by the `net-snmp` package. Test the default MIBs status by `snmptranslate 1.3.6.1.2.1.1.1` with a required result of `SNMPv2-MIB::sysDescr` 
 
 Uploaded MIBs will be in `/usr/share/icingaweb2/modules/trapdirector/mibs` directory by default: you must check if the directory is writable by the user of the web server.
 For example (as root) : 
@@ -242,12 +242,12 @@ chown apache:apache /usr/share/icingaweb2/modules/trapdirector/mibs
 chmod 755 /usr/share/icingaweb2/modules/trapdirector/mibs
 ```
 
-After this, you can add first MIBs into MIB database with the `icingacli trapdirector mib update` command
+After this, you can add your first MIBs into MIB database with the `icingacli trapdirector mib update` command
 
 Ready to go!
 
 
 
 User Guide
-===============
+------------------------
 Continue to the [user guide](02-userguide.md) for configuring trap handlers and other trapdirector features.
