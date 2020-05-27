@@ -127,5 +127,5 @@ Testing a rule
 See "Rule testing" in : [Rules evaluation](08-rules-evaluation.md)
 
 
-Go back to the [user guide](02-userguide.md)
+Go back to the [user guide](02-userguide.md).
 
