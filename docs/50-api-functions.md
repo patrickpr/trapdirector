@@ -93,5 +93,5 @@ To activate a plugin, go to Status & Mibs -> Plugins Management and click the "E
 
 
 
-Go back to user guide : [Traps](02-userguide.md)
+Go back to the [user guide](02-userguide.md).
 
