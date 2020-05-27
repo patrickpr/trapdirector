@@ -59,4 +59,7 @@ example : "[1547221876] PROCESS_SERVICE_CHECK_RESULT;Icinga host;LinkTrapStatus;
 - done : rule was found , whether or not it matches or action has been made
 - unknown : no sourceIP/OID rule was found
 - error : ....
-- waiting : trap was received, but rules were not searched/evaluated (for future use with distributed environments)
+- waiting : a trap was received, but rules were not searched/evaluated (for future use with distributed environments)
+
+
+Go back to the [user guide](02-userguide.md).
