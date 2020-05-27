@@ -246,4 +246,8 @@ After this, you can add first MIBs into MIB database with the `icingacli trapdir
 
 Ready to go!
 
+
+
+User Guide
+===============
 Continue to the [user guide](02-userguide.md) for configuring trap handlers and other trapdirector features.
