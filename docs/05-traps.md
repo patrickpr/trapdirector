@@ -112,7 +112,7 @@ Here, the display will be for example : "Trap linkUP received for 3"
 
 * 3 : Actions. Depending on whether the rule matches or not. You can choose any common status or 'nothing' to do nothing and 'ignore' to completly ignore the trap (e.g. no database record)
 
-Then click on Create to save and activate your rule for next trap.
+Then click on Create to save and activate your rule for the next trap.
 
 
 Updating a rule
