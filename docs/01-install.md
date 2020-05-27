@@ -226,7 +226,6 @@ systemctl start snmptrapd
 chkconfig --level 345 snmptrapd on
 
 service snmptrapd start
-
 ```
 
 Now all traps received by the system will be redirected to the trapdirector module.
@@ -247,5 +246,4 @@ After this, you can add first MIBs into MIB database with the `icingacli trapdir
 
 Ready to go!
 
-Now have a look at the next part of module's user guide documentation: [Traps](02-userguide.md)
- 
+Continue to the [user guide](02-userguide.md) for configuring trap handlers and other trapdirector features.
