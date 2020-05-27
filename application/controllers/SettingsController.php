@@ -422,7 +422,12 @@ class SettingsController extends TrapsController
   {
       $psOutput=array();
       // First check is someone is listening to port 162. As not root, we can't have pid... 
-      $sspath = '/usr/sbin/ss';
+      $sspath = exec('which ss 2>/dev/null');
+      if(empty($sspath))
+      {
+          // RHEL based systems
+          $sspath = '/usr/sbin/ss';
+      }
       if(!is_executable("$sspath"))
       {
           return array(1,"Can not execute $sspath");
