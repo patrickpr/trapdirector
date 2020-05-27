@@ -23,7 +23,7 @@ Help wanted :
 
 -  English is not my native language, so grammar & spelling corrections in the docs (and the module !) are VERY welcome : make a pull request or issue or just send me a message
 -  If you want to help on this project pull request are welcome !
--  If anyone has some knowledge in Zend framework, I'll happily take advices 
+-  If anyone has some knowledge in Zend framework, I'll happily take advice
 
 Have a look at : 
 
