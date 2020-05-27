@@ -3,8 +3,8 @@ API and functions
 
 Note : Beginning at version 1.0.3, this feature is still beta. 
 
-Functions part is stable and can be used.
-API part is still on development.
+The Functions part is stable and can be used.
+The API part is still under development.
 
 API
 ---
@@ -19,7 +19,7 @@ To create a new plugin named `MyPlugin` :
 - In this file create a class derived from PluginTemplate : 
 	`class MyPlugin extends PluginTemplate`
 	
-Get example from the NetworkRule.php file.
+See the NetworkRule.php file for an example.
 
 You must ACTIVATE the plugin (see below).
 
@@ -33,18 +33,18 @@ Functions are freely added in a plugin (you can use existing one to just add one
 Add the function parameters in the plugin->functions array : 
 
 -  $functions[name]['function'] : Name of the function to be called in this class
--  $functions[name]['params'] : Description of input parameters of function.
+-  $functions[name]['params'] : Description of input parameters of the function.
 -  $functions[name]['description'] : Description. Can be multiline.
 
-Create in the plugin class a new function : 
+Create a new function in the plugin class : 
 
 `public function functionName(array $params) : bool`
 
 where 
 
 - functionName = $functions[name]['function']
-- $params = params passed by rule. The function MUST check params and throw exception on error.
-- return an evaluation as boolean
+- $params = params passed by rule. The function MUST check params and throw an exception on error.
+- return an evaluation as a boolean
 
 Example with inNetwork function
 -------------------------------
@@ -80,7 +80,7 @@ Note : You can setup parameters in the plugin construct method.
 	}
 ```
 
-After activation of plugin, you can use the function in a rule : 
+After activation of the plugin, you can use the function in a rule : 
 
 - In a rule handler, have an OID which gives an IP (here $1$), and another oid (here $2$), the rule would be like : 
 
@@ -89,7 +89,7 @@ After activation of plugin, you can use the function in a rule :
 Plugin activation
 -----------------
 
-To activate a plugin, go to Status&Mibs -> Plugins Management and click "enabled" next to the plugin you want to activate.
+To activate a plugin, go to Status & Mibs -> Plugins Management and click the "Enabled" checkbox next to the plugin you want to activate.
 
 
 
