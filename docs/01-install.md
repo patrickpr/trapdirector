@@ -48,13 +48,13 @@ Set up a new (or use existing) database (these commands should be run as root or
 
 Create new database:
 
-`mysql -u root -e "create database <database name>;"`
+`mysql -u root -e "CREATE DATABASE <database name>;"`
 
 Create user with required privileges:
 
 ```
-mysql -u root -e "grant usage on *.* to <user>@localhost identified by '<password>';"
-mysql -u root -e "grant all privileges on <database name>.* to <user>@localhost ;"
+mysql -u root -e "GRANT USAGE ON *.* TO <user>@localhost IDENTIFIED BY '<password>';"
+mysql -u root -e "GRANT ALL PRIVILEGES ON <database name>.* TO <user>@localhost ;"
 ```
 
 * PostgreSQL
