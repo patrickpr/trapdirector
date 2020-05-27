@@ -115,5 +115,5 @@ There is also a rule tester page : click "open rule tester"
 
 
 
-Go back to [user fuide](02-userguide.md).
+Go back to [user guide](02-userguide.md).
 
