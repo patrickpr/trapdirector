@@ -82,7 +82,7 @@ Note : You can setup parameters in the plugin construct method.
 
 After activation of the plugin, you can use the function in a rule : 
 
-- In a rule handler, have an OID which gives an IP (here $1$), and another oid (here $2$), the rule would be like : 
+- In a rule handler, if for example you have an OID which gives an IP (here $1$), and another oid (here $2$), the rule would be like : 
 
 `__inNetwork($1$,192.168.123.0,24) & ( $2$ = 1)`
 
