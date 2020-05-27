@@ -127,5 +127,5 @@ Testing a rule
 See "Rule testing" in : [Rules evaluation](08-rules-evaluation.md)
 
 
-Go back to the user guide : [Traps](02-userguide.md)
+Go back to the [User Guide](02-userguide.md)
 
