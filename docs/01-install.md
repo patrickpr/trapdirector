@@ -162,7 +162,7 @@ Edit the `/etc/snmp/snmptrapd.conf` file and add this line to it (assuming defau
 traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
 
-At the bottom of trapdirector configuration page, you will have list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/usr/bin/php` with something like `/sbin/php-fpm` in the above traphandle line.
+At the bottom of trapdirector configuration page, you will see a list of PHP and module directories on your system. If it shows `php-fpm` instead of `php`, you are using PHP-FPM and need to replace `/usr/bin/php` with something like `/sbin/php-fpm` in the above traphandle line.
 
 Next, set up the community in `snmptrapd.conf` (`public` in example):
 
