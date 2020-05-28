@@ -1,38 +1,10 @@
-Skip to content
-Search or jump to…
+# trapdirector
+Icingaweb2 module for receiving and handling snmp traps
 
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@robdevops 
-robdevops
-/
-trapdirector
-forked from patrickpr/trapdirector
-0
-06
- Code
- Pull requests 0 Actions
- Projects 0
- Wiki
- Security 0
- Insights
- Settings
-Update README.md
-
- master
-@patrickpr
-patrickpr committed 24 days ago 
-1 parent 0662223 commit 434d3929f0b8784bde473a3df93c2807ebc62ce1
-Showing  with 4 additions and 3 deletions.
- 7  README.md 
-@@ -5,19 +5,20 @@ Icingaweb2 module for receiving and handling snmp traps
+[![Build Status](https://travis-ci.org/patrickpr/trapdirector.svg?branch=master)](https://travis-ci.org/patrickpr/trapdirector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/cc87e39440bc434bb5724bece6b5fcbc)](https://www.codacy.com/manual/patrick_34/trapdirector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=patrickpr/trapdirector&amp;utm_campaign=Badge_Grade) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/patrickpr/trapdirector/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/patrickpr/trapdirector/?branch=master) [![PSR-2 Style](https://github.styleci.io/repos/164436083/shield)](https://github.styleci.io/repos/164436083)
 
 [![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 
-Projet features : 
 Features : 
 
 -  Receive and handle traps using only net-snmp trapd daemon
@@ -41,8 +13,6 @@ Features :
 -  Write your own evaluation function in PHP for specific traps OID.
 -  OID decode to human readable name, possible to add mib files via icingaweb GUI
 
-
-Project status : Stable release 1.0.2
 Project status : [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
 
 Module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
@@ -52,23 +22,16 @@ In case of problem or feature request, [open a case](https://github.com/patrickp
 Help wanted : 
 
 -  English is not my native language, so grammar & spelling corrections in the docs (and the module !) are VERY welcome : make a pull request or issue or just send me a message
-0 comments on commit 434d392
-@robdevops
- 
- 
-Leave a comment
+-  If you want to help on this project pull request are welcome !
+-  If anyone has some knowledge in Zend framework, I'll happily take advices 
 
-Attach files by dragging & dropping, selecting or pasting them.
- You’re not receiving notifications from this thread.
-© 2020 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Help
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+Have a look at : 
+
+-  Installation doc : [Installation](docs/01-install.md)
+
+-  User guide : [Traps](docs/02-userguide.md)
+	-  Create rule from existing trapd : [Here](docs/05-traps.md)
+	-  Create a rule from scratch : [Here](docs/10-createrule.md)
+	-  Mib management : [Here](docs/15-mib.md)
+
+-  Trap receiver logic : [Basic schema](docs/20-receiver-logic.md)
