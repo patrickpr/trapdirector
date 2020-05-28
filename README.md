@@ -17,7 +17,7 @@ Project status: [Stable release 1.0.3](https://github.com/patrickpr/trapdirector
 
 This module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
 
-In case of a problem or feature request, [open a case](https://github.com/patrickpr/trapdirector/issues/new/choose)
+In case of a problem or feature request, [open a case](https://github.com/patrickpr/trapdirector/issues/new/choose).
 
 Help wanted: 
 
