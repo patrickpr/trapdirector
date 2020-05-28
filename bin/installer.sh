@@ -144,7 +144,7 @@ EOF
 		echo -n "Installing package trapdirector.pp (takes a minute): " || (echo "Error" && return)
 		semodule -i /tmp/trapdirector.pp
 		echo OK
-                rm -f /tmp/trapdirector.te /tmp/trapdirector.mod /tmp/trapdirector.pp
+		rm -f /tmp/trapdirector.te /tmp/trapdirector.mod /tmp/trapdirector.pp
 	else
 		echo "SELinux not enabled. Nothing to do."
 	fi
