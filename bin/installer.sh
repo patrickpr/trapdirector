@@ -103,12 +103,11 @@ function check_selinux() {
 		if [ $? -eq 0 ]; then return 0; fi
 
 		echo -n "Checking existing SELinux modules: "
-		semodule -l | grep -q trapdirector
+		semodule -l | grep -qw trapdirector
 		if [ $? -eq 0 ]; then
 			echo "Already installed. To reinstall, run 'semodule -r trapdirector' and try again."
 			return 0
 		fi
-
 		echo OK
 
 		echo -n "Writing source file trapdirector.te: "

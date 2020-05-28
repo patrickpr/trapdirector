@@ -439,7 +439,7 @@ class SettingsController extends TrapsController
       }
       $psOutput=array();
       $getenforce = '';
-      if(is_executable('/usr/sbin/getenforce'))
+      if(is_executable('/usr/sbin/getenforce')) // SELinux handling
       {
           $getenforce = exec('/usr/sbin/getenforce 2>/dev/null');
       }
