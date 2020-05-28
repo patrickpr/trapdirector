@@ -46,7 +46,7 @@ Extracts trap oid and stores objects (OID/value)
 2) Gets all rules which match ( sourceIP / trapoid )
 
 Evaluate all rules one by one.
-If a rule is empty, it will always be true. i.e. the "on match" action will by executed.
+If a rule is empty, it will always be true. i.e. the "on match" action will be executed.
 
 If the action is other than 'do nothing' or 'ignore', then it sends a passive service check, either via:
 
