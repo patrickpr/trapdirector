@@ -189,7 +189,7 @@ authUser log,execute,net trapuser
 
 Edit the launch options of snmptrapd
 ------------------------
-snmptrapd should be launched with options `-Lsd -n -t -Oen`. The additional options are required for trapdirector to receive traps in the correct format. Here are examples for enabling these options on various systems:
+In order for trapdirector to receive traps in the correct format, snmptrapd startup options must include `-n -Oen`. Here is how to enable these options on various systems:
 
 On RHEL6 based distros, `/etc/sysconfig/snmptrapd` should contain:
 ```
