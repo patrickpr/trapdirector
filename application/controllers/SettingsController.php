@@ -438,20 +438,32 @@ class SettingsController extends TrapsController
           return array(1,'Port UDP/162 is not open : is snmptrapd running?');
       }
       $psOutput=array();
-      exec('ps --no-headers -o command -C snmptrapd',$psOutput);
-      if (count($psOutput) == 0)
+      $getenforce = '';
+      if(is_executable('/usr/sbin/getenforce'))
       {
-          return array(1,"UDP/162 : OK, but no snmptrapd process (?)");
+          $getenforce = exec('/usr/sbin/getenforce 2>/dev/null');
       }
-      // Assume there is only one line... TODO : see if there is a better way to do this
-      $line = preg_replace('/^.*snmptrapd /','',$psOutput[0]);
-      if (!preg_match('/-n/',$line))
-          return array(1,'snmptrapd has no -n option : '.$line);
-      if (!preg_match('/-O[^ ]*n/',$line))
-          return array(1,'snmptrapd has no -On option : '.$line);
-      if (!preg_match('/-O[^ ]*e/',$line))
-          return array(1,'snmptrapd has no -Oe option : '.$line);
-      
-      return array(0,'snmptrapd listening to UDP/162, options : '.$line);
+      if(!$getenforce === 'Enforcing')
+      {
+          exec('ps --no-headers -o command -C snmptrapd',$psOutput);
+          if (count($psOutput) == 0)
+          {
+              return array(1,"UDP/162 : OK, but no snmptrapd process (?)");
+          }
+          // Assume there is only one line... TODO : see if there is a better way to do this
+          $line = preg_replace('/^.*snmptrapd /','',$psOutput[0]);
+          if (!preg_match('/-n/',$line))
+              return array(1,'snmptrapd has no -n option : '.$line);
+          if (!preg_match('/-O[^ ]*n/',$line))
+              return array(1,'snmptrapd has no -On option : '.$line);
+          if (!preg_match('/-O[^ ]*e/',$line))
+              return array(1,'snmptrapd has no -Oe option : '.$line);
+
+          return array(0,'snmptrapd listening to UDP/162, options : '.$line);
+      }
+      else
+      {
+          return array(0,'A daemon (hidden by SELinux) is listening on UDP/162');
+      }
   }
 }
