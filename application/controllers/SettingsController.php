@@ -438,12 +438,12 @@ class SettingsController extends TrapsController
           return array(1,'Port UDP/162 is not open : is snmptrapd running?');
       }
       $psOutput=array();
-      $getenforce = '';
-      if(is_executable('/usr/sbin/getenforce')) // SELinux handling
+      $selinux_state = '';
+      if(is_executable('/usr/sbin/getenforce'))
       {
-          $getenforce = exec('/usr/sbin/getenforce 2>/dev/null');
+          $selinux_state = exec('/usr/sbin/getenforce 2>/dev/null');
       }
-      if($getenforce !== 'Enforcing')
+      if($selinux_state !== 'Enforcing')
       {
           exec('ps --no-headers -o command -C snmptrapd',$psOutput);
           if (count($psOutput) == 0)
