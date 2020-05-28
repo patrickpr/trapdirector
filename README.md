@@ -5,27 +5,27 @@ Icingaweb2 module for receiving and handling snmp traps
 
 [![Gitter](https://badges.gitter.im/trapdirector/community.svg)](https://gitter.im/trapdirector/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) 
 
-Features : 
+Features: 
 
 -  Receive and handle traps using only net-snmp trapd daemon
--  Update icinga services based on rules for a host or hostgroup : the trap data updates the service status.
--  See all traps received by the system
+-  Update Icinga2 services based on rules for a host or hostgroup. The trap data is used to update the service status.
+-  See all traps received by the system.
 -  Write your own evaluation function in PHP for specific trap OIDs.
--  Decode OID to human readable names, ability to add MIB files via icingaweb2 GUI
+-  Decode OID to human readable names, ability to add MIB files via icingaweb2 GUI.
 
-Project status : [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
+Project status: [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
 
 This module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
 
 In case of a problem or feature request, [open a case](https://github.com/patrickpr/trapdirector/issues/new/choose)
 
-Help wanted : 
+Help wanted: 
 
--  English is not my native language, so grammar & spelling corrections in the docs (and the module !) are VERY welcome : make a pull request or issue, or just send me a message
--  If you want to help on this project, pull request are welcome !
--  If anyone has some knowledge in Zend framework, I'll happily take your advice 
+-  English is not my native language, so grammar & spelling corrections in the docs (and the module !) are VERY welcome. Make a pull request or issue, or just send me a message.
+-  If you want to help on this project, pull request are welcome!
+-  If anyone has some knowledge in Zend framework, I'll happily take your advice. 
 
-Have a look at : 
+Have a look at: 
 
 -  [Installation](docs/01-install.md)
 
