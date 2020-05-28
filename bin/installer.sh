@@ -127,9 +127,7 @@ require {
 }
 
 #============= snmpd_t ==============
-allow snmpd_t httpd_sys_rw_content_t:file { getattr map };
-allow snmpd_t httpd_sys_rw_content_t:file read;
-allow snmpd_t httpd_sys_rw_content_t:file open;
+allow snmpd_t httpd_sys_rw_content_t:file { getattr map read open};
 allow snmpd_t hugetlbfs_t:file { execute read map };
 allow snmpd_t mysqld_port_t:tcp_socket name_connect;
 allow snmpd_t self:process execmem;
