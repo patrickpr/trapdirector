@@ -443,7 +443,7 @@ class SettingsController extends TrapsController
       {
           $getenforce = exec('/usr/sbin/getenforce 2>/dev/null');
       }
-      if(!$getenforce === 'Enforcing')
+      if($getenforce !== 'Enforcing')
       {
           exec('ps --no-headers -o command -C snmptrapd',$psOutput);
           if (count($psOutput) == 0)
