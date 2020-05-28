@@ -11,7 +11,7 @@ Features:
 -  Update Icinga2 services based on rules for a host or hostgroup. The trap data is used to update the service status.
 -  See all traps received by the system.
 -  Write your own evaluation function in PHP for specific trap OIDs.
--  Decode OID to human readable names, ability to add MIB files via icingaweb2 GUI.
+-  Decode OID to human readable names, ability to add MIB files via Icingaweb2 GUI.
 
 Project status: [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
 
