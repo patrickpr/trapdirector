@@ -41,6 +41,7 @@ function usage()
    snmprun  : setup snmptrapd startup options
    database : create database & db user
    perm     : set directory/file permissions and paths in files
+   selinux  : set SELinux booleans and policies
    all      : all commands in sequence
    
    -i : disable interactive mode.
@@ -88,6 +89,66 @@ function get_icinga_etc()
 	icingaEtc=$(icinga2 -V | grep "Config directory:" | awk -F ': ' '{print $2}')
 	echo "$icingaEtc";
 	return 0;
+}
+
+function check_selinux() {
+	# Check SELinux available
+	echo -e "\n==================================";
+	echo "SELinux Check"
+	selinuxStatus=$(getenforce 2>/dev/null)
+
+	if [[ "$selinuxStatus" == "Enforcing" ]] || [[ "$selinuxStatus" == "Permissive" ]]; then
+		echo "SELinux is ${selinuxStatus}"
+		question "Configure SELinux?";
+		if [ $? -eq 0 ]; then return 0; fi
+
+		echo -n "Checking existing SELinux modules: "
+		semodule -l | grep -q trapdirector
+		if [ $? -eq 0 ]; then
+			echo "Already installed. To reinstall, run 'semodule -r trapdirector' and try again."
+			return 0
+		fi
+
+		echo OK
+
+		echo -n "Writing source file trapdirector.te: "
+		# Writing it out this way avoids any kind of working directory issues
+		cat << EOF > /tmp/trapdirector.te
+module trapdirector 1.0;
+
+require {
+        class file { getattr open read execute map };
+        class process execmem;
+        class tcp_socket name_connect;
+        type httpd_sys_rw_content_t;
+        type hugetlbfs_t;
+        type mysqld_port_t;
+        type snmpd_t;
+}
+
+#============= snmpd_t ==============
+allow snmpd_t httpd_sys_rw_content_t:file { getattr map };
+allow snmpd_t httpd_sys_rw_content_t:file read;
+allow snmpd_t httpd_sys_rw_content_t:file open;
+allow snmpd_t hugetlbfs_t:file { execute read map };
+allow snmpd_t mysqld_port_t:tcp_socket name_connect;
+allow snmpd_t self:process execmem;
+EOF
+		echo OK
+		echo -n "Compiling module trapdirector.mod: "
+		checkmodule -M -m -o /tmp/trapdirector.mod /tmp/trapdirector.te || (echo "Error" && return)
+		echo OK
+		echo -n "Building package trapdirector.pp: "
+		semodule_package -o /tmp/trapdirector.pp -m /tmp/trapdirector.mod || (echo "Error" && return)
+		echo OK
+		echo -n "Installing package trapdirector.pp (takes a minute): " || (echo "Error" && return)
+		semodule -i /tmp/trapdirector.pp
+		echo OK
+                rm -f /tmp/trapdirector.te /tmp/trapdirector.mod /tmp/trapdirector.pp
+	else
+		echo "SELinux not enabled. Nothing to do."
+	fi
+		return 0
 }
 
 function check_api() {
@@ -763,6 +824,10 @@ fi
 
 if [[ $commands =~ snmprun ]] || [[ $commands =~ all ]]; then
 	check_snmptrapd_run
+fi
+
+if [[ $commands =~ selinux ]] || [[ $commands =~ all ]]; then
+	check_selinux
 fi
 
 if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
