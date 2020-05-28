@@ -7,7 +7,7 @@ Icingaweb2 module for receiving and handling snmp traps
 
 Features: 
 
--  Receive and handle traps using only net-snmp trapd daemon
+-  Receive and handle traps using only the net-snmp trap daemon.
 -  Update Icinga2 services based on rules for a host or hostgroup. The trap data is used to update the service status.
 -  See all traps received by the system.
 -  Write your own evaluation function in PHP for specific trap OIDs.
