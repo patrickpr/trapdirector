@@ -205,7 +205,13 @@ On Debian based distros with systemd:
 ```
 cp -v /lib/systemd/system/snmptrapd.service /etc/systemd/system/
 ```
-2. Edit `/etc/systemd/system/snmptrapd.service` to contain:
+
+2. Clear any old symlinks:
+```
+systemctl disable snmptrapd
+```
+
+3. Edit `/etc/systemd/system/snmptrapd.service` to contain:
 ```
 ExecStart=/usr/sbin/snmptrapd -Lsd -n -t -Oed -f
 ```
