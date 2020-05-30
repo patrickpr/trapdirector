@@ -25,24 +25,27 @@ It's safe
 
 You can run it even with everything already configured. It will always ask before doing anything.
 
-After enabling module
+Launching the installer
 ---------------
 
-Go to the configuration tab. You should see this error: 
-
+1. After enabling the trapdirector module via Icingaweb2 -> Configuration -> Modules -> trapdirector, go to the configuration tab. You should see this error: 
 ![install-1](img/install-auto-1.jpg)
 
+1. Click "Save Config" to save default parameters the configuration tab has discovered (IDO database, snmptranslate, etc.)
 
-Click "Save Config" to save default parameters the configuration tab has discovered (IDO database, snmptranslate, etc.)
+1. To launch the installer, scroll down to "Automatic installation" and copy the command into a terminal (as root user).
 
-Then enter this as a super user (like root):
+Note:
+- If you use PostgreSQL, add "-b pgsql" to the end to the command.
+- If the command contains PHP BINARY NOT FOUND, amend the command with the full path to your php interpreter.
 
-Note: If you use PostgreSQL, add "-b pgsql" to the end to the command.
-
+Example install command:
 ```
-[root@icinga trapdirector]# /usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /usr/bin/php -a apache -w /etc/icingaweb2
-
+/usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /usr/bin/php -a apache -w /etc/icingaweb2
 ```
+
+Installer
+---------------
 
 First the installer checks the Icinga2 API, and lets you add a new API user for trapdirector: 
 
@@ -134,16 +137,17 @@ Done setting permissions
 Back to Icingaweb2 GUI
 ---------------
 
-Reload the configuration tab (do NOT yet click "save changes" as it will overwrite what the script has done). It should now complain about the database schema: 
-
+1. Reload the configuration tab (do NOT yet click "save changes" as it will overwrite what the script has done). It should now complain about the database schema: 
 ![install-5](img/install-auto-5.jpg)
 
-Click on the "Create Schema" link half way down the page. You will be taken to the Create Schema tab: 
-
+1. Click on the "Create Schema" link half way down the page. You will be taken to the Create Schema tab: 
 ![install-7](img/install-auto-7.jpg)
 
-Click "Return to settings page", and SAVE the configuration (for IDO database).
+1. Click "Return to settings page", and SAVE the configuration (for IDO database).
 
 If there are no more errors, you are ready to go!
 
-Now have a look at the [user guide](02-userguide.md).
+
+User Guide
+------------------------
+Continue to the [user guide](02-userguide.md) for configuring trap handlers and other trapdirector features.
