@@ -113,13 +113,16 @@ function check_selinux() {
 		echo -n "Compiling module trapdirector.mod: "
 		checkmodule -M -m -o /tmp/trapdirector.mod $(dirname $0)/../selinux/trapdirector.te || (echo "Error" && return)
 		echo OK
+
 		echo -n "Building package trapdirector.pp: "
 		semodule_package -o /tmp/trapdirector.pp -m /tmp/trapdirector.mod || (echo "Error" && return)
 		echo OK
+
 		echo -n "Installing package trapdirector.pp (takes a minute): " || (echo "Error" && return)
 		semodule -i /tmp/trapdirector.pp
 		echo OK
-		rm -f /tmp/trapdirector.te /tmp/trapdirector.mod /tmp/trapdirector.pp
+
+		rm -f /tmp/trapdirector.mod /tmp/trapdirector.pp
 	else
 		echo "SELinux not enabled. Nothing to do."
 	fi
