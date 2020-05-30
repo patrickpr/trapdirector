@@ -161,6 +161,7 @@ Edit the `/etc/snmp/snmptrapd.conf` file and add this line to it (assuming defau
 ```
 traphandle default /usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php 
 ```
+At the bottom of the trapdirector configuration page, go to 'Manual installation instructions' -> 'Set up snmptrapd.conf ': If this differs from the above, amend `/etc/snmp/snmptrapd.conf` accordingly.
 
 Next, set up the community string in `snmptrapd.conf` (`public` in example):
 
