@@ -21,7 +21,7 @@ To drop some traps manually, you can change the number of days and click "Do it 
 Log destination
 ---------------
 
-Here is where the trap receiver will log info about what it is doing - or not doing -.
+Here is where the trap receiver will log info about what it is doing - or why it is not doing it -.
 
 Note: 'display' is for debug only and can ruin your web page.
 
