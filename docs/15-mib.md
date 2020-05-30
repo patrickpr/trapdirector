@@ -13,7 +13,7 @@ Database
 
 Traps are held in the database. You can set the retention period for old traps here.
 
-This will occur at regular intervals (not implemented in beta) or when a trap is received.
+This will occur every time a trap is received.
 
 To drop some traps manually, you can change the number of days and click "Do it now".
 
