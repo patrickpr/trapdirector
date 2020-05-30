@@ -110,30 +110,8 @@ function check_selinux() {
 		fi
 		echo OK
 
-		echo -n "Writing source file trapdirector.te: "
-		# Writing it out this way avoids any kind of working directory issues
-		cat << EOF > /tmp/trapdirector.te
-module trapdirector 1.0;
-
-require {
-        class file { getattr open read execute map };
-        class process execmem;
-        class tcp_socket name_connect;
-        type httpd_sys_rw_content_t;
-        type hugetlbfs_t;
-        type mysqld_port_t;
-        type snmpd_t;
-}
-
-#============= snmpd_t ==============
-allow snmpd_t httpd_sys_rw_content_t:file { getattr map read open };
-allow snmpd_t hugetlbfs_t:file { execute read map };
-allow snmpd_t mysqld_port_t:tcp_socket name_connect;
-allow snmpd_t self:process execmem;
-EOF
-		echo OK
 		echo -n "Compiling module trapdirector.mod: "
-		checkmodule -M -m -o /tmp/trapdirector.mod /tmp/trapdirector.te || (echo "Error" && return)
+		checkmodule -M -m -o /tmp/trapdirector.mod $(dirname $0)/../selinux/trapdirector.te || (echo "Error" && return)
 		echo OK
 		echo -n "Building package trapdirector.pp: "
 		semodule_package -o /tmp/trapdirector.pp -m /tmp/trapdirector.mod || (echo "Error" && return)
