@@ -10,9 +10,9 @@ Go to the Handlers menu and click 'Add a trap handler'.
 
 ![trap-1](img/create-rule-1.jpg)
 
-You can choose between hosts or hostgroups :
-- When selecting a host, the trap receiver will take it's source IP 
-- When selecting a hostgroup, the trap receiver will take all IP addresses of all hosts in this hostgroup (! performance issues (maybe) ! )
+You can choose between hosts or hostgroups:
+- When selecting a host, the trap receiver will take it's source IP
+- When selecting a hostgroup, the trap receiver will take all IP addresses of all hosts in this hostgroup (! performance issues (maybe) !)
 
 In both cases, you must have a service attached to the host or hostgroup that accepts passive checks (see ![here](15-mib.md) for more info)
 
@@ -22,8 +22,7 @@ Then select a service (2). The service list is from the IDO database.
 
 ![trap-2](img/create-rule-2.jpg)
 
-Then you can either 
-
+Then you can either:
 * Manually add the trap OID  (3) (you won't be able to add objects automatically)
 * Or, select the MIB (1) then the trap name in this MIB (2).
 
