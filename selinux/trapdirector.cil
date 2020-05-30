@@ -1,0 +1,8 @@
+(typeattributeset cil_gen_require httpd_sys_rw_content_t)
+(typeattributeset cil_gen_require hugetlbfs_t)
+(typeattributeset cil_gen_require mysqld_port_t)
+(typeattributeset cil_gen_require snmpd_t)
+(allow snmpd_t httpd_sys_rw_content_t (file (getattr open read map)))
+(allow snmpd_t hugetlbfs_t (file (read execute map)))
+(allow snmpd_t mysqld_port_t (tcp_socket (name_connect)))
+(allow snmpd_t self (process (execmem)))
