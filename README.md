@@ -1,5 +1,5 @@
 # trapdirector
-Icingaweb2 module for receiving and handling snmp traps
+Icingaweb2 module for receiving and handling SNMP traps
 
 [![Build Status](https://travis-ci.org/patrickpr/trapdirector.svg?branch=master)](https://travis-ci.org/patrickpr/trapdirector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/cc87e39440bc434bb5724bece6b5fcbc)](https://www.codacy.com/manual/patrick_34/trapdirector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=patrickpr/trapdirector&amp;utm_campaign=Badge_Grade) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/patrickpr/trapdirector/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/patrickpr/trapdirector/?branch=master) [![PSR-2 Style](https://github.styleci.io/repos/164436083/shield)](https://github.styleci.io/repos/164436083)
 
@@ -11,7 +11,7 @@ Features:
 -  Update Icinga2 services based on rules for a host or hostgroup. The trap data is used to update the service status.
 -  See all traps received by the system.
 -  Write your own evaluation function in PHP for specific trap OIDs.
--  Decode OIDs to human readable names, including ability to add MIB files via Icingaweb2 GUI.
+-  Decode OIDs to human readable names, including ability to add MIB files via the Icingaweb2 GUI.
 
 Project status: [Stable release 1.0.3](https://github.com/patrickpr/trapdirector/releases)
 
