@@ -20,8 +20,8 @@ Get installation files
 ---------------
 
 1. Download the latest release and unzip it in a temporary directory.
-2. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
-3. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
+1. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
+1. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
 
 Automatic installation
 -----------------
@@ -143,7 +143,7 @@ Fill in the following fields:
 * icinga2 API username: Name of the user in icinga2 `api_users.conf` file. 
 * icinga2 API password: Password of the API user.
 
-Then, the module will test the API connection and report OK if everything is fine: 
+The module will test the API connection and report OK if everything is fine: 
 
 ![install-11](img/install-11.jpg)
 
