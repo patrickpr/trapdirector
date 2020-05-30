@@ -34,6 +34,8 @@ Launching the installer
 1. Click "Save Config" to save default parameters the configuration tab has discovered (IDO database, snmptranslate, etc.)
 
 1. To launch the installer, scroll down to "Automatic installation" and copy the command into a terminal (as root user).
+![install-3](img/install-auto-3.jpg)
+
 
 Note:
 - If you use PostgreSQL, add "-b pgsql" to the end to the command.
