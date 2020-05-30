@@ -110,9 +110,8 @@ function check_selinux() {
 		fi
 		echo OK
 
-		selinux_package=$(realpath $(dirname $0)/../selinux/trapdirector.pp)
-		echo -n "Installing package $selinux_package (may take a minute): " || (echo "Error" && return)
-		semodule -i $selinux_package
+		echo -n "Installing package selinux/trapdirector.pp (may take a minute): " || (echo "Error" && return)
+		semodule -i $(dirname $0)/../selinux/trapdirector.pp
 		echo OK
 
 	else
