@@ -12,11 +12,6 @@ ICINGAWEB_GITREF=${ICINGAWEB_GITREF:=}
 
 PHPCS_VERSION=${PHPCS_VERSION:=3.3.2}
 
-#################### get selinux status 
-
-sestatus=$(/usr/sbin/getenforce 2>&1)
-echo "selinux status : $sestatus"
-
 ################### Setup fake icingaweb2 /etc director for config & db setup
 
 cd "${MODULE_HOME}"
