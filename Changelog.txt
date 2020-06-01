@@ -8,13 +8,13 @@ UPGRADE NOTES :
 
 BUGS
 ====
-1) 
+1) Updated snmptrapd detection in config / installer (pr #34 & #35 by robdevops)
 
 
 ENHANCEMENTS
 ============
 1) Changed the php detection for install script (issues #30 & #31)
-2) Updated snmptrapd detection in config / installer (pr #34 & #35)
+2) SELinux support (pr #37 by robdevops)
 
 -------------------------------------------------------------------------------------------------
 
