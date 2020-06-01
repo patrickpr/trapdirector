@@ -1,7 +1,7 @@
 Mib & Status
 ===============
 
-In the "Status & Mibs" menu you will set all the configuration for mibs and database rules.
+In the "Status & Mibs" menu, you will set all the configuration for MIBs and database rules.
 
 Status
 ===============
@@ -11,66 +11,64 @@ Status
 Database
 ---------------
 
-Traps are held in the database, to get rid of old ones, you can set here the number of days the traps are kept.
+Traps are held in the database. You can set the retention period for old traps here.
 
-This will occur at regular interval (not implemented in beta) or when a trap is received.
+This will occur every time a trap is received.
 
-To drop some traps immediatly, you can change the number of days and click "Drop it now".
+To drop some traps manually, you can change the number of days and click "Do it now".
 
 
 Log destination
 ---------------
 
-Here is where the trap receiver will log info about what he's doing - or not doing -.
+Here is where the trap receiver will log info about what it is doing - or why it is not doing it -.
 
-Note : 'display' is for debug only and can ruin your web page.
+Note: 'display' is for debug only and can ruin your web page.
 
 Be careful, in trace mode the db passwords & communities can be shown.
 
 
-Mib Management
+MIB Management
 ===============
 
 ![trap-1](img/mib-status-3.jpg)
 
-Mib Database and management
+MIB Database and management
 ---------------
 
-The database should hold the snmp traps definition and their objects so you can select them easily when creating a rule.
+The database should hold the SNMP traps definition and their objects, so you can select them easily when creating a rule.
 
-On bottom of the page, you can upload a mib file (or put it in the mibs/ directory of module).
+At the bottom of the page, you can upload a MIB file (or put it in the mibs/ directory of module).
 
-The system then needs to scan all mib files , so it takes some time. You can update here or on cli : 
+The system then needs to scan all MIB files, so it takes some time. You can update here by clicking 'Update MIB Database', or on cli with `icingacli trapdirector mib update`. 
 
-`icingacli trapdirector mib update` : with this you will have a display of what's going on.
-
-If you launch update here, the process will run in background (you can leave the page), and the button will be disabled until process has finished.
+With the cli, you will be able to monitor output. With the GUI, the process will run in the background (it is ok to leave the page), and the button will animate until the process has finished.
 
 
 snmptranslate
 ---------------
 
-The system needs snmptranslate to parse the mibs : here you can check if the configuration of the module is correct, and if snmptranslate works fine on your system.
+The system needs `snmptranslate` to parse the MIBs. Here you can check if the configuration of the module is correct, and if `snmptranslate` works fine on your system.
 
 
-Services & template management
+Services management
 ===============
 
-Not much here for now : you can create a service template for services using traps.
+Not much here for now. You can create a service template for services using traps.
 
-Here is some details about it : 
+Some details: 
 
-1 : the active check is "dummy" which will return OK all the time
+1: the active check is "dummy" which will return OK all the time.
 
-2 : check & retry retry interval is the time your trap will be reverted to "OK", here is how it's working : 
+2: check & retry interval is the time your trap will be reverted to "OK", here is how it's working:
 
 - at 08h00 the active check runs and gives "OK". Next check is in 900s (15 min) so at 08h15
-- at 08h10 a trap give a "critical" status to the service. Next check is set to 08h10 + 15 min = 08h25.
+- at 08h10 a trap gives a "critical" status to the service. Next check is set to 08h10 + 15 min = 08h25.
 - at 08h25 if no traps have been received, the active check runs and returns OK.
 
-3 : Need to acept active & passive checks.
+3: Need to acept active & passive checks.
 
 ![trap-1](img/mib-status-10.jpg)
 
 
-back to user guide : [user guide](02-userguide.md)
+Go back to the [user guide](02-userguide.md).

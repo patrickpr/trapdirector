@@ -5,9 +5,9 @@ Requirements
 ---------------
 
 * You must have root access on the Icinga server
-* Icinga, IcingaWeb2, trap receiver (snmptrapd) must be on the server
-* mysql and postgreSQL database - can be on remote server
-* Server with systemctl (CentOS and RH 7 ...)
+* Icinga2, Icingaweb2, trap receiver (snmptrapd) must be on the server
+* MySQL or PostgreSQL database - can be on a remote server
+* Server with systemctl (CentOS and RH 7 or newer ...)
 
 
 What will it setup for you
@@ -23,34 +23,33 @@ What will it setup for you
 It's safe
 ---------------
 
-You can run it even with everything configure, it will always ask before doing anything.
+You can run it even with everything already configured. It will always ask before doing anything.
 
-After enabling module
+Launching the installer
 ---------------
 
-Go to configuration tab, you should see this error : 
-
+1. After enabling the trapdirector module via Icingaweb2 -> Configuration -> Modules -> trapdirector, go to the configuration tab. You should see this error: 
 ![install-1](img/install-auto-1.jpg)
 
+1. Click "Save Config" to save default parameters the configuration tab has discovered (IDO database, snmptranslate, etc.)
 
-Now have a look after the configuration form, there is the full command line you need to enter : 
-
+1. To launch the installer, scroll down to "Automatic installation" and copy the command into a terminal (as root user).
 ![install-3](img/install-auto-3.jpg)
 
-First, click on "Save Config" to save default parameters the setting page has discovered : IDO database, snmptranslate, etc...
 
-Enter this a a super user (like root) :
+Note:
+- If you use PostgreSQL, add "-b pgsql" to the end to the command.
+- If the command contains PHP BINARY NOT FOUND, amend the command with the full path to your php interpreter.
 
-Note : 
-- if you use postgreSQL, add "-b pgsql" to the script.
-- Web page detects php binary from web server. If you get a command line with php-fpm instead of php, find php binary and replace in script.
-
+Example install command:
 ```
-[root@icinga trapdirector]# /usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /usr/bin/php -a apache -w /etc/icingaweb2
-
+/usr/share/icingaweb2/modules/trapdirector/bin/installer.sh -c all -d /usr/share/icingaweb2/modules/trapdirector -p /usr/bin/php -a apache -w /etc/icingaweb2
 ```
 
-First API check and you can setup a new user : 
+Installer
+---------------
+
+First the installer checks the Icinga2 API, and lets you add a new API user for trapdirector: 
 
 ```
 ==================================
@@ -68,7 +67,7 @@ Adding API user in trapdirector configuration
 
 ```
 
-Next snmptrapd configuration
+Next, it performs snmptrapd configuration:
 
 ```
 ==================================
@@ -95,7 +94,7 @@ Found process snmptrapd with pid 21987
 Snmptrapd options are :  -Lsd -n -d -One -f
 ```
 
-You can add a schema and the corresponding user
+Then it sets up your database schema and user:
 
 ```
 ==================================
@@ -122,7 +121,7 @@ Adding this to module configuration
 Done !
 ```
 
-Finally : setup permissions and paths.
+Finally, it sets up relevant filesystem permissions:
 
 ```
 ==================================
@@ -140,17 +139,17 @@ Done setting permissions
 Back to Icingaweb2 GUI
 ---------------
 
-Reload the configuration page (do NOT click "save changes" as it will overwrite what the script has done, it should now complain about the schema : 
-
+1. Reload the configuration tab (do NOT yet click "save changes" as it will overwrite what the script has done). It should now complain about the database schema: 
 ![install-5](img/install-auto-5.jpg)
 
-So click on create schema : 
-
+1. Click on the "Create Schema" link half way down the page. You will be taken to the Create Schema tab: 
 ![install-7](img/install-auto-7.jpg)
 
-Back to settings page : SAVE the configuration (for IDO database).
+1. Click "Return to settings page", and SAVE the configuration (for IDO database).
 
-If there is no more errors, you are ready to go !
+If there are no more errors, you are ready to go!
 
-Now have a look at the doc : ![Traps](02-userguide.md)
- 
+
+User Guide
+------------------------
+Continue to the [user guide](02-userguide.md) for configuring trap handlers and other trapdirector features.
