@@ -1,0 +1,18 @@
+
+module trapdirector 1.0;
+
+require {
+	class file { getattr open read execute map };
+	class process execmem;
+        class tcp_socket name_connect;
+	type httpd_sys_rw_content_t;
+	type hugetlbfs_t;
+        type mysqld_port_t;
+	type snmpd_t;
+}
+
+#============= snmpd_t ==============
+allow snmpd_t httpd_sys_rw_content_t:file { getattr map read open };
+allow snmpd_t hugetlbfs_t:file { execute read map };
+allow snmpd_t mysqld_port_t:tcp_socket name_connect;
+allow snmpd_t self:process execmem;

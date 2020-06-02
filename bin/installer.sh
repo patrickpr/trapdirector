@@ -41,6 +41,7 @@ function usage()
    snmprun  : setup snmptrapd startup options
    database : create database & db user
    perm     : set directory/file permissions and paths in files
+   selinux  : set SELinux booleans and policies
    all      : all commands in sequence
    
    -i : disable interactive mode.
@@ -88,6 +89,35 @@ function get_icinga_etc()
 	icingaEtc=$(icinga2 -V | grep "Config directory:" | awk -F ': ' '{print $2}')
 	echo "$icingaEtc";
 	return 0;
+}
+
+function check_selinux() {
+	# Check SELinux available
+	echo -e "\n==================================";
+	echo "SELinux Check"
+	selinuxStatus=$(getenforce 2>/dev/null)
+
+	if [[ "$selinuxStatus" == "Enforcing" ]] || [[ "$selinuxStatus" == "Permissive" ]]; then
+		echo "SELinux is ${selinuxStatus}"
+		question "Configure SELinux?";
+		if [ $? -eq 0 ]; then return 0; fi
+
+		echo -n "Checking existing SELinux modules: "
+		semodule -l | grep -qw trapdirector
+		if [ $? -eq 0 ]; then
+			echo "Already installed. To reinstall, run 'semodule -r trapdirector' and try again."
+			return 0
+		fi
+		echo OK
+
+		echo -n "Installing package selinux/trapdirector.pp (may take a minute): " || (echo "Error" && return)
+		semodule -i $(dirname $0)/../selinux/trapdirector.pp
+		echo OK
+
+	else
+		echo "SELinux not enabled. Nothing to do."
+	fi
+		return 0
 }
 
 function check_api() {
@@ -763,6 +793,10 @@ fi
 
 if [[ $commands =~ snmprun ]] || [[ $commands =~ all ]]; then
 	check_snmptrapd_run
+fi
+
+if [[ $commands =~ selinux ]] || [[ $commands =~ all ]]; then
+	check_selinux
 fi
 
 if [[ $commands =~ database ]] || [[ $commands =~ all ]]; then
