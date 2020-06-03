@@ -19,7 +19,7 @@ What will it setup for you
 * snmptrapd starting configuration
 * Set file permissions
 * Setup paths or icingaweb2 config directory and module directory
-* Configure SELinux
+* SELinux configuration
 
 It's safe
 ---------------
