@@ -15,7 +15,6 @@ Optional
 
 * Icinga Director: for centralized service and template management.
 
-
 Get installation files
 ---------------
 
@@ -253,7 +252,6 @@ service snmptrapd restart
 
 Now all traps received by the system will be redirected to the trapdirector module.
 
-
 Troubleshooting:
 * Check the runtime arguments with `ps -f -C snmptrapd`
 * Ensure you are su (sudo)
@@ -268,7 +266,6 @@ In order for trapdirector to receive traps from snmptrapd, SELinux systems will 
 ```
 semodule -i /usr/share/icingaweb2/modules/trapdirector/selinux/trapdirector.pp
 ```
-
 
 Set up MIBs
 ------------------------
@@ -285,8 +282,6 @@ chmod 755 /usr/share/icingaweb2/modules/trapdirector/mibs
 After this, you can add your first MIBs into MIB database with the `icingacli trapdirector mib update` command
 
 Ready to go!
-
-
 
 User Guide
 ------------------------
