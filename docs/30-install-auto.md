@@ -19,6 +19,7 @@ What will it setup for you
 * snmptrapd starting configuration
 * Set file permissions
 * Setup paths or icingaweb2 config directory and module directory
+* Configure SELinux
 
 It's safe
 ---------------
@@ -92,6 +93,17 @@ Snmptrapd starting options
 
 Found process snmptrapd with pid 21987
 Snmptrapd options are :  -Lsd -n -d -One -f
+```
+
+The installer will also configure SELinux if required:
+
+```
+==================================
+SELinux Check
+SELinux is Enforcing
+Configure SELinux? [y/N]y
+Checking existing SELinux modules: OK
+Installing package selinux/trapdirector.pp (may take a minute): OK
 ```
 
 Then it sets up your database schema and user:
