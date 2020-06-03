@@ -260,6 +260,16 @@ Troubleshooting:
 * Ensure the config lines in the previous section are not commented out.
 * If you experience a 204 error, try changing the `ExecStart` line to `ExecStart=/usr/sbin/snmptrapd -n -t -Oen $OPTIONS -f` in the previous section.
 
+SELinux
+------------------------
+
+In order for trapdirector to receive traps from snmptrapd, SELinux systems will need further configuration. If your system uses SELinux, you can install the provided SELinux module from the trapdirector directory. For example:
+
+```
+semodule -i /usr/share/icingaweb2/modules/trapdirector/selinux/trapdirector.pp
+```
+
+
 Set up MIBs
 ------------------------
 
