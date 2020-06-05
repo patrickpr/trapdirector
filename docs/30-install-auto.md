@@ -79,7 +79,7 @@ Searching for traphandles in /etc/snmp/snmptrapd.conf
 /opt/rh/rh-php71/root/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php
 
 Add a traphandle [y/N]y
-Added traphandle to /opt/rh/rh-php71/root/usr/sbin/php-fpm /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php in /etc/snmp/snmptrapd.conf
+Added traphandle to /opt/rh/rh-php71/root/usr/bin/php /usr/share/icingaweb2/modules/trapdirector/bin/trap_in.php in /etc/snmp/snmptrapd.conf
 Searching for community in /etc/snmp/snmptrapd.conf
 log,execute,net public
 
