@@ -3,9 +3,6 @@ Date : 06 Jun 2020
 Database update : No for version >= 1.0.2
 Migration path : from version > 1.0.0
 
-UPGRADE NOTES : 
-
-
 BUGS
 ====
 1) Updated snmptrapd detection in config / installer (pr #34 & #35 by robdevops)
