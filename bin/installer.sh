@@ -306,9 +306,17 @@ function check_snmptrapd_run() {
 			return 1;
 		fi
 	fi
-	
-	sed -r -i "s/^ *(OPTIONS *= *\")(.*)/\1${optionAdd} \2/" $snmpstart
-	
+
+	grep -E '^[ \t]*OPTIONS[ \t]*=' $snmpstart > /dev/null 2>&1
+        
+	if [ $? -ne 0 ]; then
+		# If OPTIONS is commented or non existent, add it
+		echo 'OPTIONS="-Lsd -n -t -Oen"' >> $snmpstart;
+	else	
+		# Else, just add missing options
+		sed -r -i "s/^ *(OPTIONS *= *\")(.*)/\1${optionAdd} \2/" $snmpstart
+	fi
+
 	if [ $Pinter -eq 1 ]; then
 		question "Restart snmptrapd (need systemctl)";
 		if [ $? -eq 0 ]; then return 0; fi
@@ -700,6 +708,9 @@ function set_perms(){
   
   # bin utilities
   chmod 755 $inputDir/bin/*.sh
+
+  # test files shell
+  chmod 755 $inputDir/tests/*.sh
   
   # change icingaweb2 etc if needed
   if [ -z  "$PicingawbEtc" ]; then
