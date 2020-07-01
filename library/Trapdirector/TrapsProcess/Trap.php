@@ -82,13 +82,16 @@ class Trap
     /** @var Plugins plugins manager **/
     public $pluginClass = null;
     
+    /** @var TrapApi $trapApiClass */
+    public $trapApiClass = null;
+    
     function __construct($etcDir='/etc/icingaweb2',$baseLogLevel=null,$baseLogMode='syslog',$baseLogFile='')
     {
         // Paths of ini files
         $this->icingaweb2Etc=$etcDir;
         $this->trapModuleConfig=$this->icingaweb2Etc."/modules/trapdirector/config.ini";
         $this->icingaweb2Ressources=$this->icingaweb2Etc."/resources.ini";
-        
+
         //************* Setup logging
         $this->logging = new Logging();
         if ($baseLogLevel != null)
@@ -101,6 +104,11 @@ class Trap
             $this->logSetup=false;
         }
         $this->logging->log('Loggin started', INFO);
+        
+        
+        // Create distributed API object
+        
+        $this->trapApiClass = new TrapApi($this->logging);
         
         //*************** Get options from ini files
         if (! is_file($this->trapModuleConfig))
@@ -148,6 +156,12 @@ class Trap
     public function getLogging()
     {
         return $this->logging;
+    }
+
+    /** @return \Trapdirector\TrapApi   */
+    public function getTrapApi()
+    {
+        return $this->trapApiClass;
     }
     
     /** @return \Trapdirector\Database */

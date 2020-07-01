@@ -5,6 +5,7 @@ namespace Icinga\Module\Trapdirector\TrapsActions;
 use Exception;
 use Zend_Db_Expr;
 use Zend_Db_Adapter_Abstract;
+use Zend_Db_Select;
 use Icinga\Module\Trapdirector\TrapsController;
 
 /**
@@ -88,6 +89,24 @@ trait TrapDBQuery
             'id='.$ruleID
             );
         return $query;
+    }
+
+    /**
+     * Get last trap rule table modification
+     * @throws \ErrorException
+     * @return Zend_Db_Select
+     */
+    public function lastModification()
+    {
+        $dbConn = $this->getDbConn();
+        if ($dbConn === null) throw new \ErrorException('uncatched db error');
+        
+        $query = $dbConn->select()
+        ->from(
+            $this->getTrapCtrl()->getModuleConfig()->getTrapRuleName(),
+            array('lastModified'=>'UNIX_TIMESTAMP(MAX(modified))'));
+        $returnRow=$dbConn->fetchRow($query);
+        return $returnRow->lastmodified;
     }
     
     /** Delete trap by ip & oid

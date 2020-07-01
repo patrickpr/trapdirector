@@ -17,6 +17,8 @@ trait TrapConfig
 
     /** @return \Trapdirector\Logging   */
     abstract public function getLogging();
+    /** @return \Trapdirector\TrapApi   */
+    abstract public function getTrapApi();
     
     /**
      * Get option from array of ini file, send message if empty
@@ -28,7 +30,7 @@ trait TrapConfig
      * @param string $message warning message if not found
      * @return boolean true if found, or false
      */
-    protected function getOptionIfSet($option_array,$option_category,$option_name, &$option_var, $log_level = 2, $message = null)
+    protected function getOptionIfSet($option_array,$option_category,$option_name, &$option_var, $log_level = WARN, $message = null)
     {
         if (!isset($option_array[$option_category][$option_name]))
         {
@@ -98,6 +100,28 @@ trait TrapConfig
     protected function getMainOptions($trapConfig)
     {
         
+        $nodeStatus='';
+        $this->getOptionIfSet($trapConfig,'config','node', $nodeStatus);
+        if ($this->getTrapApi()->setStatus($nodeStatus) === FALSE)
+        {
+            $this->getLogging()->log('Unknown node status '.$nodeStatus.' : setting to MASTER',WARN);
+            $this->getTrapApi()->setStatusMaster();
+        }
+        else 
+        {
+            if ($this->getTrapApi()->getStatus() != TrapApi::MASTER)
+            {
+                // Get options to connect to API
+                $IP = $port = $user =  $pass = null;
+                $this->getOptionIfSet($trapConfig,'config','masterIP', $IP, ERROR);
+                $this->getOptionIfSet($trapConfig,'config','masterPort', $port, ERROR);
+                $this->getOptionIfSet($trapConfig,'config','masterUser', $user, ERROR);
+                $this->getOptionIfSet($trapConfig,'config','masterPass', $pass, ERROR);
+                $this->getTrapApi()->setParams($IP, $port, $user, $pass);
+                return;
+            }
+        }
+        
         // Snmptranslate binary path
         $this->getOptionIfSet($trapConfig,'config','snmptranslate', $this->snmptranslate);
         
@@ -114,9 +138,10 @@ trait TrapConfig
         if ($this->getOptionIfSet($trapConfig,'config','icingaAPI_host', $this->apiHostname))
         {
             $this->apiUse=true;
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_port', $this->apiPort);
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_user', $this->apiUsername);
-            $this->getOptionIfSet($trapConfig,'config','icingaAPI_password', $this->apiPassword);
+            // Get API options or throw exception as not configured correctly
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_port', $this->apiPort,ERROR);
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_user', $this->apiUsername,ERROR);
+            $this->getOptionIfSet($trapConfig,'config','icingaAPI_password', $this->apiPassword,ERROR);
         }
     }
     
