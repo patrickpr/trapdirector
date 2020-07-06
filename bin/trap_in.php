@@ -17,10 +17,10 @@ $trap=null;
 try
 {
        
-    $trap = new Trap($icingaweb2Etc);
-    //$Trap = new Trap($icingaweb2Etc,4,'display'); // For debug
-    //$Trap = new Trap($icingaweb2Etc,4,'syslog'); // For debug
-    //$Trap->setLogging(4,'syslog'); 
+    #$trap = new Trap($icingaweb2Etc);
+    //$trap = new Trap($icingaweb2Etc,4,'display'); // For debug
+    $trap = new Trap($icingaweb2Etc,4,'syslog'); // For debug
+    //$trap->setLogging(4,'syslog'); 
     
     // TODO : tranfer this to reset_trap cli command
     $trap->eraseOldTraps();

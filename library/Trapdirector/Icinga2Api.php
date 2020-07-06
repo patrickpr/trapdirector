@@ -82,6 +82,10 @@ class Icinga2API
         //var_dump($result);
         $permOk=1;
         $permMissing='';
+        if ($permissions === NULL) // If no permission check return OK after connexion
+        {
+            return array(false,'OK');
+        }
         if (property_exists($result, 'results') && property_exists($result->results[0], 'permissions'))
         {
             

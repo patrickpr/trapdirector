@@ -14,6 +14,7 @@ use Icinga\Module\Trapdirector\Tables\TrapTableHostList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
 use Icinga\Module\Trapdirector\TrapsActions\UIDatabase;
+use Icinga\Module\Trapdirector\Icinga2API;
 
 use Trapdirector\Trap;
 
@@ -39,6 +40,8 @@ class TrapsController extends Controller
 	protected $trapClass;
 	/** @var UIDatabase $UIDatabase */
 	protected $UIDatabase;
+	/** @var Icinga2Api $IcingaAPI */
+	protected $icingaAPI = NULL;
 	
 	
 	
@@ -108,6 +111,31 @@ class TrapsController extends Controller
 	       
 	    }
 	    return $this->UIDatabase;
+	}
+
+	/**
+	 * Get Ido connection on API (first) or Database as fallback
+	 * @return \Icinga\Module\Trapdirector\TrapsActions\UIDatabase|\Icinga\Module\Trapdirector\Icinga2API
+	 */
+	public function getIdoConn()
+	{
+	    if ($this->icingaAPI === NULL)
+	    {
+    	    $host = $this->Config()->get('config', 'icingaAPI_host');
+    	    $port = $this->Config()->get('config', 'icingaAPI_port');
+    	    $user = $this->Config()->get('config', 'icingaAPI_user');
+    	    $pass = $this->Config()->get('config', 'icingaAPI_password');
+    	    $this->icingaAPI = new Icinga2API($host,$port);
+    	    $this->icingaAPI->setCredentials($user, $pass);
+    	    list($ret,$message) = $this->icingaAPI->test(NULL);
+    	    if ($ret === TRUE)
+    	    {
+    	        return $this->getUIDatabase();
+    	    }
+    	    
+	    }
+	    return $this->icingaAPI;
+	    
 	}
 	
     protected function applyPaginationLimits(Paginatable $paginatable, $limit = 25, $offset = null)
@@ -209,6 +237,7 @@ class TrapsController extends Controller
 		}
 		return false;
 	}
-	
+
+
 }
 

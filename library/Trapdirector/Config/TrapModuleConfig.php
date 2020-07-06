@@ -29,6 +29,7 @@ class TrapModuleConfig
 	static public function urlPath() { return 'trapdirector'; }
 	static public function getapiUserPermissions() { return array("status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result"); } //< api user permissions required
 	
+	
 	/*********** Log configuration *************************/
 	protected $logLevels=array(0=>'No output', 1=>'critical', 2=>'warning', 3=>'trace', 4=>'ALL');
 	public function getlogLevels() { return $this->logLevels;}

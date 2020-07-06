@@ -239,7 +239,7 @@ class SettingsController extends TrapsController
 	// But check read permission
 	$this->checkReadPermission();
 	
-	$this->view->tabs = $this->Module()->getConfigTabs()->activate('config');
+	$this->view->tabs = $this->Module()->getConfigTabs()->activate('config');	
 	
 	// Get message : sent on configuration problems detected by controllers
     $this->get_param();
@@ -295,6 +295,34 @@ class SettingsController extends TrapsController
         
   }
 
+  /**
+   * Satellite configuration
+   * Params setup in $this->view :
+   * errorDetected : if db or ido was detected by another page
+   * configErrorDetected : error if empty configuration (or error wrting a new one).
+   * db_error : numerical error (trap db) 0=OK
+   * message : message (trap db)
+   * ido_db_error : numerical error 0=OK
+   * ido_message : message
+   * apimessage
+   * icingaEtcWarn : 0 if same than in trap_in.php, 1 if not
+   * icingaweb2_etc : path
+   **/
+  public function satelliteAction()
+  {
+      
+      // CHeck permissions
+      $this->view->configPermission=$this->checkModuleConfigPermission();
+      
+      // Setup tabs
+      $this->view->tabs = $this->Module()->getConfigTabs()->activate('satellite');	
+      
+      $this->view->masterHASet = FALSE;
+      
+      $this->view->masterHAConf = array ('name' => 'masterHA1', 'icingaweb2 user'=>'User1');
+  }
+  
+  
   public function createschemaAction()
   {
 	$this->checkModuleConfigPermission();
@@ -418,6 +446,7 @@ class SettingsController extends TrapsController
 	  echo '</pre>';
   }  
 
+  
   private function checkSnmpTrapd()
   {
       $psOutput=array();

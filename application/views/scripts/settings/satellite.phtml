@@ -1,0 +1,160 @@
+<?php use Icinga\Web\Url; ?>
+<div class="controls">
+    <?= /** @var \Icinga\Web\Widget\Tabs $tabs */ $tabs ?>
+</div>
+
+<div class="content">
+	Satellite configuration<br>
+	NOT IMPLEMENTED<br>
+	<h2>Master HA</h2>
+	
+	<div id="noMasterHA">
+		No master HA template defined : <button id="id_add_master_ha" type="button" onclick="addMasterHA()">Add one</button>
+	</div>
+	
+	<div id="id_master_ha" style="display:none">
+		Master HA template name : <span id='id_master_ha_conf_name'>NAME</span>
+		<a id='id_master_ha_conf_deploy' href="#" onclick="deployConf('#id_master_ha_conf_deploy','#id_master_ha_conf_data')"style="font-size: large;color: coral;">&lt;+&gt;</a><br>
+		
+		<div id="id_master_ha_conf_data" style='max-width: 450px;display:none;' >
+			
+		</div>		
+	</div>
+	
+	<h2>Satellites and agents templates</h2>
+	
+	<ul id="id_sat">
+		<li id="id_sat_1">
+			Template name : test1<br>
+		</li>
+	</ul>
+</div>
+
+
+<script type='text/javascript'>
+
+satelliteeHelper='<?= Url::fromPath("trapdirector/") ?>/settings/sathelper';
+
+function deployConf(button,data)
+{
+	if ($(data).is(":visible") == false)
+	{
+		$(data).show();
+		$(button).html('&lt;-&gt;');
+	}
+	else
+	{
+		$(data).hide();
+		$(button).html('&lt;+&gt;');	
+	}
+}
+
+function displayWarning(message)
+{
+	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	//alert(message);
+}
+function displayOK(message)
+{
+	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
+}
+
+
+function add_config(baseDIV, name, value)
+{
+	//htm = "<div> " + name + " : <input type='text' id='" + baseDIV + "_" + name + "' placeholder='Use master value' size=20 value='"+value+"'/></div>";
+	// flex-grow: 0;flex-shrink: 0;justify-content: space-between;
+	
+
+	htm = "<div style='display: flex;margin: 1em -1em 1em 0;'>";
+	htm +=" 	<div style='flex-grow: 1;flex-basis: 0; max-width: 162px;'> ";
+	htm +=" 		<span id='test'>";
+	htm +=" 			<label for='" + baseDIV + "_" + name + "'>";
+	htm +=" 				" + name + " <span>*</span>";
+	htm +=" 			</label>";
+	htm +=" 		</span>";
+	htm +=" 	</div>";
+	htm +=" 	<input type='text' name='"+name+"'  id='" + baseDIV + "_" + name + "' value='"+value+"' ";
+	htm += "		style='flex-grow: 1;flex-basis: 0;background-clip: padding-box;background-color: rgb(218, 227, 230);'";
+	htm +="</div>";
+
+	$("#"+baseDIV).append(htm);
+}
+
+function addMasterHA()
+{
+	return;
+	$("#id_apply_mib").prop("disabled",true);
+	
+	//$("#id_animate_apply_mib").addClass("spinner");
+	$("#id_animate_apply_mib").css("animation","spin 2s linear infinite");	
+	$("#id_animate_apply_mib").show();
+
+	$.ajax({
+			url: mibfileHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"action"	: 	"update_mib_db"
+			},
+	        success: function (data) 
+			{
+				if (data.status == "OK") 
+				{
+					$("#id_apply_mib").prop("disabled",false);
+					displayOK("Command sent");
+				} 
+				else 
+				{
+					displayWarning("Error sending command "+data.status);
+					$("#id_animate_apply_mib").css("animation","none");	
+					$("#id_animate_apply_mib").hide();						
+				}
+			
+			},
+			error: function (data)
+			{
+				//$("#id_apply_mib").prop("disabled",false);
+				$("#id_animate_apply_mib").css("animation","none");	
+				$("#id_animate_apply_mib").hide();				
+				
+				displayWarning ("Error in server answer");
+			}
+	});		
+
+}
+
+$(function() {
+
+<?php 
+    /** @var \Icinga\Module\Trapdirector\Controllers\SettingsController $this */
+    if ($this->masterHASet === TRUE)
+    {
+        foreach ($this->masterHAConf as $name => $value)
+        {
+            echo "add_config('id_master_ha_conf_data','$name','$value');\n";
+            if ($name == 'name')
+               echo "$('#id_master_ha_conf_name').html('$value');\n";
+        }
+        echo "$('#id_master_ha').show();\n";
+        echo "$('#noMasterHA').hide();\n";
+    }
+    else 
+    {
+        echo "$('#id_master_ha').hide();\n";
+        echo "$('#noMasterHA').show();\n";
+    }
+?>
+	//$("#file_form").onsubmit = add_mib_files(event);
+/*	$("#id_upload_button").click(function( event ) {
+		alert('test');
+		event.preventDefault();
+		add_mib_files(event);
+	});	
+*/
+
+});
+	
+</script>
