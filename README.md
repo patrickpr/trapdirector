@@ -13,7 +13,7 @@ Features:
 -  Write your own evaluation function in PHP for specific trap OIDs.
 -  Decode OIDs to human readable names, including ability to add MIB files via the Icingaweb2 GUI.
 
-Project status: [Stable release 1.0.4](https://github.com/patrickpr/trapdirector/releases)
+Project status: [Stable release 1.0.4b](https://github.com/patrickpr/trapdirector/releases)
 
 This module has been installed and tested on CentOS 7, Ubuntu 18.04 (Bionic) and some more.
 
