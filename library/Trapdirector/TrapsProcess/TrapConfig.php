@@ -173,9 +173,7 @@ trait TrapConfig
         
         $this->trapsDB = new Database($this->logging,$dbConfig[$dbTrapName],$this->dbPrefix);
         
-        //TODO enable this again when API queries are all done :  $this->logging->log("API Use : ".print_r($this->apiUse,true),INFO );
-        
-        if ($this->apiUse === true) return; // In case of API use, no IDO is necessary
+        // TODO enable this again when API queries are all done : if ($this->apiUse === true) return; // In case of API use, no IDO is necessary
         
         // IDO Database
         if (!array_key_exists('IDOdatabase',$trapConfig['config']))
