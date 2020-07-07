@@ -1,5 +1,20 @@
-Version 1.0.4b
-Date : 06 Jul 2020
+Version 1.0.5
+Date : Not released
+Database update : No for version >= 1.0.2
+Migration path : from version > 1.0.0
+
+BUGS
+====
+1) 
+
+
+ENHANCEMENTS
+============
+1) 
+
+-------------------------------------------------------------------------------------------------
+Version 1.0.4b/c
+Date : 06-07 Jul 2020
 Database update : No for version >= 1.0.2
 Migration path : from version > 1.0.0
 

@@ -27,11 +27,11 @@ Help wanted:
 
 Have a look at: 
 
--  [Installation](docs/01-install.md)
+-  [Installation](doc/01-install.md)
 
--  [User Guide](docs/02-userguide.md)
-	-  [Create a rule from an existing trap](docs/05-traps.md)
-	-  [Create a rule from scratch](docs/10-createrule.md)
-	-  [MIB management](docs/15-mib.md)
+-  [User Guide](doc/02-userguide.md)
+	-  [Create a rule from an existing trap](doc/05-traps.md)
+	-  [Create a rule from scratch](doc/10-createrule.md)
+	-  [MIB management](doc/15-mib.md)
 
--  [Trap receiver logic](docs/20-receiver-logic.md)
+-  [Trap receiver logic](doc/20-receiver-logic.md)
