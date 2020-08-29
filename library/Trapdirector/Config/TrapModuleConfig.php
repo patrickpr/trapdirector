@@ -12,6 +12,8 @@ class TrapModuleConfig
 		'log_destination' => 'syslog', // Log destination for trap handler
 		'log_file' => '/tmp/trapdirector.log', // Log file
 		'log_level' => 2, // log level
+		'use_SnmpTrapAddess' => 1, // use SnmpTrapAddress by default
+	    'SnmpTrapAddess_oid' => '.1.3.6.1.6.3.18.1.3', // default snmpTrapAdress OID
 	);
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}

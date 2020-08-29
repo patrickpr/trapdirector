@@ -60,6 +60,19 @@ class StatusController extends TrapsController
 		catch (Exception $e)
 		{
 			$this->displayExitError('status',$e->getMessage());
+		}
+		
+		/*************** SNMP configuration ****************/
+		try
+		{
+		    $this->view->useSnmpTrapAddess= ( $this->getUIDatabase()->getDBConfigValue('use_SnmpTrapAddess') == 1 ) ? TRUE : FALSE;
+		    $this->view->SnmpTrapAddressOID=$this->getUIDatabase()->getDBConfigValue('SnmpTrapAddess_oid');
+		    $this->view->SnmpTrapAddressOIDDefault = ($this->view->SnmpTrapAddressOID == $this->getModuleConfig()->getDBConfigDefaults()['SnmpTrapAddess_oid'] ) ? TRUE : FALSE;
+		    
+		}
+		catch (Exception $e)
+		{
+		    $this->displayExitError('status',$e->getMessage());
 		}		
 		
 	} 

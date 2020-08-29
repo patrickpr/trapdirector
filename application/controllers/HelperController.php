@@ -275,6 +275,34 @@ class HelperController extends TrapsController
 			
 	}	
 
+	/** Save snmp configuration to db
+	 *	use=>1 (true) or 0
+	 *	oid=>specific oid or '' for default
+	 *	return : status=>OK/Message error
+	 */
+	public function snmpconfigAction()
+	{
+	    $postData=$this->getRequest()->getPost();
+	    
+	    $snmpUse = $this->checkPostVar($postData, 'useTrapAddr', '0|1');
+	    
+	    $snmpOID = $this->checkPostVar($postData, 'trapAddrOID', '^[\.0-9]+$');
+	    	    
+	    try
+	    {
+	        $this->getUIDatabase()->setDBConfigValue('use_SnmpTrapAddess',$snmpUse);
+	        $this->getUIDatabase()->setDBConfigValue('SnmpTrapAddess_oid',$snmpOID);
+	    }
+	    catch (Exception $e)
+	    {
+	        $this->_helper->json(array('status'=>'Save error : '.$e->getMessage() ));
+	        return;
+	    }
+	    $this->_helper->json(array('status'=>'OK'));
+	    return;
+	    
+	}
+	
 	/** Save log output to db
 	*	destination=>log destination 
 	*	file=>file name

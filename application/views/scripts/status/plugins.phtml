@@ -17,7 +17,7 @@ use Icinga\Web\Url;
 					<th>Enabled</th><th>Name</th><th>All OIDs</th><th>Target</th><th>Functions</th><th>Description</th>
 				</tr>
 			</thead>
-<? 
+<?php 
     $count=1;
     foreach ($this->pluginArray as $plugin)
     {
@@ -34,7 +34,7 @@ use Icinga\Web\Url;
 					<td><?= $plugin->description ?></td>
 				</tr>
 			</tbody>
-<? } ?>
+<?php } ?>
 	</table>
 
   <h2>Function list</h2>
@@ -45,7 +45,7 @@ use Icinga\Web\Url;
 					<th>Name</th><th>Plugin</th><th>Params</th><th>description</th>
 				</tr>
 			</thead>		
-<? 
+<?php 
     $count=1;
     foreach ($this->functionList as $function)
     {
@@ -58,7 +58,7 @@ use Icinga\Web\Url;
 					<td><?= $function->description ?></td>
 				</tr>
 			</tbody>
-<? } ?>			
+<?php } ?>			
 	</table>
 
 	<h2>Test function</h2>

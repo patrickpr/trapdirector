@@ -15,11 +15,11 @@
   value="<?= $this->trap_days_delete ?>" /> days will be dropped.<br><br>
   <button type="button" id="button_trap_save" onclick='click_button_trap("save")'>Save</button>
   <button type="button" id="button_trap_doit" onclick='click_button_trap("execute")'>Do it now</button><br>
-
+  <br>
   <hr>
   
    <h2>Log destination</h2>
-   Logs from the trap receiver will be sent to : <br>
+   Logs from the trap receiver will be sent to : 
 	<select name="logsel" id="select_log_destination" >
 <?php
 		if (count($this->logDestinations)==0)
@@ -40,8 +40,8 @@
 		}
 ?>		
 	</select><br><br>
-	For file log : <input type="text" id="input_current_log" maxlength="50"
-	value="<?= $this->currentLogFile ?>" style="width=40em;"> <br><br>
+	Destination file if set to 'file' : <input type="text" id="input_current_log" maxlength="50"
+	value="<?= $this->currentLogFile ?>" size=30 > <br><br>
 	Log level : <select name="logsel" id="select_log_level" >
 <?php
 		if (count($this->logLevels)==0)
@@ -64,12 +64,37 @@
 	</select><br><br>
 	<button type="button" id="button_log_save" onclick='click_button_log()'>Save</button>
   
+    <br>
+    <br>
+    <hr>
+    <h2>SNMP configuration</h2>
+    Use snmpTrapAddress when found to get source IP : 
+    <input type="checkbox" id="id_use_snmpTrapAddress" <?php if ($this->useSnmpTrapAddess === true) { echo 'checked'; } ?>>
+    <br>
+    
+    Specific OID to get source IP : 
+    <input type="text" id="id_snmpTrapAddess_oid" maxlength="50" size=30
+    <?php if ($this->SnmpTrapAddressOIDDefault === TRUE)
+    {
+        echo 'placeholder="' . $this->SnmpTrapAddressOID . '"';
+    }
+    else
+    {
+        echo 'value="' . $this->SnmpTrapAddressOID . '"';
+    }
+        
+    ?>
+    >
+    <br><br>
+    
+    <button type="button" id="button_snmp_save" onclick='click_button_snmp()'>Save</button>
 </div>
 
 <script type='text/javascript'>
 <?php use Icinga\Web\Url; ?>
 dbHelper='<?= Url::fromPath("trapdirector/") ?>helper/dbmaintenance';
 logHelper='<?= Url::fromPath("trapdirector/") ?>helper/logdestination';
+snmpHelper='<?= Url::fromPath("trapdirector/") ?>helper/snmpconfig';
 // TODO : put function in a js (duplicate from add.phtml)
 function displayWarning(message)
 {
@@ -79,6 +104,43 @@ function displayWarning(message)
 function displayOK(message)
 {
 	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
+}
+
+function click_button_snmp()
+{
+	useTrapAddr= ( $("#id_use_snmpTrapAddress").is(":checked") == true ) ? '1' : '0';
+	trapAddrOID=$("#id_snmpTrapAddess_oid").val();
+	if ( trapAddrOID == '' ) 
+	{
+		 trapAddrOID = '<?= $this->SnmpTrapAddressOID ?>';
+	}
+	$.ajax({
+			url: snmpHelper,
+			async: true,
+			dataType: "json",
+			type: "POST",
+			data: 
+			{
+				"useTrapAddr"	: 	useTrapAddr,
+				"trapAddrOID"	:	trapAddrOID
+			},
+	        success: function (data) 
+			{
+				//alert(data.status);
+				if (data.status == "OK") 
+				{
+					displayOK("Done");
+				} 
+				else 
+				{
+					displayWarning("Error : "+data.status);		
+				}
+			},
+			error: function (data)
+			{
+				displayWarning ("error" + data);
+			}
+	});	
 }
 
 
