@@ -254,21 +254,28 @@ class Trap
             if ($ret_code===0 || $ret_code===false)
             {
                 $this->logging->log('No match on trap data : '.$vars,WARN,'');
+                continue;
             }
-            else
+            if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
             {
-                if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
-                {
-                    $this->trapData['trap_oid']=$matches[2];
-                }
-                else
-                {
-                    $object= new stdClass;
-                    $object->oid =$matches[1];
-                    $object->value = $matches[2];
-                    array_push($this->trapDataExt,$object);
-                }
+                $this->trapData['trap_oid']=$matches[2];
+                continue;
             }
+            if ( $this->useSnmpTrapAddess === TRUE &&  preg_match('/'.$this->snmpTrapAddressOID.'/', $matches[1]) == 1)
+            {
+                $this->logging->log('Found relayed trap from ' . $matches[2] . ' relayed by ' .$this->trapData['source_ip'],DEBUG);
+                if (preg_match('/^[0-9\.]+$/',$matches[2]) == 0 && preg_match('/^[0-9a-fA-F:]+$/',$matches[2]) == 0)
+                {
+                    $this->logging->log('Value of SnmpTrapAddess ('.$this->snmpTrapAddressOID.') is not IP : ' .$matches[2],WARN,'');
+                    continue;
+                }
+                $this->trapData['source_ip'] = $matches[2];
+                continue;
+            }
+            $object= new stdClass;
+            $object->oid =$matches[1];
+            $object->value = $matches[2];
+            array_push($this->trapDataExt,$object);
         }
         
         if ($this->trapData['trap_oid']=='unknown')

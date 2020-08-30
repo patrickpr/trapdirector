@@ -19,6 +19,12 @@ trait TrapConfig
     abstract public function getLogging();
     /** @return \Trapdirector\TrapApi   */
     abstract public function getTrapApi();
+
+    // TODO : Get default values from TrapModuleConfig 
+    /** @var bool	Use SnmpTrapAddess as source adress */
+    public $useSnmpTrapAddess=TRUE;
+    /** @var string	Special OID to get IP source address of trap emitter */
+    public $snmpTrapAddressOID='.1.3.6.1.6.3.18.1.3';
     
     /**
      * Get option from array of ini file, send message if empty
@@ -60,6 +66,13 @@ trait TrapConfig
             $this->getDBConfigIfSet('log_destination',$this->getLogging()->outputMode);
             $this->getDBConfigIfSet('log_file',$this->getLogging()->outputFile);
         }
+        
+        $tmpVal = -1; // Get boolean coded in database as 1/0
+        $this->getDBConfigIfSet('use_SnmpTrapAddess', $tmpVal);
+        if ($tmpVal != -1) $this->useSnmpTrapAddess = ($tmpVal == 1) ? TRUE : FALSE;
+        
+        $this->getDBConfigIfSet('SnmpTrapAddess_oid', $this->snmpTrapAddressOID); // Get oid then replace '.' with '\.' to use in regexp whrn reading traps
+        $this->snmpTrapAddressOID = preg_replace('/\./', '\\.', $this->snmpTrapAddressOID);
     }
         
     /** Set $variable to value if $element found in database config table
