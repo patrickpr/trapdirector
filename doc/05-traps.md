@@ -118,8 +118,12 @@ Then click on Create to save and activate your rule for the next trap.
 Updating a rule
 ---------------
 
-On the Handler page, click on a rule to edit it.
+On the Handler page, click on a rule to edit it and click 'update' to save.
 
+Cloning a rule
+---------------
+
+On the Handler page, click on a rule to edit it, then click the 'clone' button.
 
 Testing a rule
 ---------------
