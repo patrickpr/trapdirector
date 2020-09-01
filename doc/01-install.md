@@ -22,6 +22,8 @@ Get installation files
 1. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
 1. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
 
+Note : directory in modules directory MUST be named 'trapdirector' or you will have errors.
+
 Automatic installation
 -----------------
 
