@@ -271,6 +271,7 @@ use Icinga\Web\Url;
 		</div>
 		<input type="submit" name="submit" id="id_submit_main" value="Create">
 		<button type="button" name="delete" id="id_delete_main" value="Delete" disabled>Delete</button>
+		<button type="button" name="delete" id="id_clone_main" value="Clone" style="display: none;">Clone</button>
 	</div>
 
 	</form>
@@ -314,7 +315,8 @@ function setToUpdate()
 {
 	$("#id_submit_main").val("Update");
 	$("#id_submit_main_label").html("Update Rule");
-	$("#id_delete_main").prop( "disabled", false )
+	$("#id_delete_main").prop( "disabled", false );
+	$("#id_clone_main").show();
 }
 
 function deleteMain()
@@ -355,7 +357,7 @@ function deleteMain()
 	});	
 }
 
-function submitMain()
+function submitMain(clone)
 {
 	// Check everything
 	// Hostname/hostgroup
@@ -404,6 +406,14 @@ function submitMain()
 		newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');	
 		
 	}
+	if (clone == 1)
+	{
+	  actionFormVal='clone';
+	}
+	else
+	{
+	  actionFormVal='save';
+	}
 	// Do ajax call
 	$.ajax({
 			url: form_submit,
@@ -424,7 +434,7 @@ function submitMain()
 				"rule"			:	newRule,
 				"ruleMatch"		:	$("#id_rule_action_true").val(),
 				"ruleNoMatch"	:	$("#id_rule_action_false").val(),
-				"action_form"	:	'save'
+				"action_form"	:	actionFormVal
 			},
 	        success: function (data) 
 			{
@@ -946,12 +956,17 @@ $(function() {
 
 	$( "#id_submit_main" ).click(function( event ) {
 		event.preventDefault();
-		submitMain();
+		submitMain(0);
 	});
 	
 	$( "#id_delete_main").click(function( event ) {
 		event.preventDefault();
 		deleteMain();
+	});
+
+	$( "#id_clone_main" ).click(function( event ) {
+		event.preventDefault();
+		submitMain(1);
 	});
 	
 	$( "#id_test_rule").click(function( event ) {

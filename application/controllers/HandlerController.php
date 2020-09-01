@@ -405,22 +405,22 @@ class HandlerController extends TrapsController
 	
 		$params=array(
 			// id (also db) => 	array('post' => post id, 'val' => default val, 'db' => send to table)
-			'hostgroup'		=>	array('post' => 'hostgroup','db'=>false),
-			'db_rule'		=>	array('post' => 'db_rule','db'=>false),
-			'hostid'		=>	array('post' => 'hostid','db'=>false),
-			'host_name'		=>	array('post' => 'hostname','val' => null,'db'=>true),
-			'host_group_name'=>	array('post' => null,'val' => null,'db'=>true),
-			'serviceid'		=>	array('post' => 'serviceid','db'=>false),
-			'service_name'	=>	array('post' => 'serviceName','db'=>true),
-			'trap_oid'		=>	array('post' => 'oid','db'=>true),
-			'revert_ok'		=>	array('post' => 'revertOK','val' => 0,'db'=>true),
-			'display'		=>	array('post' => 'display','val' => '','db'=>true),
-			'rule'			=>	array('post' => 'rule','val' => '','db'=>true),			
-			'action_match'	=>	array('post' => 'ruleMatch','val' => -1,'db'=>true),
-			'action_nomatch'=>	array('post' => 'ruleNoMatch','val' => -1,'db'=>true),					
-			'ip4'			=>	array('post' => null,'val' => null,'db'=>true),
-			'ip6'			=>	array('post' => null,'val' => null,'db'=>true),
-			'action_form'	=>	array('post' => 'action_form','db'=>false)
+			'hostgroup'		=>	array('post' => 'hostgroup',                    'db'=>false),
+			'db_rule'		=>	array('post' => 'db_rule',                      'db'=>false),
+			'hostid'		=>	array('post' => 'hostid',                       'db'=>false),
+			'host_name'		=>	array('post' => 'hostname',      'val' => null,  'db'=>true),
+			'host_group_name'=>	array('post' => null,            'val' => null,  'db'=>true),
+			'serviceid'		=>	array('post' => 'serviceid',                     'db'=>false),
+			'service_name'	=>	array('post' => 'serviceName',                    'db'=>true),
+			'trap_oid'		=>	array('post' => 'oid',                            'db'=>true),
+			'revert_ok'		=>	array('post' => 'revertOK',      'val' => 0,      'db'=>true),
+			'display'		=>	array('post' => 'display',        'val' => '',     'db'=>true),
+			'rule'			=>	array('post' => 'rule',          'val' => '',        'db'=>true),			
+			'action_match'	=>	array('post' => 'ruleMatch',       'val' => -1,    'db'=>true),
+			'action_nomatch'=>	array('post' => 'ruleNoMatch',    'val' => -1,    'db'=>true),					
+			'ip4'			=>	array('post' => null,             'val' => null,  'db'=>true),
+			'ip6'			=>	array('post' => null,             'val' => null,  'db'=>true),
+		    'action_form'	=>	array('post' => 'action_form',    'val' => null, 'db'=>false)
 		);
 		
 		if (isset($postData[$params['action_form']['post']]) 
@@ -507,8 +507,9 @@ class HandlerController extends TrapsController
 				}
 			}
 			// echo '<br>';	print_r($dbparams);echo '<br>';
-			if ($params['db_rule']['val'] == -1 ) 
-			{
+			
+			if ($params['db_rule']['val'] == -1 || $params['action_form']['val'] == 'clone') 
+			{  // If no rule number or action is clone, add the handler
 			    $ruleID=$this->getUIDatabase()->addHandlerRule($dbparams);
 			}
 			else
