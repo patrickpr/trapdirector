@@ -223,7 +223,7 @@ class TrapTableList extends TrapTable
 			if ($sql != '') $sql.=' AND ';
 			$sql.="(status != 'done')";
 		}
-		if ($sql != '') $query->where($sql);		
+		if ($sql != '') $query->where($sql);	
         return $query;
     }	
 

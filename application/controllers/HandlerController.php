@@ -7,6 +7,7 @@ use Icinga\Web\Url;
 use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
+use Icinga\Module\Trapdirector\Tables\HandlerTable;
 
 
 //use Icinga\Web\Form as Form;
@@ -26,6 +27,24 @@ class HandlerController extends TrapsController
 		$dbConn = $this->getUIDatabase()->getDb();
 		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
+		$this->view->handlerTable = new HandlerTable(
+		      $this->moduleConfig->getTrapRuleName(),
+		      $this->moduleConfig->getHandlerListTitles(),
+		      $this->moduleConfig->getHandlerListDisplayColumns(),
+		      $this->moduleConfig->getHandlerColumns(),
+		      $dbConn->getConnection(),
+		      $this->view,
+		      $this->moduleConfig->urlPath());
+		
+		$getVars = $this->getRequest()->getParams();		
+		$this->view->handlerTable->getParams($getVars);
+		
+		//$this->view->handlerTable->setFilter('127.0.0.1',array('ip4'));
+		
+		$this->view->handlerTable->setMibloader($this->getMIB());
+		
+		
+		// TODO : Obsolete remove after new table validation.
 		$this->getHandlerListTable()->setConnection($dbConn);
 		$this->getHandlerListTable()->setMibloader($this->getMIB());
 		// Apply pagination limits 
@@ -320,6 +339,7 @@ class HandlerController extends TrapsController
 	{
 		$this->checkConfigPermission();
 		// set up tab
+		$this->prepareTabs();
 		$this->getTabs()->add('get',array(
 			'active'	=> true,
 			'label'		=> $this->translate('Add handler'),
@@ -636,7 +656,7 @@ class HandlerController extends TrapsController
 	protected function prepareTabs()
 	{
 		return $this->getTabs()->add('status', array(
-			'label' => $this->translate('Traps'),
+			'label' => $this->translate('Trap handlers'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/handler')
 		);
 	} 

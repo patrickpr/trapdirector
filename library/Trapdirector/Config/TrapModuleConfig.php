@@ -177,6 +177,20 @@ class TrapModuleConfig
 			//'id'			=> 'Id',
 		);
 	}
+	public function getHandlerColumns()
+	{
+	    return array(
+	        'r.host_name', 'r.host_group_name',
+	        'r.ip4', 'r.ip6',
+	        'r.trap_oid',
+	        'r.rule',
+	        'r.action_match',
+	        'r.action_nomatch',
+	        'r.service_name',
+	        'r.num_match',
+	        'r.id'
+	    );
+	}
 
 	// handler update (<key> => <sql select>)
 	public function ruleDetailQuery()

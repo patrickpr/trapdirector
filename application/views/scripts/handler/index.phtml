@@ -13,14 +13,16 @@
         'title' => $this->translate('Create a new trap service')
     ))
 ?>  
- <br />  
- <?= $this->table->getPaginator(); ?> 
+ <br><br>
+ <?= $this->handlerTable->renderFilter(); ?>
+
+
 
 </div>
 
 
 <div class="content">
-
-<?= $this->table->render(); ?>
+<?=  $this->handlerTable->renderPagingHeader()?>
+<?= $this->handlerTable->render(); ?>
 
 </div>

@@ -256,7 +256,7 @@ class HandlerTableList extends TrapTable
             $query->where($this->renderFilter($filter));
         }
 		*/
-		
+
         return $query;
     }	
 
