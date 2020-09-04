@@ -25,6 +25,16 @@ class HandlerTable extends TrapDirectorTable
         $this->doTranslate=true;
     }
 
+    public function titleOrder($name)
+    {
+        switch ($name)
+        {
+            case 'host_name' : return $this->content[$name]; break;
+            case 'source_ip' : return 'ip4'; break;
+            default: return $this->content[$name];	
+        }
+        return NULL;
+    }
     
     public function getCurrentURL()
     {

@@ -2,10 +2,6 @@
 
 namespace Icinga\Module\Trapdirector\Tables;
 
-use Icinga\Data\Fetchable;
-use Icinga\Data\Queryable;
-use Icinga\Data\Selectable;
-
 
 abstract class TrapDirectorTable
 {
@@ -18,7 +14,7 @@ abstract class TrapDirectorTable
     /** @var array $columnNames names of columns for filtering */
     protected $columnNames = array();
     
-    /** @var Selectable $dbConn connection to database  */
+    /** @var mixed $dbConn connection to database  */
     protected $dbConn = null;
     
     /** Current view **/
@@ -30,7 +26,7 @@ abstract class TrapDirectorTable
    /** @var array $table (db ref, name) */
     protected $table = array();
     
-    /** @var Queryable  $query Query in database; */
+    /** @var mixed  $query Query in database; */
     protected $query = null;
     
     /** @var array $order : (db column, 'ASC' | 'DESC') */
@@ -71,6 +67,7 @@ abstract class TrapDirectorTable
     {
         $this->getFilterQuery($getVars);
         $this->getPagingQuery($getVars);
+        $this->getOrderQuery($getVars);
     }
     
     public function getCurrentURL()
@@ -126,6 +123,7 @@ abstract class TrapDirectorTable
     
     
     /**************** Filtering ******************/
+    
     public function applyFilter()
     {
         if ($this->filterString == '' || count($this->filterColumn) == 0)
@@ -152,8 +150,7 @@ abstract class TrapDirectorTable
         $this->filterColumn = $filterCol;
         return $this;
     }
-
-    
+   
     public function renderFilter()
     {
         
@@ -184,6 +181,7 @@ abstract class TrapDirectorTable
     }
     
     /***************** Ordering ********************/
+    
     public function applyOrder()
     {
         if (count($this->order) == 0)
@@ -213,7 +211,13 @@ abstract class TrapDirectorTable
         if (isset($getVars['o']))
         {
             $this->orderQuery = $getVars['o'];
-            // TODO
+            $match = array();
+            if (preg_match('/(.*)(ASC|DESC)$/', $this->orderQuery , $match))
+            {
+                $orderArray=array($match[1] => $match[2]);
+                echo "$match[1] => $match[2]";
+                $this->setOrder($orderArray);
+            }
         }
     }
     
@@ -224,6 +228,7 @@ abstract class TrapDirectorTable
     }
     
     /*****************  Paging and counting *********/
+    
     public function countQuery()
     {
         $this->query = $this->dbConn->select();
@@ -335,26 +340,6 @@ abstract class TrapDirectorTable
         
         $html .= '</ul> </div>';
         
-        $htmlOLD = '
-            <ul class="nav tab-nav">
-
-                <li class="active nav-item">
-                    <a href="/icingaweb2/trapdirector/received/?q=&amp;page=1" title="Show rows 1 to 25 of 29" aria-label="Show rows 1 to 25 of 29">
-                    1                
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/icingaweb2/trapdirector/received/?q=&amp;page=2" title="Show rows 26 to 29 of 29" aria-label="Show rows 26 to 29 of 29">
-                        2                
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="/icingaweb2/trapdirector/received/?q=&amp;page=2" title="Show rows 26 to 50 of 29" aria-label="Show rows 26 to 50 of 29" class="next-page">
-                        <i aria-hidden="true" class="icon-angle-double-right"></i>
-                     </a>
-                 </li>
-               </ul>
-';
         return $html;
     }
     
@@ -365,12 +350,42 @@ abstract class TrapDirectorTable
     }
     
     /*************** Rendering *************************/
+    
+    public function titleOrder($name)
+    {
+        return $this->content[$name];
+    }
+    
     public function renderTitles()
     {
         $html = "<thead>\n<tr>\n";
-        foreach ($this->titles as $values)
+        foreach ($this->titles as $name => $values)
         {
-            $html .= '<th>' . $values . '</th>';            
+            $titleOrder = $this->titleOrder($name);
+            if ($titleOrder != NULL)
+            {
+                if (isset($this->order[$titleOrder]))
+                {
+                    if ($this->order[$titleOrder] == 'ASC')
+                    {
+                        $titleOrder.='DESC';
+                    }
+                    else
+                    {
+                        $titleOrder.='ASC';
+                    }
+                }
+                else 
+                {
+                    $titleOrder.='ASC';
+                }
+                $actionURL = $this->getCurrentURLAndQS('order').'o='.$titleOrder;
+                $html .= '<th><a href="'.$actionURL.'">' . $values . '</a></th>';
+            }
+            else 
+            {
+                $html .= '<th>' . $values . '</th>';
+            }          
         }
         $html .= "</tr>\n</thead>\n";
         return $html;
