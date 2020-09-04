@@ -89,7 +89,7 @@ abstract class TrapDirectorTable
             array_push($QSList , $this->curOrderQuery());
         
         if (count($QSList) != 0)
-            $actionURL .=  implode('&', $QSList);
+            $actionURL .=  implode('&', $QSList) . '&';
         
         return $actionURL;
     }
