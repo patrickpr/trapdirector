@@ -380,6 +380,7 @@ function add_schema_mysql(){
   dbRet=$(mysql $sql_conn -e 'show databases;')
   if [ $? -ne 0 ]; then 
 	   # Error is shown with stderr
+	   echo "Command sent was : mysql $sql_conn -e 'show databases;'"
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters"
 	   if [ $? -eq 0 ]; then return 1; fi
