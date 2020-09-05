@@ -36,10 +36,10 @@ class HandlerController extends TrapsController
 		      $this->view,
 		      $this->moduleConfig->urlPath());
 		
+		$this->view->handlerTable->setMaxPerPage($this->getModuleConfig()->itemListDisplay());
+				
 		$getVars = $this->getRequest()->getParams();		
 		$this->view->handlerTable->getParams($getVars);
-		
-		//$this->view->handlerTable->setFilter('127.0.0.1',array('ip4'));
 		
 		$this->view->handlerTable->setMibloader($this->getMIB());
 		
@@ -376,6 +376,9 @@ class HandlerController extends TrapsController
 			$this->view->modified=gmdate("Y-m-d\TH:i:s\Z",$ruleDetail->modified);
 			$this->view->modifier=$ruleDetail->modifier;
 			
+			$this->view->comment = $ruleDetail->comment;
+			$this->view->category = $ruleDetail->category;
+			
 			// Warning message if host/service don't exists anymore
 			$this->view->warning_message='';
 			if ($this->view->hostname != null)
@@ -432,6 +435,8 @@ class HandlerController extends TrapsController
 			'host_group_name'=>	array('post' => null,            'val' => null,  'db'=>true),
 			'serviceid'		=>	array('post' => 'serviceid',                     'db'=>false),
 			'service_name'	=>	array('post' => 'serviceName',                    'db'=>true),
+		    'comment'       =>  array('post' => 'comment',       'val' => '',    'db'=>true),
+		    'rule_type'     =>  array('post' => 'category',       'val' => 0,    'db'=>true),
 			'trap_oid'		=>	array('post' => 'oid',                            'db'=>true),
 			'revert_ok'		=>	array('post' => 'revertOK',      'val' => 0,      'db'=>true),
 			'display'		=>	array('post' => 'display',        'val' => '',     'db'=>true),

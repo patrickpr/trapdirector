@@ -155,6 +155,8 @@ class TrapModuleConfig
 			'source_ip'		=> "CASE WHEN r.ip4 IS NULL THEN r.ip6 ELSE r.ip4 END",
 			'trap_oid'		=> 'r.trap_oid',
 			'rule'			=> 'r.rule',
+		    'comment'	    => 'r.comment',
+		    'category'	    => 'r.rule_type',
 			'action_match'	=> 'r.action_match',
 			'action_nomatch'=> 'r.action_nomatch',
 			'service_name'	=> 'r.service_name',
@@ -209,7 +211,9 @@ class TrapModuleConfig
 			'revert_ok'		=> 'r.revert_ok',
 			'display'		=> 'r.display',
 			'modified'		=> 'UNIX_TIMESTAMP(r.modified)',
-            'modifier'		=> 'r.modifier'
+            'modifier'		=> 'r.modifier',
+		    'comment'       => 'r.comment',
+		    'category'      => 'r.rule_type'
 		);
 	}	
 		

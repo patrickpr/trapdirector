@@ -26,7 +26,9 @@ use Icinga\Web\Url;
 	?>
 	<input type="hidden" name="hostid" id="id_Hidden_hostgroup"
 		value="<?= $this->hostgroupid ?>">	
-	<fieldset id="fieldset-source_definition" class=""><legend>Trap source</legend>
+	<fieldset id="fieldset-source_definition" class=""><legend>Trap source and handler information</legend>
+	  <table> <tr> 
+	  <td>
 		<input type="checkbox" id="id_host_or_hostgroup"
 			onChange="toggle_host_hostgroup()"
 			<?php if ($this->selectGroup) { echo 'checked'; } ?>> 
@@ -41,7 +43,7 @@ use Icinga\Web\Url;
 						<label for="id_hostgroupfilter" class="control-label optional">Host group</label>
 					</span>
 				</div>
-				<input type="text" name="hostgroup" id="id_hostgroupfilter" placeholder="Enter partial name" list="hostgroups_list"
+				<input type="text" name="hostgroup" id="id_hostgroupfilter" placeholder="Enter partial name" list="hostgroups_list" size=30
 					oninput="hostGroupFilterGet()"
 					value="<?= $this->hostgroupname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
 				<datalist id="hostgroups_list">
@@ -70,7 +72,7 @@ use Icinga\Web\Url;
 						<label for="id_hostfilter" class="control-label optional">Host name</label>
 					</span>
 				</div>
-				<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list"
+				<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list" size=30
 					oninput="hostFilterGet()"
 					value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
 				<datalist id="hosts_list">
@@ -96,6 +98,30 @@ use Icinga\Web\Url;
 				</select>		
 			</div>
 		</div>
+		</td>
+		<td style="padding-left: 150px;">
+			<div class="control-group">
+				<div class="control-label-group">
+					<span id="id_comment_span_label">
+						<label for="id_comment" class="control-label optional">Handler comment</label>
+					</span>
+				</div>
+				<input type="text" name="coment" id="id_comment" placeholder="Enter trap handler comment here" list="hosts_list" size=60
+					value="<?= $this->comment ?>" > 
+			</div>		
+			<div class="control-group">
+				<div class="control-label-group">
+					<span>
+						<label for="id_handler_category" class="control-label optional">Handler category</label>
+					</span>
+				</div>
+				<select name="service" id="id_handler_category"  >
+					<option value="0" selected>Not categorized</option>
+				</select>		
+			</div>			
+		</td>
+	</tr>
+	</table>
 	</fieldset>
 	
 	<fieldset id="fieldset-objects_definition" class=""><legend>Trap definition</legend>		
@@ -147,7 +173,7 @@ use Icinga\Web\Url;
 					<label for="id_mainoid" class="control-label optional">Trap OID</label>
 				</span>
 			</div>			
-			<input type="text" name="mainoid" id="id_mainoid" placeholder="Enter oid" 
+			<input type="text" name="mainoid" id="id_mainoid" placeholder="Enter oid" size=40
 			value="<?= $this->mainoid ?>" > 
 			<span id="id_mainoid_trapname"> MIB::name </span>
 			<button type="button" disabled id="id_mainoid_add_objects" onclick="onclickAddObjects()">
@@ -303,12 +329,12 @@ count_id=1;
 
 function displayWarning(message)
 {
-	$("#footer > #notifications").html('<li class="error fading-out">'+message+'</li>');
+	$("#footer > #notifications").html('<li class="error">'+message+'</li>');
 	//alert(message);
 }
 function displayOK(message)
 {
-	$("#footer > #notifications").html('<li class="success fading-out">'+message+'</li>');
+	$("#footer > #notifications").html('<li class="success">'+message+'</li>');
 }
 
 function setToUpdate()
@@ -359,6 +385,7 @@ function deleteMain()
 
 function submitMain(clone)
 {
+
 	// Check everything
 	// Hostname/hostgroup
 	hostgroupSel=$("#id_host_or_hostgroup").is(":checked");
@@ -389,7 +416,7 @@ function submitMain(clone)
 	{
 		getOID = '.'+getOID;
 	}
-	
+
 	// Get revert time
 	var timeRegexp = /^[\d]*$/;
 	var revertOK=$("#id_revertOK").val()
@@ -406,6 +433,11 @@ function submitMain(clone)
 		newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');	
 		
 	}
+
+	// Get comment and category
+	comment = $("#id_comment").val();
+	category = $("#id_handler_category").val();
+	
 	if (clone == 1)
 	{
 	  actionFormVal='clone';
@@ -414,6 +446,7 @@ function submitMain(clone)
 	{
 	  actionFormVal='save';
 	}
+	
 	// Do ajax call
 	$.ajax({
 			url: form_submit,
@@ -428,6 +461,8 @@ function submitMain(clone)
 				"hostname"		:	hostname,
 				"serviceid"		:	serviceid,
 				"serviceName"	:	servicename,
+				"comment"		:	comment,
+				"category"		:	category,
 				"oid"			:	getOID,
 				"revertOK"		:	revertOK,
 				"display"		:	newDisplay,
@@ -456,7 +491,7 @@ function submitMain(clone)
 				displayWarning ("error" + data);
 			}
 	});	
-	
+		
 }
 
 function toggle_host_hostgroup()

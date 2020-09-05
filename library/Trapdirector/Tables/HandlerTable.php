@@ -98,15 +98,19 @@ class HandlerTable extends TrapDirectorTable
                   $val = '-';
               }
               if ($firstCol === true) { // Put link in first column for trap detail.
-                  $html .= '<td>'
+                  $html .= '<td class="traphover">'
                       . $this->view->qlink(
                           $this->view->escape($val),
                           Url::fromPath(
                               $this->urlPath . '/handler/add',
                               array('ruleid' => $row->id)
                               )
-                          )
-                          . '</td>';
+                          );
+                  if ($row->comment != '')
+                  {
+                      $html.= '<span class="tohover">'. $row->comment .'</span></td>';
+                  }
+                  $html.= '</td>';
               } else {
                   $html .= '<td>' . $this->view->escape($val) . '</td>';
               }
