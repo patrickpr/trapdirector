@@ -27,6 +27,17 @@ Note: 'display' is for debug only and can ruin your web page.
 
 Be careful, in trace mode the db passwords & communities can be shown.
 
+SNMP Configuration
+------------------
+
+![trap-1-1](img/mib-status-1-1.jpg)
+
+When traps are forwarded by snmptrap agents, the original IP is added in the trap data (by default in snmpAddress).
+
+Here you can toggle the use of this data, and set specific OID if needed.
+
+
+
 
 MIB Management
 ===============
@@ -49,6 +60,23 @@ snmptranslate
 ---------------
 
 The system needs `snmptranslate` to parse the MIBs. Here you can check if the configuration of the module is correct, and if `snmptranslate` works fine on your system.
+
+
+UI Configuration
+================
+
+![trap-1](UIConfig-1-1.jpg)
+
+Tables
+------
+
+Set maximum row to show in tables before paging
+
+Categories
+----------
+
+Manage handlers categories here.
+If you delete a category, any handler with this category will go back to the default (Not categorized) category.
 
 
 Services management
