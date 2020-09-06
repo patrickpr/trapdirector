@@ -9,7 +9,7 @@ User Guide
 
 * [API and functions](50-api-functions.md)
 
-* [MIB management](15-mib.md)
+* [Module configuration and MIB management](15-mib.md)
 
 * [Trap receiver logic](20-receiver-logic.md)
 
