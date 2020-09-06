@@ -74,6 +74,26 @@ trait TrapDBQuery
         return $numRows;
     }
     
+    /**
+     * ON category removal, put back cat to 0 on handlers with this category.
+     * @param int $catIndex
+     * @throws \ErrorException
+     * @return number
+     */
+    public function updateHandlersOnCategoryDelete($catIndex)
+    {
+        // TODO Check for rule consistency
+        $dbConn = $this->getDbConn();
+        if ($dbConn === null) throw new \ErrorException('uncatched db error');
+        
+        $numRows=$dbConn->update(
+            $this->getTrapCtrl()->getModuleConfig()->getTrapRuleName(),
+            array('rule_type' => 0),
+            'rule_type='.$catIndex
+            );
+        return $numRows;
+    }
+    
     /** Delete rule by id
      *	@param int $ruleID rule id
      */

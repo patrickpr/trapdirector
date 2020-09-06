@@ -27,7 +27,7 @@ class HandlerController extends TrapsController
 		$dbConn = $this->getUIDatabase()->getDb();
 		if ($dbConn === null) throw new \ErrorException('uncatched db error');
 		
-		$this->view->handlerTable = new HandlerTable(
+		$handlerTable = new HandlerTable(
 		      $this->moduleConfig->getTrapRuleName(),
 		      $this->moduleConfig->getHandlerListTitles(),
 		      $this->moduleConfig->getHandlerListDisplayColumns(),
@@ -36,15 +36,27 @@ class HandlerController extends TrapsController
 		      $this->view,
 		      $this->moduleConfig->urlPath());
 		
-		$this->view->handlerTable->setMaxPerPage($this->getModuleConfig()->itemListDisplay());
-				
-		$getVars = $this->getRequest()->getParams();		
-		$this->view->handlerTable->getParams($getVars);
+		$handlerTable->setMaxPerPage($this->itemListDisplay());
 		
-		$this->view->handlerTable->setMibloader($this->getMIB());
+		$handlerTable->setMibloader($this->getMIB());
+		
+		$getVars = $this->getRequest()->getParams();
+		$handlerTable->getParams($getVars);
+		
+		if ($handlerTable->isOrderSet() == FALSE)
+		{ // Id no order set order and grouping to categories
+		  $handlerTable->setGrouping('rule_type');
+		  $handlerTable->setCategoriesArray($this->getHandlersCategory());
+		  $handlerTable->setOrder(array('rule_type'=>'DESC'));
+		
+		}
+		
+		$this->view->handlerTable = $handlerTable;
 		
 		
 		// TODO : Obsolete remove after new table validation.
+		
+	    /**
 		$this->getHandlerListTable()->setConnection($dbConn);
 		$this->getHandlerListTable()->setMibloader($this->getMIB());
 		// Apply pagination limits 
@@ -54,6 +66,7 @@ class HandlerController extends TrapsController
 		$this->view->filterEditor = $this->getHandlerListTable()->getFilterEditor($this->getRequest());		
 	
 		//$this->displayExitError('Handler/indexAction','Not implemented');
+		 */
 	}
 
 	/** test_rule : test a rule
@@ -350,6 +363,9 @@ class HandlerController extends TrapsController
 		
 		// Get Mib List from DB
 		$this->view->mibList=$this->getMIB()->getMIBList();
+		
+		// Get categories
+		$this->view->categoryList = $this->getHandlersCategory();
 		
 		//$this->view->trapvalues=false; // Set to true to display 'value' colum in objects
 		

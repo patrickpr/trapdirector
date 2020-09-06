@@ -79,7 +79,7 @@ use Icinga\Web\Url;
 					<!-- <optgroup label=""> -->
 		<?php
 			foreach($this->hostlist as $hostopt)
-			{ 
+			{  // TODO : check why it doesn't end with '/option'
 				echo '<option>' . $hostopt . '<option>';
 			}
 		?>
@@ -116,7 +116,13 @@ use Icinga\Web\Url;
 					</span>
 				</div>
 				<select name="service" id="id_handler_category"  >
-					<option value="0" selected>Not categorized</option>
+		<?php
+		foreach($this->categoryList as $index => $catName)
+			{ 
+			    $selected = ($index == $this->category)? 'selected' : '';
+			    echo '<option value="'. $index .'" '.$selected.'>' . $catName . '</option>';
+			}
+		?>					
 				</select>		
 			</div>			
 		</td>

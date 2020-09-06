@@ -47,6 +47,15 @@ abstract class TrapDirectorTable
     
     protected $currentPage = 0;
     
+    /*************** Grouping ************/
+    protected $grouppingActive=false;
+    
+    protected $groupingColumn='';
+    
+    protected $groupingVal='';
+    
+    protected $groupingColSpan=1;
+    
     function __construct(array $table,array $titles, array $columns, array $columnNames, $dbConn , $view, $urlPath)
     {
         $this->table = $table;
@@ -205,6 +214,12 @@ abstract class TrapDirectorTable
         $this->order = $order;
         return $this;
     }
+
+    public function isOrderSet()
+    {
+        if (count($this->order == 0)) return FALSE;
+        return TRUE;
+    }
     
     public function getOrderQuery(array $getVars)
     {
@@ -349,6 +364,41 @@ abstract class TrapDirectorTable
         return $this;
     }
     
+    /*****************  Grouping ****************/
+    
+    public function setGrouping($columnDBName)
+    {
+        $this->groupingColumn = $columnDBName;
+        $this->grouppingActive = TRUE;
+    }
+    
+    public function initGrouping()
+    {
+        $this->groupingVal = '';
+        $this->groupingColSpan = count($this->titles);
+    }
+    
+    public function groupingPrintData( $value)
+    {
+        $html = "$value";
+        return $html;
+    }
+    
+    public function groupingNextLine( $values)
+    {
+        if ($this->grouppingActive === FALSE) return '';
+        
+        $dbcol = $this->groupingColumn;
+        if ($this->groupingVal == '' || $this->groupingVal != $values->$dbcol )
+        {
+            $this->groupingVal = $values->$dbcol;
+            $html = '<tr><th colspan="'. $this->groupingColSpan .'">'. $this->groupingPrintData($this->groupingVal) .'</th></tr>';
+            return $html;
+        }
+        return '';
+        
+    }
+    
     /*************** Rendering *************************/
     
     public function titleOrder($name)
@@ -409,6 +459,8 @@ abstract class TrapDirectorTable
        $html = '<tbody id="obj_table_body">';
        foreach($values as $value)
        {
+           $html .= $this->groupingNextLine($value);
+           
            $html .= "<tr>\n";
            $html .= $this->renderLine($value);
            $html .= "</tr>\n";
@@ -423,6 +475,7 @@ abstract class TrapDirectorTable
         
         
         $values = $this->fullQuery();
+        $this->initGrouping();
         
         $html.="<table class='simple common-table table-row-selectable'>\n";
         

@@ -19,6 +19,7 @@ use Icinga\Module\Trapdirector\Icinga2API;
 use Trapdirector\Trap;
 
 use Icinga\Data\ConfigObject;
+use Icinga\Exception\ProgrammingError;
 
 class TrapsController extends Controller
 {
@@ -239,5 +240,75 @@ class TrapsController extends Controller
 	}
 
 
+	/************************ UI elements **************************/
+	
+    /**
+     * get max rows to display before paging.
+     * @return number
+     */
+	public function itemListDisplay()
+	{
+	    return $this->getUIDatabase()->getDBConfigValue('max_rows_in_list');
+	}
+
+	public function setitemListDisplay(int $maxRows)
+	{
+	    return $this->getUIDatabase()->setDBConfigValue('max_rows_in_list',$maxRows);
+	}
+	
+    /**
+     * get Handlers categories list (index => textvalue).
+     * @return array
+     */	
+	public function getHandlersCategory()
+	{
+	    //<index>:<name>!<index>:<name>
+	    $catList = $this->getUIDatabase()->getDBConfigValue('handler_categories');
+	    $catListArray=explode('!',$catList);
+	    $retArray=array();
+	    foreach ($catListArray as $category)
+	    {
+	        $catArray=explode(':',$category);
+	        $retArray[$catArray[0]] = $catArray[1];
+	    }
+	    return $retArray; 
+	}
+
+	public function setHandlerCategory(array $catArray)
+	{
+	    $catString='';
+	    foreach ($catArray as $index => $value)
+	    {
+	        if ($catString != '' ) $catString .= '!';
+	        $catString .= $index . ':' . $value;
+	    }
+	    $this->getUIDatabase()->setDBConfigValue('handler_categories', $catString);
+	}
+	
+	public function addHandlersCategory(string $catName)
+	{
+	    $catArray = $this->getHandlersCategory();
+	    $i=1;
+	    while (isset($catArray[$i]) && $i < 100) $i++;
+	    if ($i == 100) throw new ProgrammingError('Category array error');
+	    $catArray[$i] = $catName;
+	    $this->setHandlerCategory($catArray);
+	}
+	
+	public function delHandlersCategory(int $catIndex)
+	{
+	    $catArray = $this->getHandlersCategory();
+	    unset($catArray[$catIndex]);
+	    $this->setHandlerCategory($catArray);
+	    $this->getUIDatabase()->updateHandlersOnCategoryDelete($catIndex);
+	}
+	
+	public function renameHandlersCategory(int $catIndex, string $catName)
+	{
+	    $catArray = $this->getHandlersCategory();
+	    $catArray[$catIndex] = $catName;
+	    $this->setHandlerCategory($catArray);
+	}
+	
 }
 

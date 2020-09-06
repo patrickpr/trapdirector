@@ -19,6 +19,26 @@ class HandlerTable extends TrapDirectorTable
     protected $doTranslate=false;
     protected $MIB;
     
+    // categories
+    protected $categories = NULL;
+    
+    public function setCategoriesArray(array $categories)
+    {
+        $this->categories = $categories;
+    }
+    
+    public function groupingPrintData( $value)
+    {
+        if ($this->groupingColumn == 'rule_type')
+        {
+            if ($this->categories == NULL || (! isset($this->categories[$value])))
+                return 'Unknown category ('.$value.')';
+            return 'Category : '. $this->categories[$value];
+        }
+        $html = "$value";
+        return $html;
+    }
+    
     public function setMibloader($mibloader)
     {
         $this->MIB=$mibloader;

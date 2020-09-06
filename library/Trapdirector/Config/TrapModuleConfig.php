@@ -14,6 +14,8 @@ class TrapModuleConfig
 		'log_level' => 2, // log level
 		'use_SnmpTrapAddess' => 1, // use SnmpTrapAddress by default
 	    'SnmpTrapAddess_oid' => '.1.3.6.1.6.3.18.1.3', // default snmpTrapAdress OID
+	    'max_rows_in_list' => 5, // Max rows displayed in table before paging
+	    'handler_categories' => '0:Not categorized' // handlers categories : <index>:<name>!<index>:<name> ....
 	);
 	// get default values for dbconfig
 	public function getDBConfigDefaults() { return $this->DBConfigDefaults;}
@@ -161,6 +163,7 @@ class TrapModuleConfig
 			'action_nomatch'=> 'r.action_nomatch',
 			'service_name'	=> 'r.service_name',
 			'num_match'		=> 'r.num_match',
+		    'rule_type'     => 'r.rule_type',
 			'id'           	=> 'r.id'
 		);
 	}
@@ -248,7 +251,7 @@ class TrapModuleConfig
 	// foreign key of trap data table
 	public function trapDataFK() { return 'trap_id';}
 	
-	// Max items in a list
+	// Max items in a list OBSOLETE TODO : remove after all tables moved to trapdirectorTable
 	public function itemListDisplay() { return 25; }
 }
 

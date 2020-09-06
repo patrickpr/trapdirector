@@ -233,6 +233,71 @@ class StatusController extends TrapsController
 		
 	}
 
+	/** UI options */
+	public function uimgtAction()
+	{
+	    $this->prepareTabs()->activate('uimgt');
+	    
+	    $this->view->setError='';
+	    $this->view->setOKMsg='';
+	    
+	    //max_rows=25&row_update=update
+	    if ( $this->getRequest()->getParam('max_rows',NULL) !== NULL )
+	    {
+	        $maxRows = $this->getRequest()->getParam('max_rows');
+	        if (!preg_match('/^[0-9]+$/', $maxRows) || $maxRows < 1)
+	        {
+	            $this->view->setError='Max rows must be a number';
+	        }
+	        else
+	        {
+	            $this->setitemListDisplay($maxRows);
+	            $this->view->setOKMsg='Set max rows to ' . $maxRows;
+	        }
+	    }
+	    
+	    if ( $this->getRequest()->getParam('add_category',NULL) !== NULL )
+	    {
+	        $addCat = $this->getRequest()->getParam('add_category');
+            $this->addHandlersCategory($addCat);
+	    }
+	    
+	    if ( $this->getRequest()->getPost('type',NULL) !== NULL )
+	    {
+	        $type = $this->getRequest()->getPost('type',NULL);
+	        $index = $this->getRequest()->getPost('index',NULL);
+	        $newname = $this->getRequest()->getPost('newname',NULL);
+
+	        if (!preg_match('/^[0-9]+$/', $index) || $index < 1)
+	            $this->_helper->json(array('status'=>'Bad index'));
+	        
+	        switch ($type)
+	        {
+	            case 'delete':
+	                $this->delHandlersCategory($index);
+	                $this->_helper->json(array('status'=>'OK'));
+	                return;
+	                break;
+	            case 'rename':
+	                $this->renameHandlersCategory($index, $newname);
+	                $this->_helper->json(array('status'=>'OK'));
+	                return;
+	                break;
+	            default:
+	                $this->_helper->json(array('status'=>'Unknwon command'));
+	                return;
+	                break;
+	        }
+	    }
+	    
+	    $this->view->maxRows = $this->itemListDisplay();
+	    
+	    $this->view->categories = $this->getHandlersCategory();
+	    
+	    
+	    
+	}
+	
 	/** Create services and templates
 	 *  Create template for trap service
 	 * 
@@ -328,7 +393,10 @@ class StatusController extends TrapsController
 		)->add('mib', array(
 			'label' => $this->translate('MIB Management'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/status/mib')
-		)->add('services', array(
+	    )->add('uimgt', array(
+	        'label' => $this->translate('UI Configuration'),
+	        'url'   => $this->getModuleConfig()->urlPath() . '/status/uimgt')
+        )->add('services', array(
 			'label' => $this->translate('Services management'),
 			'url'   => $this->getModuleConfig()->urlPath() . '/status/services')
 	    )->add('plugins', array(
