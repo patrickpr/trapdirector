@@ -110,9 +110,10 @@ use Icinga\Web\Url;
 					value="<?= $this->comment ?>" > 
 			</div>		
 			<div class="control-group">
-				<div class="control-label-group">
+				<div class="control-label-group" data-base-target="_next">
 					<span>
-						<label for="id_handler_category" class="control-label optional">Handler category</label>
+						<label for="id_handler_category" class="control-label optional">
+							Handler category (<a href="<?= Url::fromPath('trapdirector/') ?>status/uimgt" > manage </a>)</label>
 					</span>
 				</div>
 				<select name="service" id="id_handler_category"  >
