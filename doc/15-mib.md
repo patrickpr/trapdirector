@@ -65,7 +65,7 @@ The system needs `snmptranslate` to parse the MIBs. Here you can check if the co
 UI Configuration
 ================
 
-![trap-1](UIConfig-1-1.jpg)
+![trap-1](img/UIConfig-1-1.jpg)
 
 Tables
 ------
