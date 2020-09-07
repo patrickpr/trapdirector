@@ -7,7 +7,11 @@ trait TrapDirectorTableOrder
 { 
     /** @var array $order : (db column, 'ASC' | 'DESC') */
     protected $order = array();
+    /** @var string $orderQuery passed by GET */
     protected $orderQuery = '';   
+    
+    /** used var & functions of trapDirectorTable **/
+    protected $query;
     
    /***************** Ordering ********************/
     

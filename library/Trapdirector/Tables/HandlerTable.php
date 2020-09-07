@@ -27,7 +27,7 @@ class HandlerTable extends TrapDirectorTable
         $this->categories = $categories;
     }
     
-    public function groupingPrintData( $value)
+    public function groupingPrintData( string $value)
     {
         if ($this->groupingColumn == 'rule_type')
         {

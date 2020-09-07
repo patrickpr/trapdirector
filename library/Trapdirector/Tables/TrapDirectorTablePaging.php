@@ -11,7 +11,11 @@ trait TrapDirectorTablePaging
     
     protected $currentPage = 0;
         
- 
+    /**** var & func of TrapDirectorTable used ***/
+    protected $query;
+    abstract protected function getCurrentURLAndQS(string $caller);
+    abstract public function applyFilter();
+    
     /*****************  Paging and counting *********/
     
     public function countQuery()

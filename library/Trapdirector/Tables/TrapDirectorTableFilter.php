@@ -15,6 +15,9 @@ trait TrapDirectorTableFilter
     
     protected $filterQuery='';
     
+    /**** var & func of TrapDirectorTable used ***/
+    protected $query;
+    abstract protected function getCurrentURLAndQS(string $caller);
     
     /**************** Filtering ******************/
     
