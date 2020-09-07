@@ -217,7 +217,7 @@ abstract class TrapDirectorTable
 
     public function isOrderSet()
     {
-        if (count($this->order == 0)) return FALSE;
+        if (count($this->order) == 0) return FALSE;
         return TRUE;
     }
     
