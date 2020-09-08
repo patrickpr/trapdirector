@@ -14,7 +14,7 @@ class TrapModuleConfig
 		'log_level' => 2, // log level
 		'use_SnmpTrapAddess' => 1, // use SnmpTrapAddress by default
 	    'SnmpTrapAddess_oid' => '.1.3.6.1.6.3.18.1.3', // default snmpTrapAdress OID
-	    'max_rows_in_list' => 5, // Max rows displayed in table before paging
+	    'max_rows_in_list' => 25, // Max rows displayed in table before paging
 	    'handler_categories' => '0:Not categorized' // handlers categories : <index>:<name>!<index>:<name> ....
 	);
 	// get default values for dbconfig
