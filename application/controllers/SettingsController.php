@@ -263,7 +263,7 @@ class SettingsController extends TrapsController
 	$this->check_icingaweb_path();
 
 	$phpBinary = $this->get_php_binary();
-	if ($phpBinary == null)
+	if ($phpBinary === null)
 	{
 	    $phpBinary = ' PHP BINARY NOT FOUND ';
 	    

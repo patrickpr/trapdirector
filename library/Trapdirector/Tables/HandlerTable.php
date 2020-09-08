@@ -53,7 +53,6 @@ class HandlerTable extends TrapDirectorTable
             case 'source_ip' : return 'ip4'; break;
             default: return $this->content[$name];	
         }
-        return NULL;
     }
     
     public function getCurrentURL()

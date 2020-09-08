@@ -82,7 +82,7 @@ class Icinga2API
         //var_dump($result);
         $permOk=1;
         $permMissing='';
-        if ($permissions === NULL) // If no permission check return OK after connexion
+        if ($permissions === NULL || count($permissions) == 0) // If no permission check return OK after connexion
         {
             return array(false,'OK');
         }
@@ -211,7 +211,7 @@ class Icinga2API
         $url='objects/hosts';
         $body=array(
             "filter"        => 'host.address=="'.$ip.'" || host.address6=="'.$ip.'"',
-            "attrs"         => array('__name','name','display_name')
+            "attrs"         => array('__name','name','display_name','groups')
         );
         try
         {
@@ -256,7 +256,7 @@ class Icinga2API
     {        
         $url='objects/hosts';
         $body=array(
-            "filter"        => '\"'.$hostGroup.'\" in host.groups',
+            "filter"        => '\"'.$hostGroup.'\" in groups',
             "attrs"         => array('address','address','name')
         );
         try

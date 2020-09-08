@@ -384,6 +384,36 @@ class StatusController extends TrapsController
 	    }
 
 	}
+
+	/**
+	 * For testing functions
+	 */
+	public function debugAction()
+	{
+	    $this->view->answer='No answer';
+	    
+	    $postData=$this->getRequest()->getPost();
+	    if (isset($postData['input1']))
+	    {
+	        $input1 = $postData['input1'];
+	        $input2 = $postData['input2'];
+	        $input3 = $postData['input3'];
+	        
+	        //$this->view->answer=$input1 . '/' . $input2  . '/' . $input3;
+	        try {
+	            $API = $this->getIdoConn();
+	            //$hosts = $API->getHostByIP($input1);
+	            $hosts = $API->getHostsIPByHostGroup($input1);
+	            $this->view->answer = print_r($hosts,true);
+	            
+	        } catch (Exception $e)
+	        {
+	            $this->view->answer = "Exception : " . print_r($e->getMessage());
+	        }
+	        
+	    }
+	    
+	}
 	
 	protected function prepareTabs()
 	{

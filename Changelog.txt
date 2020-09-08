@@ -10,7 +10,9 @@ BUGS
 
 ENHANCEMENTS
 ============
-1) 
+1) Added comments and categories for handlers, redesigned handler list table (issue # 43)
+2) Added real host IP detection in forwarded traps using snmpTrapAddress (or custom one) (issue #41)
+3) Added handler cloning (issue #44)
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.4b/c

@@ -14,7 +14,6 @@ use Icinga\Module\Trapdirector\Tables\TrapTableHostList;
 use Icinga\Module\Trapdirector\Tables\HandlerTableList;
 use Icinga\Module\Trapdirector\Config\MIBLoader;
 use Icinga\Module\Trapdirector\TrapsActions\UIDatabase;
-use Icinga\Module\Trapdirector\Icinga2API;
 
 use Trapdirector\Trap;
 
@@ -126,9 +125,9 @@ class TrapsController extends Controller
     	    $port = $this->Config()->get('config', 'icingaAPI_port');
     	    $user = $this->Config()->get('config', 'icingaAPI_user');
     	    $pass = $this->Config()->get('config', 'icingaAPI_password');
-    	    $this->icingaAPI = new Icinga2API($host,$port);
+    	    $this->icingaAPI = new Icinga2Api($host,$port);
     	    $this->icingaAPI->setCredentials($user, $pass);
-    	    list($ret,$message) = $this->icingaAPI->test(NULL);
+    	    list($ret,$message) = $this->icingaAPI->test(array());
     	    if ($ret === TRUE)
     	    {
     	        return $this->getUIDatabase();
