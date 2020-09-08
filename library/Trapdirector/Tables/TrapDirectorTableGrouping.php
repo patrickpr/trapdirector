@@ -77,10 +77,10 @@ trait TrapDirectorTableGrouping
         if ($this->grouppingActive === FALSE) return '';
         
         $dbcol = $this->groupingColumn;
+        if ($values->$dbcol === NULL) $values->$dbcol = 0; // Set default to 0 
         if ($this->groupingVal == '' || $this->groupingEvalNext($this->groupingVal ,$values->$dbcol) === TRUE )
         {
             $this->groupingVal = $values->$dbcol;
-	    if ($this->groupingVal === NULL) return ''; // 
             $html = '<tr><th colspan="'. $this->groupingColSpan .'">'. $this->groupingPrintData($this->groupingVal) .'</th></tr>';
             return $html;
         }
