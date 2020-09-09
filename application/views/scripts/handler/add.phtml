@@ -239,6 +239,17 @@ use Icinga\Web\Url;
 	</fieldset>
 
 	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>
+	
+			<table class="simple common-table" style="display:none" id="id_rules_table">
+			<thead>
+				<tr>
+					<th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>
+					<th>Host reassign</th><th>Service reassign</th><th>Move</th><th>Edit</th><th>Delete</th>
+				</tr>
+			</thead>
+			</table>
+			<hr style="display:none">
+						
 	<div class="control-group" data-base-target="_next">
 		<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
     	<div class="control-label-group">
@@ -316,6 +327,8 @@ use Icinga\Web\Url;
     <script type='text/javascript'> webPath='<?= Url::fromPath("trapdirector/") ?>' </script>
     <script type='text/javascript' src='<?= Url::fromPath("trapdirector/") ?>public/js/module.js'> </script>
  -->
+
+ 
 <script type='text/javascript'>
 webPath='<?= Url::fromPath("trapdirector/") ?>'
 hostHelper=webPath + 'helper/gethosts';
@@ -333,16 +346,7 @@ objectsList=[
 ];
 objectsList_id=1;
 count_id=1;
-
-function displayWarning(message)
-{
-	$("#footer > #notifications").html('<li class="error">'+message+'</li>');
-	//alert(message);
-}
-function displayOK(message)
-{
-	$("#footer > #notifications").html('<li class="success">'+message+'</li>');
-}
+trapDir=null;
 
 function setToUpdate()
 {
@@ -356,7 +360,7 @@ function deleteMain()
 {
 	if ($("#id_Hidden_db_rule").val() == -1)
 	{
-		displayWarning("No rule to delete");
+		trapDir.displayWarning("No rule to delete");
 		return;
 	}
 	// Do ajax call
@@ -375,17 +379,17 @@ function deleteMain()
 				//alert(data.status);
 				if (data.status == "OK") 
 				{
-					displayOK("Rule deleted");
+					trapDir.displayOK("Rule deleted");
 					window.location.replace(data.redirect);
 				} 
 				else 
 				{
-					displayWarning("Error : "+data.status);		
+					trapDir.displayWarning("Error : "+data.status);		
 				}
 			},
 			error: function (data)
 			{
-				displayWarning ("error" + data);
+				trapDir.displayWarning ("error" + data);
 			}
 	});	
 }
@@ -398,26 +402,26 @@ function submitMain(clone)
 	hostgroupSel=$("#id_host_or_hostgroup").is(":checked");
 	if ( hostgroupSel == true )
 	{ // hostgroup selection
-		if ($("#id_Hidden_hostgroup").val() == -1 ) { displayWarning("Invalid hosgroup (hostid)");return; }
+		if ($("#id_Hidden_hostgroup").val() == -1 ) { trapDir.displayWarning("Invalid hosgroup (hostid)");return; }
 		hostid=$("#id_Hidden_hostgroup").val();
 		hostname=$("#id_hostgroupfilter").val();
-		if ($("#id_service_hostgroup").val() == -1 ) { displayWarning("Invalid service");return; }
+		if ($("#id_service_hostgroup").val() == -1 ) { trapDir.displayWarning("Invalid service");return; }
 		servicename=$("#id_service_hostgroup").val();
 		serviceid=0;
 	}
 	else
 	{ // Hostname
-		if ($("#id_Hidden_hostid").val() == -1 ) { displayWarning("Invalid hostname (hostid)");return; }
+		if ($("#id_Hidden_hostid").val() == -1 ) { trapDir.displayWarning("Invalid hostname (hostid)");return; }
 		hostid=$("#id_Hidden_hostid").val();
 		hostname=$("#id_hostfilter").val();
-		if ($("#id_service").val() == -1 ) { displayWarning("Invalid service");return; }
+		if ($("#id_service").val() == -1 ) { trapDir.displayWarning("Invalid service");return; }
 		servicename=$("#id_service  option:selected").text();
 		serviceid=$("#id_service").val();
 	}
 	// Get OID
 	var oidRegexp = /^[\.\d]+$/;
 	var getOID=$("#id_mainoid").val();
-	if ( ! oidRegexp.test(getOID)  ) { displayWarning("Invalid oid");return; }
+	if ( ! oidRegexp.test(getOID)  ) { trapDir.displayWarning("Invalid oid");return; }
 	// Check if first car is a '.' 
 	if (getOID.charAt(0) != '.')
 	{
@@ -428,7 +432,7 @@ function submitMain(clone)
 	var timeRegexp = /^[\d]*$/;
 	var revertOK=$("#id_revertOK").val()
 	if (revertOK=='') revertOK=0;
-	if ( ! timeRegexp.test(revertOK)  ) { displayWarning("Invalid Revert OK value");return; }
+	if ( ! timeRegexp.test(revertOK)  ) { trapDir.displayWarning("Invalid Revert OK value");return; }
 
 	newRule=$("#id_rules").val();
 	newDisplay=$("#id_display").val();
@@ -485,17 +489,17 @@ function submitMain(clone)
 				{
 					$("#id_Hidden_db_rule").val(data.id);
 					setToUpdate();
-					displayOK("Saved");
+					trapDir.displayOK("Saved");
 					
 				} 
 				else 
 				{
-					displayWarning("Error : "+data.status);		
+					trapDir.displayWarning("Error : "+data.status);		
 				}
 			},
 			error: function (data)
 			{
-				displayWarning ("error" + data);
+				trapDir.displayWarning ("Error" + data);
 			}
 	});	
 		
@@ -558,7 +562,7 @@ function onclickAddObjects()
 				else 
 				{
 						//alert ("Error");
-						displayWarning(data.status);		
+						trapDir.displayWarning(data.status);		
 				}
 			}
 	});	
@@ -571,7 +575,7 @@ function click_button_oid_add()
 	//test_oid= new RegExp(".1[0-9\.]+");
 	if (add_oid[0] != '.') add_oid='.'+add_oid; // add starting "."
 	if ( add_oid.match(/^[0-9\.\*]+$/) == null) {
-		displayWarning("Not a valid oid");
+		trapDir.displayWarning("Not a valid oid");
 		return;
 	}
 	// If not a regexp, try to translate
@@ -624,13 +628,13 @@ function click_button_table_del(rowid)
 	//alert(displayVal+" : "+rowNumRef+"#"+"#obj_table_oid_"+rowid+"_SC");
 	if (displayVal!= '' && displayVal.indexOf(rowNumRef) !== -1)
 	{
-		displayWarning("Remove reference to object ("+rowNumRef+") in display before deleting");
+		trapDir.displayWarning("Remove reference to object ("+rowNumRef+") in display before deleting");
 		$("#id_display").focus();
 		return;
 	}
 	if (ruleVal != '' && ruleVal.indexOf(rowNumRef) !== -1)
 	{
-		displayWarning("Remove reference to object ("+rowNumRef+") in rules before deleting");
+		trapDir.displayWarning("Remove reference to object ("+rowNumRef+") in rules before deleting");
 		$("#id_rules").focus();
 		return;
 	}	
@@ -669,7 +673,7 @@ function translateOID(oid,callback)
 			},
 			error: function (data)
 			{
-				displayWarning ("error" + data);
+				trapDir.displayWarning ("error" + data);
 			}
 	});
 }
@@ -711,7 +715,7 @@ function selectTrapName(update=1) // On trap select update textual details and m
 		},
 		error: function (data)
 		{
-			displayWarning ("error" + data);
+			trapDir.displayWarning ("error" + data);
 		}
 	});	
 	
@@ -846,8 +850,6 @@ function hostGroupServiceGet(serviceSet=null)
 				}
 			}
 	});
-	// Put host list in <option> for user to choose.
-
 	
 }
 
@@ -855,72 +857,34 @@ function hostGroupServiceGet(serviceSet=null)
 function hostFilterGet()
 {
 	// Get host list
-	hostInput=$("#id_hostfilter").val();
-	$.ajax({
-			url: hostHelper,
-			async: true,
-			dataType: "json",
-			type: "POST",
-			data: 
-			{
-				"hostFilter": hostInput,
-			},
-	        success: function (data) 
-			{
-				//alert(data.status);
-				if (data.status == "OK") 
-				{ // Put host list in <option> for user to choose.
+	data = { "hostFilter": $("#id_hostfilter").val() };
+	
+	trapDir.ajaxCall (hostHelper, data, function(data) {
 					hostList=data.hosts;
-					//alert(hostList);
 					html='';
 					hostList.forEach(function (host)
 					{
 						html+='<option >'+host+'</option>';
 					});
-					$("#hosts_list").html(html);					
-				} 
-				else 
-				{
-						//alert ("Error");
-				}
-			}
-	});
+					$("#hosts_list").html(html);		
+	}, null , null );
 }
 
 function hostGroupFilterGet()
 {
-	// Get host list
-	hostInput=$("#id_hostgroupfilter").val();
-	$.ajax({
-			url: hostgroupHelper,
-			async: true,
-			dataType: "json",
-			type: "POST",
-			data: 
-			{
-				"hostFilter": hostInput,
-			},
-	        success: function (data) 
-			{
-				//alert(data.status);
-				if (data.status == "OK") 
-				{
+
+	// Get hostgroup list
+	data = { "hostFilter": $("#id_hostgroupfilter").val() };
+	
+	trapDir.ajaxCall (hostgroupHelper, data, function(data) {
 					hostList=data.hosts;
-					//alert(hostList);
 					html='';
 					hostList.forEach(function (host)
 					{
 						html+='<option >'+host+'</option>';
 					});
-					$("#hostgroups_list").html(html);					
-				} 
-				else 
-				{
-					displayWarning(data.status);
-				}
-			}
-	});
-
+					$("#hostgroups_list").html(html);		
+	}, null , null );
 }
 
 function test_rule()
@@ -989,12 +953,20 @@ function test_rule()
 			},
 			error: function (data)
 			{
-				displayWarning ("Error : " + data);
+				trapDir.displayWarning ("Error : " + data);
 			}
 	});	
 }
 
 $(function() {
+
+	if (icinga.isLoadedModule('trapdirector') === false)
+	{
+		alert('TrapDirector javascript not loaded. This page won\'t work as expected');
+		return;
+	}
+	
+	trapDir = icinga.modules.trapdirector.object;
 
 	$( "#id_submit_main" ).click(function( event ) {
 		event.preventDefault();
@@ -1019,7 +991,7 @@ $(function() {
 <?php 
     if ($this->warning_message != '')
     {
-        echo 'displayWarning("'. $this->warning_message .'");';
+        echo 'trapDir.displayWarning("'. $this->warning_message .'");';
     }
 ?>
 <?php 
