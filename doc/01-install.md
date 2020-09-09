@@ -19,8 +19,11 @@ Get installation files
 ---------------
 
 1. Download the latest release and unzip it in a temporary directory.
-1. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
-1. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
+- Get the latest release : ![latest](https://github.com/patrickpr/trapdirector/releases)
+- Get the latest master release directly : ![master](https://github.com/patrickpr/trapdirector/archive/master.zip)
+- Or get the latest release with git on cli : `git checkout https://github.com/patrickpr/trapdirector.git`
+2. Move the `trapdirector` directory to the modules directory (`/usr/share/icingaweb2/modules` by default).
+3. `trapdirector/mibs/` directory must be writable by the icinga web user for web GUI MIB upload to function.
 
 Note : directory in modules directory MUST be named 'trapdirector' or you will have errors.
 
