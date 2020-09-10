@@ -1,0 +1,18 @@
+Release policy and numbering
+==============================
+
+Starting with 1.0.4, the release policy will be :
+
+<major version>.<minor version>.<release>[patch]
+
+Example : 1.0.4c or 1.0.2
+
+- Major version : No policy for now
+- Minor version : Will change after major changes
+- Release : Will increase with updates and bug correction. An EVEN number is a stable version, an ODD number is the current dev version
+- Patch : in case of bug in stable (even number) release, will be a letter.
+
+The master branch should always be working as build testing is done on every commit, but it is not extensively tested as a release.
+
+Ongoing dev in master branch will always be with an odd release version.
+
