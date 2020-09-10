@@ -172,17 +172,25 @@ class StatusController extends TrapsController
 			$translate=exec($snmptranslate . ' 1');
 			if (preg_match('/iso/',$translate))
 			{
-				$this->view->snmptranslate='works fine';
-				$this->view->snmptranslate_state='ok';
+			    $translate=exec($snmptranslate . ' 1.3.6.1.4');
+			    if (preg_match('/private/',$translate))
+			    {		    
+    				$this->view->snmptranslate='works fine';
+    				$this->view->snmptranslate_state='ok';
+			    }
+			    else
+			    {
+			        $this->view->snmptranslate='works fine but missing basic MIBs';
+			    }
 			}
 			else
 			{
-				$this->view->snmptranslate='can execute but no resolution';
+				$this->view->snmptranslate='Can execute but no OID to name resolution';
 			}
 		}
 		else
 		{
-			$this->view->snmptranslate='cannot execute';
+			$this->view->snmptranslate='Cannot execute';
 		}
 	
 		// mib database
