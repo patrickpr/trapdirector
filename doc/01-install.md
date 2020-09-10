@@ -7,7 +7,7 @@ Requirements
 * `icingaweb2`
 * `php7` or later
 * `net-snmp` for `snmptrapd`
-* `net-snmp-utils` for `snmptranslate`
+* `net-snmp-utils` (RedHat/Centos) or `snmp-mibs-downloader` (Debian/Ubuntu) for `snmptranslate`
 * `MySQL/MariaDB` or `PostgreSQL` as DB backend 
 
 Optional
