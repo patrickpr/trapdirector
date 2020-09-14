@@ -763,49 +763,32 @@ function TrapNameGet(selectMib,selectUpdate)
 
 function serviceGet(serviceSet=null)
 {
-	// Get Host name
-	host=$("#id_hostfilter").val();
-	// Get service list
-	
-	$.ajax({
-			url: serviceHelper,
-			async: true,
-			dataType: "json",
-			type: "POST",
-			data: 
-			{
-				"host": host,
-			},
-	        success: function (data) 
-			{
-				//alert(data.status);
-				if (data.status == "OK") 
-				{
-					serviceList=data.services;
-					// Set host object id
-					hostid=data.hostid;
-					$("#id_Hidden_hostid").val(hostid);
-					html='';
-					serviceList.forEach(function (service){
-						html+='<option value="'+service[0]+'">'+service[1]+'</option>';
-					});
-					$("#id_service").html(html);
-					if (serviceSet != null)
-					{
-						$('#id_service').val(serviceSet);	
-					}
-				} 
-				else 
-				{
-					html='<option value=-1 selected>'+data.status+'<option>'
-					$("#id_service").html(html);
-					//alert ("Error");
-				}
-			}
-	});
-	// Put host list in <option> for user to choose.
 
+	// Get host list
+	data = { "host": $("#id_hostfilter").val() };
 	
+	trapDir.ajaxCall (serviceHelper, data, 
+		function(data) { // status OK
+			serviceList=data.services;
+			// Set host object id
+			hostid=data.hostid;
+			$("#id_Hidden_hostid").val(hostid);
+			html='';
+			serviceList.forEach(function (service){
+				html+='<option value="'+service[0]+'">'+service[1]+'</option>';
+			});
+			$("#id_service").html(html);
+			if (serviceSet != null)
+			{
+				$('#id_service').val(serviceSet);	
+					}		
+		}, function(data) { // status not OK
+    		html='<option value=-1 selected>'+data.status+'<option>'
+    		$("#id_service").html(html);
+    		trapDir.displayWarning ("Services : " + data.status);		
+	} , null );
+
+	return;	
 }
 
 function hostGroupServiceGet(serviceSet=null)

@@ -10,6 +10,13 @@ $this->provideConfigTab('config', array(
     'url'   => 'settings'
 ));
 
+/**
+$this->provideConfigTab('satellite', array(
+    'title' => 'Satellite',
+    'url'   => 'settings/satellite'
+));
+**/
+
 $section = $this->menuSection(N_('Traps'),array (
 	'icon'	=> 'filter',
 	'url'	=> 'trapdirector'

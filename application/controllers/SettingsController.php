@@ -11,7 +11,7 @@ use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
-use Icinga\Module\Trapdirector\Icinga2Api;
+use Icinga\Module\Trapdirector\Icinga2API;
 use Icinga\Module\Trapdirector\TrapsActions\DBException;
 
 use Trapdirector\Trap;
@@ -132,7 +132,7 @@ class SettingsController extends TrapsController
   {
       if ($this->Config()->get('config', 'icingaAPI_host') != '')
       {
-          $apitest=new Icinga2Api($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
+          $apitest=new Icinga2API($this->Config()->get('config', 'icingaAPI_host'),$this->Config()->get('config', 'icingaAPI_port'));
           $apitest->setCredentials($this->Config()->get('config', 'icingaAPI_user'), $this->Config()->get('config', 'icingaAPI_password'));
           try {
               list($this->view->apimessageError,$this->view->apimessage)=$apitest->test($this->getModuleConfig()::getapiUserPermissions());

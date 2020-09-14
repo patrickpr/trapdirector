@@ -399,6 +399,7 @@ class StatusController extends TrapsController
 	public function debugAction()
 	{
 	    $this->view->answer='No answer';
+	    $this->view->input1 = '';
 	    
 	    $postData=$this->getRequest()->getPost();
 	    if (isset($postData['input1']))
@@ -406,17 +407,35 @@ class StatusController extends TrapsController
 	        $input1 = $postData['input1'];
 	        $input2 = $postData['input2'];
 	        $input3 = $postData['input3'];
-	        
+	        $this->view->input1 = $input1;
 	        //$this->view->answer=$input1 . '/' . $input2  . '/' . $input3;
 	        try {
+	            $this->view->answer = 'Answer : ';
 	            $API = $this->getIdoConn();
-	            //$hosts = $API->getHostByIP($input1);
-	            $hosts = $API->getHostsIPByHostGroup($input1);
-	            $this->view->answer = print_r($hosts,true);
+	            $DB = $this->getUIDatabase();
+
+	            //$hosts = $DB->getServicesByHostGroupid($input1);
+	            //$this->view->answer .= 'services : '.print_r($hosts,true);
+	            
+	            $hosts = $API->getServicesByHostGroupid($input1);
+	            $this->view->answer .= 'services : '.print_r($hosts,true);
+	            
+
+	            
+	            return;
+	            $hosts = $API->getHostByIP($input1);
+	            $this->view->answer .= 'Host : '. print_r($hosts,true);
+	            $hosts = $API->getHostGroupByName($input1);
+	            $this->view->answer .= 'Group : '.print_r($hosts,true);
+	            $hosts = $API->getServicesByHostid($input1);
+	            $this->view->answer .= 'service : '.print_r($hosts,true);
+	            
+	            /* $hosts = $API->getHostsIPByHostGroup($input1);
+	            $this->view->answer .= "\n Hostgrp : " . print_r($hosts,true); */
 	            
 	        } catch (Exception $e)
 	        {
-	            $this->view->answer = "Exception : " . print_r($e->getMessage());
+	            $this->view->answer = "Exception : " . print_r($e);
 	        }
 	        
 	    }

@@ -3,7 +3,7 @@
 
 //No autoloader when running in CLI.
 
-include (dirname(__DIR__).'/library/Trapdirector/Icinga2Api.php');
+include (dirname(__DIR__).'/library/Trapdirector/Icinga2API.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Logging.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Database.php');
 

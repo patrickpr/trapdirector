@@ -40,7 +40,7 @@ class TrapsController extends Controller
 	protected $trapClass;
 	/** @var UIDatabase $UIDatabase */
 	protected $UIDatabase;
-	/** @var Icinga2Api $IcingaAPI */
+	/** @var Icinga2API $IcingaAPI */
 	protected $icingaAPI = NULL;
 	
 	
@@ -125,7 +125,7 @@ class TrapsController extends Controller
     	    $port = $this->Config()->get('config', 'icingaAPI_port');
     	    $user = $this->Config()->get('config', 'icingaAPI_user');
     	    $pass = $this->Config()->get('config', 'icingaAPI_password');
-    	    $this->icingaAPI = new Icinga2Api($host,$port);
+    	    $this->icingaAPI = new Icinga2API($host,$port);
     	    $this->icingaAPI->setCredentials($user, $pass);
     	    list($ret,$message) = $this->icingaAPI->test(array());
     	    if ($ret === TRUE)

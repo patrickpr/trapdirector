@@ -67,7 +67,7 @@ trait IdoDBQuery
                 'b.host_object_id=a.object_id',
                 array('display_name' => 'b.display_name'))
                 ->where("a.name1 = '$name'");
-                return $dbConn->fetchAll($query);
+         return $dbConn->fetchAll($query);
     }
     
     /** Get host groups by  name in IDO database

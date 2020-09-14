@@ -31,7 +31,7 @@ class TrapModuleConfig
 	/************ Module configuration **********************/
 	// Module base path
 	static public function urlPath() { return 'trapdirector'; }
-	static public function getapiUserPermissions() { return array("status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result"); } //< api user permissions required
+	static public function getapiUserPermissions() { return array("status", "objects/query/Host", "objects/query/hostgroup", "objects/query/Service" , "actions/process-check-result"); } //< api user permissions required
 	
 	
 	/*********** Log configuration *************************/
