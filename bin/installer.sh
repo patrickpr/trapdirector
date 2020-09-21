@@ -13,7 +13,7 @@
 icinga='icinga2';
 icingaEtc='';
 icinga2APIconf="/conf.d/api-users.conf";
-icinga2APIperms='[ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result" ]'
+icinga2APIperms='[ "status", "objects/query/Host", "objects/query/Service" , "actions/process-check-result", "objects/query/hostgroup" ]'
 
 # TrapDirector
 
