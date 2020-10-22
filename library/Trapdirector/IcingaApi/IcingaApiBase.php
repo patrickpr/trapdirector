@@ -75,6 +75,11 @@ class IcingaApiBase
         throw new RuntimeException('Certificate auth not implemented');
     }
 
+    /**
+     * Test API connection
+     * @param array $permissions : check permissions if not null or empty
+     * @return array (bool,string) : bool = false is all OK, else true with message
+     * */
     public function test(array $permissions)
     {
        try
@@ -304,8 +309,8 @@ class IcingaApiBase
     public function standardQuery(string $urlType , string $filter, array $attributes)
     {
         /*
-         *  curl -k -s -u  trapdirector:trapdirector -H 'X-HTTP-Method-Override: GET' -X POST 'https://localhost:5665/v1/objects/hosts'
-         *  -d '{"filter":"host.group==\"test_trap\"","attrs": ["address" ,"address6"]}'
+         *  curl -k -s -u  trapdirector:trapdirector -H 'X-HTTP-Method-Override: GET' -X POST 'https://localhost:5665/v1/objects/hosts' 
+         *  -d '{"filter":"\"test_trap\" in host.groups","attrs": ["address" ,"address6"],"pretty": true}'
          
          {"results":[{"attrs":{"__name":"Icinga host","address":"127.0.0.1","display_name":"Icinga host","name":"Icinga host"},"joins":{},"meta":{},"name":"Icinga host","type":"Host"}]}
          */

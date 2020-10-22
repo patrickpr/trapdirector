@@ -21,8 +21,16 @@ class HelperController extends TrapsController
 		$hostFilter = $this->checkPostVar($postData, 'hostFilter', '.*');
 		
 		$retHosts=array('status'=>'OK','hosts' => array());
-
-		$hosts=$this->getUIDatabase()->getHostByIP($hostFilter);
+		$this->getIdoConn(); // set apiMode to correct val
+        if ($this->apiMode === TRUE)
+        {
+          $hosts=$this->getIdoConn()->getHostByNameOrIP($hostFilter);
+          $retHosts['test']=count($hosts);
+        }
+        else 
+        {
+		  $hosts=$this->getIdoConn()->getHostByIP($hostFilter);
+        }
 		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
@@ -42,7 +50,7 @@ class HelperController extends TrapsController
 		
 		$retHosts=array('status'=>'OK','hosts' => array());
 
-		$hosts=$this->getUIDatabase()->getHostGroupByName($hostFilter);
+		$hosts=$this->getIdoConn()->getHostGroupByName($hostFilter);
 		foreach ($hosts as $val)
 		{
 			array_push($retHosts['hosts'],$val->name);
@@ -72,7 +80,7 @@ class HelperController extends TrapsController
 			return;
 		}
 		
-		$hostArray=$this->getUIDatabase()->getHostByName($host);
+		$hostArray=$this->getIdoConn()->getHostByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one host matches','hostid' => -1));
@@ -83,7 +91,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No host matches','hostid' => -1));
 			return;
 		}
-		$services=$this->getUIDatabase()->getServicesByHostid($hostArray[0]->id);
+		$services=$this->getIdoConn()->getServicesByHostid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for host','hostid' => $hostArray[0]->id));
@@ -109,7 +117,7 @@ class HelperController extends TrapsController
 		
 		$host = $this->checkPostVar($postData, 'host', '.+');
 		
-		$hostArray=$this->getUIDatabase()->getHostGroupByName($host);
+		$hostArray=$this->getIdoConn()->getHostGroupByName($host);
 		if (count($hostArray) > 1)
 		{	
 			$this->_helper->json(array('status'=>'More than one hostgroup matches','hostid' => -1));
@@ -120,7 +128,7 @@ class HelperController extends TrapsController
 			$this->_helper->json(array('status'=>'No hostgroup matches','hostid' => -1));
 			return;
 		}
-		$services=$this->getUIDatabase()->getServicesByHostGroupid($hostArray[0]->id);
+		$services=$this->getIdoConn()->getServicesByHostGroupid($hostArray[0]->id);
 		if (count($services) < 1)
 		{
 			$this->_helper->json(array('status'=>'No services found for hostgroup','hostid' => $hostArray[0]->id));

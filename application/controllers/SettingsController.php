@@ -11,7 +11,7 @@ use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Forms\TrapsConfigForm;
-use Icinga\Module\Trapdirector\Icinga2Api;
+use Icinga\Module\Trapdirector\Icinga2API;
 use Icinga\Module\Trapdirector\TrapsActions\DBException;
 
 use Trapdirector\Trap;

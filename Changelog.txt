@@ -6,7 +6,8 @@ Migration path : from version > 1.0.0
 Upgrade notes
 =============
 
-API is now the default for object queries. A new permission must be added for api user : 'objects/query/hostgroup' 
+API will soon be the default for object queries. A new permission must be added for api user : 'objects/query/hostgroup' 
+Either you create a new user (using "bin/installer -c api") or edit the /etc/icinga2/conf.d/api-users.conf file, find the user and change the 'permission=' line.
 
 BUGS
 ====
@@ -18,7 +19,8 @@ ENHANCEMENTS
 1) Added comments and categories for handlers, redesigned handler list table (issue # 43)
 2) Added real host IP detection in forwarded traps using snmpTrapAddress (or custom one) (issue #41)
 3) Added handler cloning (issue #44)
-4) Added API
+
+
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.4b/c

@@ -42,6 +42,9 @@ class TrapsController extends Controller
 	protected $UIDatabase;
 	/** @var Icinga2API $IcingaAPI */
 	protected $icingaAPI = NULL;
+	/** @var bool $apiMode connection to icinngaDB is by api (true) od ido DB (false) */
+	protected $apiMode = FALSE;
+	
 	
 	
 	
@@ -127,11 +130,13 @@ class TrapsController extends Controller
     	    $pass = $this->Config()->get('config', 'icingaAPI_password');
     	    $this->icingaAPI = new Icinga2API($host,$port);
     	    $this->icingaAPI->setCredentials($user, $pass);
-    	    list($ret,$message) = $this->icingaAPI->test(array());
-    	    if ($ret === TRUE)
+    	    list($ret,$message) = $this->icingaAPI->test($this->getModuleConfig()->getapiUserPermissions());
+    	    if ($ret === TRUE) // On error, switch to ido DB
     	    {
+    	        $this->apiMode = FALSE;
     	        return $this->getUIDatabase();
     	    }
+    	    $this->apiMode = TRUE;
     	    
 	    }
 	    return $this->icingaAPI;

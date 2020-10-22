@@ -138,7 +138,7 @@ class HandlerController extends TrapsController
 	    // Get host
 	    try
 	    {
-	        $hosts=$this->getUIDatabase()->getHostByIP($hostfilter);
+	        $hosts=$this->getIdoConn()->getHostByIP($hostfilter);
 	    }
 	    catch (Exception $e)
 	    {
@@ -234,7 +234,7 @@ class HandlerController extends TrapsController
 	private function add_check_host_exists($ruleDetail)
 	{
 	    // Check if hostname still exists
-	    $host_get=$this->getUIDatabase()->getHostByName($this->view->hostname);
+	    $host_get=$this->getIdoConn()->getHostByName($this->view->hostname);
 	    
 	    if (count($host_get)==0)
 	    {
@@ -246,7 +246,7 @@ class HandlerController extends TrapsController
 	        // Tell JS to get services when page is loaded
 	        $this->view->serviceGet=true;
 	        // get service id for form to set :
-	        $serviceID=$this->getUIDatabase()->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
+	        $serviceID=$this->getIdoConn()->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
 	        if (count($serviceID) ==0)
 	        {
 	            $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
@@ -265,7 +265,7 @@ class HandlerController extends TrapsController
 	private function add_check_hostgroup_exists($ruleDetail)
 	{
 	    // Check if groupe exists
-	    $group_get=$this->getUIDatabase()->getHostGroupByName($this->view->hostgroupname);
+	    $group_get=$this->getIdoConn()->getHostGroupByName($this->view->hostgroupname);
 	    if (count($group_get)==0)
 	    {
 	        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
@@ -273,7 +273,7 @@ class HandlerController extends TrapsController
 	    }
 	    else
 	    {
-	        $grpServices=$this->getUIDatabase()->getServicesByHostGroupid($group_get[0]->id);
+	        $grpServices=$this->getIdoConn()->getServicesByHostGroupid($group_get[0]->id);
 	        $foundGrpService=0;
 	        foreach ($grpServices as $grpService)
 	        {
@@ -473,7 +473,7 @@ class HandlerController extends TrapsController
 			}
 			catch (Exception $e)
 			{
-				$this->_helper->json(array('status'=>$e->getMessage()));
+				$this->_helper->json(array('status'=>$e->getMessage(),'location'=>'Deleting Rule'));
 				return;
 			}
 			//$this->Module()->
@@ -500,13 +500,14 @@ class HandlerController extends TrapsController
 				}
 			}
 		}
-
+		$this->getIdoConn(); //Set apiMode
 		try 
 		{
 			$isHostGroup=($params['hostgroup']['val'] == 1)?true:false;
 			if (! $isHostGroup ) 
 			{  // checks if selection by host 
-			    $hostAddr=$this->getUIDatabase()->getHostInfoByID($params['hostid']['val']);
+			    $hostAddr=$this->getIdoConn()->getHostInfoByID($params['hostid']['val']);
+			    if ($hostAddr === NULL) throw new \Exception("No object found");
 				$params['ip4']['val']=$hostAddr->ip4;
 				$params['ip6']['val']=$hostAddr->ip6;
 				$checkHostName=$hostAddr->name;
@@ -515,26 +516,51 @@ class HandlerController extends TrapsController
 					$this->_helper->json(array('status'=>"Invalid host id : Please re enter host name"));
 					return;
 				}
-				if (!is_numeric($params['serviceid']['val']))
+				if ($this->apiMode == TRUE)
 				{
-				    $this->_helper->json(array('status'=>"Invalid service id ". $params['serviceid']['val']));
-				    return;
+				    $serviceName=$this->getIdoConn()->getServiceById($params['serviceid']['val']);
+				    if (count($serviceName) == 0 )
+				    {
+				        $this->_helper->json(array('status'=>"Invalid service id : Please re enter service",'sent'=>$params['serviceid']['val'],'found'=>$serviceName[0]->__name));
+				        return;
+				    }
 				}
-				$serviceName=$this->getUIDatabase()->getObjectNameByid($params['serviceid']['val']);
-				if ($params['service_name']['val'] != $serviceName->name2)
+				else
 				{
-					$this->_helper->json(array('status'=>"Invalid service id : Please re enter service"));
-					return;
+    				if (!is_numeric($params['serviceid']['val']))
+    				{
+    				    $this->_helper->json(array('status'=>"Invalid service id ". $params['serviceid']['val']));
+    				    return;
+    				}
+    				
+    				$serviceName=$this->getUIDatabase()->getObjectNameByid($params['serviceid']['val']);
+    				if ($params['service_name']['val'] != $serviceName->name2)
+    				{
+    					$this->_helper->json(array('status'=>"Invalid service id : Please re enter service"));
+    					return;
+    				}
 				}
 			}
 			else
 			{
-			    $object=$this->getUIDatabase()->getObjectNameByid($params['hostid']['val']);
-				if ($params['host_name']['val'] != $object->name1)
-				{
-					$this->_helper->json(array('status'=>"Invalid object group id : Please re enter service"));
-					return;					
-				}
+			    if ($this->apiMode == TRUE)
+			    {
+			        $object=$this->getIdoConn()->getHostGroupById($params['hostid']['val']);
+			        if (count($object) == 0 || $params['host_name']['val'] != $object->__name)
+			        {
+			            $this->_helper->json(array('status'=>"Invalid object group id : Please re enter service"));
+			            return;
+			        }
+			    }
+			    else 
+			    {
+    			    $object=$this->getUIDatabase()->getObjectNameByid($params['hostid']['val']);
+    				if ($params['host_name']['val'] != $object->name1)
+    				{
+    					$this->_helper->json(array('status'=>"Invalid object group id : Please re enter service"));
+    					return;					
+    				}
+			    }
 				// Put param in correct column (group_name)
 				$params['host_group_name']['val'] = $params['host_name']['val'];
 				$params['host_name']['val']=null;
@@ -561,7 +587,7 @@ class HandlerController extends TrapsController
 		}
 		catch (Exception $e)
 		{
-			$this->_helper->json(array('status'=>$e->getMessage()));
+		    $this->_helper->json(array('status'=>$e->getMessage(),'location'=>'Add/update Rule','line'=>$e->getLine(),'file'=>$e->getFile()));
 			return;
 		}
 		$this->_helper->json(array('status'=>'OK', 'id' => $ruleID));

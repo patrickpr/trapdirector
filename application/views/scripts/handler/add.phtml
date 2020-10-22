@@ -782,7 +782,8 @@ function serviceGet(serviceSet=null)
 			{
 				$('#id_service').val(serviceSet);	
 					}		
-		}, function(data) { // status not OK
+			}, 
+		function(data) { // status not OK
     		html='<option value=-1 selected>'+data.status+'<option>'
     		$("#id_service").html(html);
     		trapDir.displayWarning ("Services : " + data.status);		
@@ -981,7 +982,7 @@ $(function() {
 	if ($this->serviceGet == true) { 
 		echo "serviceGet(";
 		if ($this->serviceSet != null) // add param to service get to set service after ajax call
-			{ echo $this->serviceSet;}		
+		  { echo '"'.$this->serviceSet . '"'; }		
 		echo ");\n" ;  
 	}
 ?>
