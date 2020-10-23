@@ -6,9 +6,12 @@ Migration path : from version > 1.0.0
 Upgrade notes
 =============
 
-API id the default for object queries (host, services...). 
+API id the default for object queries (host, services...) when API connection elements are set, as ido database will maybe disapear some time soon (See issue #39).
 A new permission must be added for api user : 'objects/query/hostgroup' 
 Either you create a new user (using "bin/installer -c api") or edit the /etc/icinga2/conf.d/api-users.conf file, find the user and change the 'permission=' line.
+
+File Icinga2Api.php moved to Icinga2API.php ub library/trapdirector directory to be consistent with class name. 
+Delete the Icinga2Api.php file if it's still in the directory.
 
 BUGS
 ====
@@ -20,6 +23,10 @@ ENHANCEMENTS
 1) Added comments and categories for handlers, redesigned handler list table (issue # 43)
 2) Added real host IP detection in forwarded traps using snmpTrapAddress (or custom one) (issue #41)
 3) Added handler cloning (issue #44)
+4) Added new permissions in installer script ( Bierchemuesli contrib )
+5) Added mysql command display on error in installer script (issue #46)
+6) Added snmptranslate testing (issue #48)
+
 
 
 
