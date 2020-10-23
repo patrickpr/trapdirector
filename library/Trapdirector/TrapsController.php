@@ -39,7 +39,7 @@ class TrapsController extends Controller
 	/** @var Trap $trapClass Trap class for bin/trap_class.php */
 	protected $trapClass;
 	/** @var UIDatabase $UIDatabase */
-	protected $UIDatabase;
+	protected $UIDatabase = NULL;
 	/** @var Icinga2API $IcingaAPI */
 	protected $icingaAPI = NULL;
 	/** @var bool $apiMode connection to icinngaDB is by api (true) od ido DB (false) */
@@ -122,11 +122,14 @@ class TrapsController extends Controller
 	 */
 	public function getIdoConn()
 	{
-	    if ($this->UIDatabase !== NULL)
-	        return $this->UIDatabase;
 	    if ($this->icingaAPI === NULL)
 	    {
     	    $host = $this->Config()->get('config', 'icingaAPI_host');
+    	    if ($host == '')
+    	    {
+    	        $this->apiMode = FALSE;
+    	        return $this->getUIDatabase();
+    	    }
     	    $port = $this->Config()->get('config', 'icingaAPI_port');
     	    $user = $this->Config()->get('config', 'icingaAPI_user');
     	    $pass = $this->Config()->get('config', 'icingaAPI_password');
