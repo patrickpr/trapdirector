@@ -122,6 +122,8 @@ class TrapsController extends Controller
 	 */
 	public function getIdoConn()
 	{
+	    if ($this->UIDatabase !== NULL)
+	        return $this->UIDatabase;
 	    if ($this->icingaAPI === NULL)
 	    {
     	    $host = $this->Config()->get('config', 'icingaAPI_host');

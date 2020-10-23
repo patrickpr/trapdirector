@@ -6,12 +6,13 @@ Migration path : from version > 1.0.0
 Upgrade notes
 =============
 
-API will soon be the default for object queries. A new permission must be added for api user : 'objects/query/hostgroup' 
+API id the default for object queries (host, services...). 
+A new permission must be added for api user : 'objects/query/hostgroup' 
 Either you create a new user (using "bin/installer -c api") or edit the /etc/icinga2/conf.d/api-users.conf file, find the user and change the 'permission=' line.
 
 BUGS
 ====
-1) 
+1)  
 
 
 ENHANCEMENTS

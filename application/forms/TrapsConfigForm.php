@@ -142,11 +142,12 @@ class TrapsConfigForm extends ConfigForm
 		    )
         );
 		$this->addElement(
-		    'text',
+		    'password',
 		    'config_icingaAPI_password',
 		    array(
 		        'required'      => false,
 		        'label'         => $this->translate('icinga2 API password'),
+		        'renderPassword'=> true,
 		        'value'			=> '',
 		    )
 	    );
