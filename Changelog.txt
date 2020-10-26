@@ -1,3 +1,21 @@
+Version 1.0.7
+Date : Not released
+Database update : No for version >= 1.0.2
+Migration path : from version > 1.0.0
+
+Upgrade notes
+=============
+
+BUGS
+====
+1)  
+
+
+ENHANCEMENTS
+============
+1)
+
+-------------------------------------------------------------------------------------------------
 Version 1.0.6
 Date : 26 Oct 2020
 Database update : No for version >= 1.0.2
@@ -26,9 +44,6 @@ ENHANCEMENTS
 4) Added new permissions in installer script ( Bierchemuesli contrib )
 5) Added mysql command display on error in installer script (issue #46)
 6) Added snmptranslate testing (issue #48)
-
-
-
 
 -------------------------------------------------------------------------------------------------
 Version 1.0.4b/c
