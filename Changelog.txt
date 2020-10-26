@@ -1,5 +1,5 @@
-Version 1.0.5
-Date : Not released
+Version 1.0.6
+Date : 26 Oct 2020
 Database update : No for version >= 1.0.2
 Migration path : from version > 1.0.0
 
@@ -15,7 +15,7 @@ Delete the Icinga2Api.php file if it's still in the directory.
 
 BUGS
 ====
-1)  
+1) Corrected bugs in web pages with incorrect inclusions 
 
 
 ENHANCEMENTS
