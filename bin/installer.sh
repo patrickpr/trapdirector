@@ -384,7 +384,7 @@ function add_schema_mysql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_mysql
 	   return 0;
   fi
   
@@ -401,7 +401,7 @@ function add_schema_mysql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_mysql
 	   return 0;
   fi
   
@@ -435,7 +435,7 @@ function add_schema_mysql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters and start again"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_mysql
 	   return 0;
   fi
 
@@ -450,7 +450,7 @@ function add_schema_mysql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters and start again"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_mysql
 	   return 0;
   fi
 
@@ -545,7 +545,7 @@ function add_schema_pgsql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_pgsql
 	   return 0;
   fi
   
@@ -587,7 +587,7 @@ function add_schema_pgsql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters and start again"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_pgsql
 	   return 0;
   fi
   
@@ -597,7 +597,7 @@ function add_schema_pgsql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_pgsql
 	   return 0;
   fi  
   
@@ -613,7 +613,7 @@ function add_schema_pgsql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters and start again"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_pgsql
 	   return 0;
   fi
   echo $dbRet;
@@ -631,7 +631,7 @@ function add_schema_pgsql(){
 	   if [ $dbAuto -eq 1 ]; then exit 1; fi
 	   question "Change parameters and start again"
 	   if [ $? -eq 0 ]; then return 1; fi
-	   add_schema
+	   add_schema_pgsql
 	   return 0;
   fi
   echo $dbRet;  
