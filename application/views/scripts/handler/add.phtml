@@ -73,7 +73,7 @@ use Icinga\Web\Url;
 					</span>
 				</div>
 				<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list" size=30
-					oninput="hostFilterGet()"
+					oninput="hostFilterGet('#id_hostfilter','#hosts_list')"
 					value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
 				<datalist id="hosts_list">
 					<!-- <optgroup label=""> -->
@@ -237,74 +237,127 @@ use Icinga\Web\Url;
 			</tbody>
 		</table>
 	</fieldset>
-
-	<fieldset id="fieldset-objects_definition" class=""><legend>Display and rules</legend>
 	
-			<table class="simple common-table" style="display:none" id="id_rules_table">
+	<fieldset id="fieldset-rules_list" class=""><legend>Multiple rules list</legend>
+			<table class="simple common-table"  id="id_rules_table">
 			<thead>
 				<tr>
-					<th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>
+					<th>Order</th><th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>
 					<th>Host reassign</th><th>Service reassign</th><th>Move</th><th>Edit</th><th>Delete</th>
 				</tr>
 			</thead>
-			</table>
-			<hr style="display:none">
-						
-	<div class="control-group" data-base-target="_next">
-		<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
-    	<div class="control-label-group">
-    		<span id="id_rules_label">
-    			<label for="id_rules" class="control-label optional">Rule (an empty rule will always return true)</label>
-    		</span>
-    	</div>
-    	<input type="text" name="rules" id="id_rules" placeholder="Rule to evaluate"
-    	 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" 
-    	 size=90/>
-    	 <button type="button" name="testrule" id="id_test_rule" value="test" >Test rule</button>
-    	 <span id="testrule_result"></span>
-    	 <br>
-	</div>
-	<!-- Output Display -->
-	<div class="control-group">
-		<div class="control-label-group">
-			<span id="id_display_label">
-				<label for="id_display" class="control-label optional">Display in Icinga</label>
-			</span>
-		</div>
-		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
-			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>"
-			size=90
-			>
-
-	</div>
-	<div class="control-group">
-		<div class="control-label-group">
-			<span id="id_rule_action_label">
-				<label for="id_rule_action_true" class="control-label optional">Action if rule matches</label>
-			</span>
-		</div>
-		<select name="service" id="id_rule_action_true">
-				<option value="-1" selected>Nothing</option>
-				<option value="0" >OK</option>
-				<option value="1" >Warning</option>
-				<option value="2" >Critical</option>
-				<option value="3" >Unknown</option>
-				<option value="-2" >Ignore</option>
-		</select>		
-		<div class="control-label-group">
-			<span id="id_rule_action_false_label">
-				<label for="id_rule_action_false" class="control-label optional">Action if rule does not match</label>
-			</span>
-		</div>
-		<select name="service" id="id_rule_action_false">
-				<option value="-1" selected>Nothing</option>
-				<option value="0" >OK</option>
-				<option value="1" >Warning</option>
-				<option value="2" >Critical</option>
-				<option value="3" >Unknown</option>
-				<option value="-2" >Ignore</option>
-		</select>			
-	</div>		
+			<tr style="background-color: yellow;">
+				<td>Default</td>
+				<td>$1$ = 3</td>
+				<td>Result : $1$</td>
+				<td>result:$1$</td>
+				<td>OK</td>
+				<td>No</td>
+				<td>No</td>
+				<td><button type="button" onclick="ruleListc.setDefaultRule(true)">Up</button> 
+					- <button type="button" onclick="ruleListc.setDefaultRule(false)">Down</button></td>
+				<td><button type="button" onclick="click_button_rule_del(1)">Edit</button></td>
+				<td><button type="button" onclick="click_button_rule_del(1)">Del.</button></td>
+			</tr>
+			</table>	
+	</fieldset>
+	<fieldset id="fieldset-objects_definition" class=""><legend>Rule Editor for rule : <b id="id_rule_number">Default</b></legend>
+		<table><tr>			
+    		<td>
+        		<div class="control-group" data-base-target="_next">
+            		<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
+					<button type="button" onclick="ruleList.newRule()">Add Rule</button>
+					<button type="button" onclick="ruleList.saveCurrentRule()">Save Rule</button>
+                	<div class="control-label-group">
+                		<span id="id_rules_label">
+                			<label for="id_rules" class="control-label optional">Rule (an empty rule will always return true)</label>
+                		</span>
+                	</div>
+                	<input type="text" name="rules" id="id_rules" placeholder="Rule to evaluate"
+                	 value="<?= preg_replace('/"/',"&quot;",$this->rule) ?>" 
+                	 size=90/>
+                	 <button type="button" name="testrule" id="id_test_rule" value="test" >Test rule</button>
+                	 <br>
+					 <b><span id="testrule_result"></span><b>
+            	</div>
+            	<!-- Output Display -->
+            	<div class="control-group">
+            		<div class="control-label-group">
+            			<span id="id_display_label">
+            				<label for="id_display" class="control-label optional">Display in Icinga</label>
+            			</span>
+            		</div>
+            		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
+            			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>"
+            			size=90
+            			>
+            
+            	</div>
+            	<div class="control-group">
+            		<div class="control-label-group">
+            			<span id="id_rule_action_label">
+            				<label for="id_rule_action_true" class="control-label optional">Action if rule matches</label>
+            			</span>
+            		</div>
+            		<select name="service" id="id_rule_action_true">
+            				<option value="-1" selected>Nothing</option>
+            				<option value="0" >OK</option>
+            				<option value="1" >Warning</option>
+            				<option value="2" >Critical</option>
+            				<option value="3" >Unknown</option>
+            				<option value="-2" >Ignore</option>
+            		</select>		
+            		<div class="control-label-group">
+            			<span id="id_rule_action_false_label">
+            				<label for="id_rule_action_false" class="control-label optional">Action if rule does not match</label>
+            			</span>
+            		</div>
+            		<select name="service" id="id_rule_action_false">
+            				<option value="-1" selected>Nothing</option>
+            				<option value="0" >OK</option>
+            				<option value="1" >Warning</option>
+            				<option value="2" >Critical</option>
+            				<option value="3" >Unknown</option>
+            				<option value="-2" >Ignore</option>
+            		</select>			
+            	</div>
+            </td>
+            <td>
+            	<div class="control-group">
+            		<div class="control-label-group">
+            			<span id="id_perfdata_label">
+            				<label for="id_perfdata" class="control-label optional">Performance data</label>
+            			</span>
+            		</div>
+            		<input type="text" name="perfData" id="id_perfdata" placeholder="Performance data to send"
+            			value=""
+            			size=90>            		
+            	</div>
+				<input type="checkbox" id="id_rule_host_or_hostgroup" onChange="ruleList.toggle_host_hostgroup()"> 
+				<label for="id_host_or_hostgroup" > Select by hostgroup</label>				
+            	<div class="control-group">
+            		<div class="control-label-group">
+            			<span id="id_host_reassign_label">
+            				<label for="id_host_reassign" class="control-label optional">Reassign to host</label>
+            			</span>
+            		</div>
+            		<input type="text" name="hostAssign" id="id_host_reassign" placeholder="No reassigment if left empty"
+            			value="" size=40 list="id_rule_host_list" oninput="ruleList.hostFilterGet('#id_host_reassign','#id_rule_host_list')">
+						<datalist id="id_rule_host_list">
+						</datalist>						
+            	</div>
+            	<div class="control-group">
+            		<div class="control-label-group">
+            			<span id="id_service_reassign_label">
+            				<label for="id_service_reassign" class="control-label optional">Reassign to service</label>
+            			</span>
+            		</div>
+            		<input type="text" name="servAssign" id="id_service_reassign" placeholder="No reassigment if left empty"
+            			value=""
+            			size=40>            		
+            	</div>            	          	
+            </td>
+        </tr></table>	
 	</fieldset>
 	
 	<div class="control-group">
@@ -319,16 +372,8 @@ use Icinga\Web\Url;
 	</div>
 
 	</form>
-
 </div>
 
-
-<!-- 
-    <script type='text/javascript'> webPath='<?= Url::fromPath("trapdirector/") ?>' </script>
-    <script type='text/javascript' src='<?= Url::fromPath("trapdirector/") ?>public/js/module.js'> </script>
- -->
-
- 
 <script type='text/javascript'>
 webPath='<?= Url::fromPath("trapdirector/") ?>'
 hostHelper=webPath + 'helper/gethosts';
@@ -348,6 +393,161 @@ objectsList_id=1;
 count_id=1;
 trapDir=null;
 
+var actionList= { '-2' : 'Ignore' ,  '-1' : 'Nothing' ,  '0' : 'OK' ,  '1' : 'Warning' ,  '2' : 'Critical' ,  '3' : 'Unknown'  };
+var ruleList = new CruleList('<?= preg_replace('/"/',"&quot;",$this->rule) ?>', '', '<?= preg_replace('/"/',"&quot;",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
+// ************** Rule List ***************
+function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=false,newHost='', newService='')
+{
+	this.isDefault=isDefault;
+	//this.updateVal(rule, perfdata, display, actionOK, actionNOK, newHost, newService);
+	
+	this.updateVal = function(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService) {
+		this.rule = rule;
+		this.perfdata = 	perfdata;
+		this.display = 	display;
+		this.actionOK = 	actionOK;
+		this.actionNOK = 	actionNOK;
+		this.newHost = 	newHost;
+		this.newService = 	newService;
+		this.hostGroup = hostGroup;
+	}
+	
+	this.updateVal(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService);	
+	
+	this.render = function(index,current) {
+		let htm = '<tr ' + (current == true ? 'style="background-color: yellow;"' : '')  + '>';
+		htm += '<td>' + (index == 0 ? 'Default' : index ) + '</td>';
+		htm += '<td>' + this.rule + '</td>';
+		htm += '<td>' + this.display + '</td>';
+		htm += '<td>' + this.perfdata + '</td>';
+		htm += '<td>' + actionList[this.actionOK] + '</td>';
+		htm += '<td>' + (this.newHost == '' ? 'No' : this.newHost ) + (this.hostGroup == true ? '(grp)' : '' ) + '</td>';
+		htm += '<td>' + (this.newService == '' ? 'No' : this.newService ) + '</td>';
+		if ( index == 0) { 
+			htm+='<td>- -</td>'
+		}
+		else 
+		{
+			htm += '<td><button type="button" onclick="ruleList.ruleUp(' + index + ')">Up</button>';
+			htm += '- <button type="button" onclick="ruleList.ruleDown(' + index + ')">Down</button></td>';
+		}
+		htm += '<td><button type="button" onclick="ruleList.ruleEdit(' + index + ')">Edit</button></td>';
+		if ( index == 0) { 
+			htm+='<td>- -</td>'
+		}
+		else 
+		{		
+			htm += '<td><button type="button" onclick="ruleList.ruleDelete(' + index + ')">Del.</button></td>';
+		}
+		htm += '</tr>';
+		return htm;
+	}
+
+	
+	}
+
+function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
+{
+	this.ruleListArray=[];
+	this.ruleListIndex=0;
+	this.curRule=0;
+	this.ruleListArray[0] = new CRuleElmt(true,rule,perfdata, display, actionOK, actionNOK);
+	this.isDefault=true;
+	this.editRulesetup = function(CurRuleElmt,isDefault) {
+		$("#id_rules").val(CurRuleElmt.rule);
+		$("#id_display").val(CurRuleElmt.display);
+		$("#id_rule_action_true").val(CurRuleElmt.actionOK);
+		$("#id_rule_action_false").prop( "disabled", ! isDefault );
+		$("#id_rule_action_false").val(CurRuleElmt.actionNOK);
+		$("#id_perfdata").val(CurRuleElmt.perfdata);
+		$("#id_rule_host_or_hostgroup").prop('checked', CurRuleElmt.hostGroup);
+		$("#id_host_reassign").val(CurRuleElmt.newHost);
+		$("#id_host_reassign").prop( "disabled", isDefault );
+		$("#id_service_reassign").val(CurRuleElmt.newService);
+		$("#id_service_reassign").prop( "disabled", isDefault );
+		this.setRuleDisplay();
+
+	};
+	this.setRuleDisplay = function () { $("#id_rule_number").html((this.curRule==0 ? 'Default' : this.curRule)); }
+
+	this.render = function() {
+		htm = '<thead><tr><th>Order</th><th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>';
+		htm += '<th>Host reassign</th><th>Service reassign</th><th>Move</th><th>Edit</th><th>Delete</th></tr></thead>';
+		for (i=1;i<=this.ruleListIndex;i++)
+		{
+			htm += this.ruleListArray[i].render(i,(this.curRule == i ? true : false));
+		}
+		htm += this.ruleListArray[0].render(0,(this.curRule == 0 ? true : false));
+		$("#id_rules_table").html(htm);
+		this.setRuleDisplay();
+	};
+	this.newRule = function() {
+		this.ruleListIndex++;
+		this.ruleListArray[this.ruleListIndex] = new CRuleElmt(false);
+		this.isDefault=false;
+		this.curRule=this.ruleListIndex;
+		this.editRulesetup(this.ruleListArray[this.ruleListIndex],false);
+		this.render();
+	}
+	this.saveCurrentRule = function() {
+		this.ruleListArray[this.curRule].updateVal(
+			$("#id_rules").val(),$("#id_perfdata").val(),
+			$("#id_display").val(),$("#id_rule_action_true").val(),
+			$("#id_rule_action_false").val(),$("#id_rule_host_or_hostgroup").is(":checked"),
+			$("#id_host_reassign").val(),$("#id_service_reassign").val()
+		);
+		this.render();
+	}
+	this.ruleUp = function(index) {
+		if (index == 1) return;
+		ruleN=this.ruleListArray[index];
+		this.ruleListArray[index]=this.ruleListArray[index-1];
+		this.ruleListArray[index-1]=ruleN;
+		if (this.curRule == index) this.curRule--;
+		else if (this.curRule == index-1 ) this.curRule++;
+		this.render();
+	}
+	this.ruleDown = function(index) {
+		if (index == this.ruleListIndex) return;
+		ruleN=this.ruleListArray[index];
+		this.ruleListArray[index]=this.ruleListArray[index+1];
+		this.ruleListArray[index+1]=ruleN;
+		if (this.curRule == index) this.curRule++;
+		else if (this.curRule == index+1 ) this.curRule--;		
+		this.render();
+	}	
+	this.ruleEdit = function(index) {
+		this.curRule = index;
+		this.isDefault= (index==0 ? true : false);
+		this.editRulesetup(this.ruleListArray[this.curRule],this.isDefault);
+		this.render();
+	}
+	this.ruleDelete = function(index) {
+		this.ruleListArray.splice(index,1);
+		this.ruleListIndex--;
+		if (this.curRule == index) { 
+			this.ruleEdit(0); 
+		} else {
+			this.render();
+		}
+	}
+	this.toggle_host_hostgroup = function() {
+		$("#id_host_reassign").val('');
+		this.ruleListArray[this.curRule].hostGroup = $("#id_rule_host_or_hostgroup").is(":checked");
+	}
+	this.hostFilterGet = function (source,options) {
+		if (this.ruleListArray[this.curRule].hostGroup == true) 
+		{
+			//TODO
+		}
+		else
+		{
+			hostFilterGet(source,options);
+		}
+	}
+}
+
+// ************** END Rule List ***************
 function setToUpdate()
 {
 	$("#id_submit_main").val("Update");
@@ -640,9 +840,7 @@ function click_button_table_del(rowid)
 	}	
 	$("#obj_table_oid_"+rowid).remove();
 	objectsList[rowid]=null;
-	// renumber without gaps ? Must then renumber in display & rule :  TODO : renumber or just leave like this
 	//newcount=1;
-	
 }
 
 function translateOID(oid,callback)
@@ -837,11 +1035,10 @@ function hostGroupServiceGet(serviceSet=null)
 	
 }
 
-
-function hostFilterGet()
+function hostFilterGet(id_source,id_options)
 {
 	// Get host list
-	data = { "hostFilter": $("#id_hostfilter").val() };
+	data = { "hostFilter": $(id_source).val() };
 	
 	trapDir.ajaxCall (hostHelper, data, function(data) {
 					hostList=data.hosts;
@@ -850,7 +1047,7 @@ function hostFilterGet()
 					{
 						html+='<option >'+host+'</option>';
 					});
-					$("#hosts_list").html(html);		
+					$(id_options).html(html);		
 	}, null , null );
 }
 
@@ -911,7 +1108,7 @@ function test_rule()
        		cur_rule=cur_rule.replace(curVar,curVarValue);
    		};
 	}
-	resultText.html("Expression evaluated : " + cur_rule + "\n");
+	resultText.html("Evaluated : " + cur_rule + "\n");
 
 	// Do ajax call
 	$.ajax({
@@ -1037,6 +1234,11 @@ $(function() {
 	   
 	}
 ?>
+
+	//var ruleList = new CruleList('<?= preg_replace('/"/',"&quot;",$this->rule) ?>', '', '<?= preg_replace('/"/',"&quot;",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
+	//ruleList.setDefaultRule(true);
+	ruleList.render();
+	ruleList.editRulesetup(ruleList.ruleListArray[0],true);
 });
 
 </script>

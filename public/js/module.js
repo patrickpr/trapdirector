@@ -63,9 +63,7 @@
 					}
 			});						
 			
-		}
-
-              
+		}     
     };
 
     Icinga.availableModules.trapdirector = TrapDirector;
