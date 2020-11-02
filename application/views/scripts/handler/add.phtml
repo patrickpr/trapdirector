@@ -44,8 +44,8 @@ use Icinga\Web\Url;
 					</span>
 				</div>
 				<input type="text" name="hostgroup" id="id_hostgroupfilter" placeholder="Enter partial name" list="hostgroups_list" size=30
-					oninput="hostGroupFilterGet()"
-					value="<?= $this->hostgroupname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+					oninput="hostGroupFilterGet('#id_hostgroupfilter','#hostgroups_list')"
+					value="<?= $this->hostgroupname ?>" >
 				<datalist id="hostgroups_list">
 				</datalist>
 			</div>
@@ -58,7 +58,7 @@ use Icinga\Web\Url;
 					</span>
 				</div>
 				<select name="service_hostgroup" id="id_service_hostgroup" 
-				 onfocus="hostGroupServiceGet()">
+				 onfocus="hostGroupServiceGet(null,null,null,1)">
 					<option value="-1" selected>Enter host group first</option>
 				</select>		
 			</div>
@@ -74,7 +74,7 @@ use Icinga\Web\Url;
 				</div>
 				<input type="text" name="hostfilter" id="id_hostfilter" placeholder="Enter partial name" list="hosts_list" size=30
 					oninput="hostFilterGet('#id_hostfilter','#hosts_list')"
-					value="<?= $this->hostname ?>" > <!--  onblur="serviceGet()" onkeypress="hostFilterGet()-->
+					value="<?= $this->hostname ?>" >
 				<datalist id="hosts_list">
 					<!-- <optgroup label=""> -->
 		<?php
@@ -93,7 +93,7 @@ use Icinga\Web\Url;
 						<label for="id_service" class="control-label optional">Service</label>
 					</span>
 				</div>
-				<select name="service" id="id_service" onfocus="serviceGet()">
+				<select name="service" id="id_service" onfocus="serviceGet(null,'#id_hostfilter','#id_service',1)">
 					<option value="-1" selected>Enter host first</option>
 				</select>		
 			</div>
@@ -262,12 +262,14 @@ use Icinga\Web\Url;
 			</table>	
 	</fieldset>
 	<fieldset id="fieldset-objects_definition" class=""><legend>Rule Editor for rule : <b id="id_rule_number">Default</b></legend>
+		<div class="control-group" data-base-target="_next">
+			<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
+			<button type="button" onclick="ruleList.newRule()">New Rule</button>
+			<button type="button" onclick="ruleList.saveCurrentRule()">Save Rule</button>
+		</div>
 		<table><tr>			
     		<td>
         		<div class="control-group" data-base-target="_next">
-            		<a href="<?= Url::fromPath("trapdirector/") ?>handler/testrule" class="link-button icon-wrench">Open rule tester</a>
-					<button type="button" onclick="ruleList.newRule()">Add Rule</button>
-					<button type="button" onclick="ruleList.saveCurrentRule()">Save Rule</button>
                 	<div class="control-label-group">
                 		<span id="id_rules_label">
                 			<label for="id_rules" class="control-label optional">Rule (an empty rule will always return true)</label>
@@ -278,7 +280,7 @@ use Icinga\Web\Url;
                 	 size=90/>
                 	 <button type="button" name="testrule" id="id_test_rule" value="test" >Test rule</button>
                 	 <br>
-					 <b><span id="testrule_result"></span><b>
+					 <b><span id="testrule_result"></span></b>
             	</div>
             	<!-- Output Display -->
             	<div class="control-group">
@@ -288,7 +290,7 @@ use Icinga\Web\Url;
             			</span>
             		</div>
             		<input type="text" name="display" id="id_display" placeholder="Message sent with service status"
-            			value="<?= preg_replace('/"/',"&quot;",$this->display) ?>"
+            			value="<?= preg_replace('/"/','&quot;',$this->display) ?>"
             			size=90
             			>
             
@@ -307,12 +309,12 @@ use Icinga\Web\Url;
             				<option value="3" >Unknown</option>
             				<option value="-2" >Ignore</option>
             		</select>		
-            		<div class="control-label-group">
+            		<div class="control-label-group trapdir_rule_default_entries">
             			<span id="id_rule_action_false_label">
             				<label for="id_rule_action_false" class="control-label optional">Action if rule does not match</label>
             			</span>
             		</div>
-            		<select name="service" id="id_rule_action_false">
+            		<select name="service" id="id_rule_action_false" class="trapdir_rule_default_entries">
             				<option value="-1" selected>Nothing</option>
             				<option value="0" >OK</option>
             				<option value="1" >Warning</option>
@@ -320,9 +322,17 @@ use Icinga\Web\Url;
             				<option value="3" >Unknown</option>
             				<option value="-2" >Ignore</option>
             		</select>			
-            	</div>
+            		<div class="control-label-group trapdir_rule_default_entries">
+            			<span id="id_rule_limit_label">
+            				<label for="id_rule_limit" class="control-label optional">Limit (s/m/h)</label>
+            			</span>
+						
+            		</div>
+					<input type="text" name="limit" id="id_rule_limit" class="trapdir_rule_default_entries" placeholder="Maximum action per seconds(s)/minutes(m)/hour(h)"
+							value="" size=30 >	
+				</div>
             </td>
-            <td>
+            <td valign='top'>
             	<div class="control-group">
             		<div class="control-label-group">
             			<span id="id_perfdata_label">
@@ -333,12 +343,12 @@ use Icinga\Web\Url;
             			value=""
             			size=90>            		
             	</div>
-				<input type="checkbox" id="id_rule_host_or_hostgroup" onChange="ruleList.toggle_host_hostgroup()"> 
-				<label for="id_host_or_hostgroup" > Select by hostgroup</label>				
-            	<div class="control-group">
+				<input class="trapdir_rule_list_entries" type="checkbox" id="id_rule_host_or_hostgroup" onChange="ruleList.toggle_host_hostgroup()"> 
+				<label for="id_host_or_hostgroup" class ="trapdir_rule_list_entries" > Reassign to hostgroup</label>				
+            	<div class="control-group trapdir_rule_list_entries">
             		<div class="control-label-group">
             			<span id="id_host_reassign_label">
-            				<label for="id_host_reassign" class="control-label optional">Reassign to host</label>
+            				<label for="id_host_reassign" class="control-label optional">Reassign to host/hostgroup</label>
             			</span>
             		</div>
             		<input type="text" name="hostAssign" id="id_host_reassign" placeholder="No reassigment if left empty"
@@ -346,16 +356,17 @@ use Icinga\Web\Url;
 						<datalist id="id_rule_host_list">
 						</datalist>						
             	</div>
-            	<div class="control-group">
-            		<div class="control-label-group">
-            			<span id="id_service_reassign_label">
-            				<label for="id_service_reassign" class="control-label optional">Reassign to service</label>
-            			</span>
-            		</div>
-            		<input type="text" name="servAssign" id="id_service_reassign" placeholder="No reassigment if left empty"
-            			value=""
-            			size=40>            		
-            	</div>            	          	
+				<!-- Service name selection -->
+				<div class="control-group trapdir_rule_list_entries">
+					<div class="control-label-group">
+						<span>
+							<label for="id_service_reassign" class="control-label optional">Reassign Service</label>
+						</span>
+					</div>
+					<select name="service" id="id_service_reassign" onfocus="ruleList.ruleServiceGet()">
+						<option value="-1" selected>Unchanged</option>
+					</select>
+				</div>        	          	
             </td>
         </tr></table>	
 	</fieldset>
@@ -394,14 +405,16 @@ count_id=1;
 trapDir=null;
 
 var actionList= { '-2' : 'Ignore' ,  '-1' : 'Nothing' ,  '0' : 'OK' ,  '1' : 'Warning' ,  '2' : 'Critical' ,  '3' : 'Unknown'  };
-var ruleList = new CruleList('<?= preg_replace('/"/',"&quot;",$this->rule) ?>', '', '<?= preg_replace('/"/',"&quot;",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
+var ruleList = new CruleList('<?= preg_replace("/'/","\'",$this->rule) ?>', '', '<?= preg_replace("/'/","\'",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
 // ************** Rule List ***************
-function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=false,newHost='', newService='')
+
+function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=null,newHost='', newService=-1, newServiceText = '', newlimit = '0')
 {
 	this.isDefault=isDefault;
-	//this.updateVal(rule, perfdata, display, actionOK, actionNOK, newHost, newService);
 	
-	this.updateVal = function(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService) {
+	if (hostGroup == null) this.hostGroup = $("#id_host_or_hostgroup").is(":checked"); // on new rule setup set host/hostgroup select as main select
+	
+	this.updateVal = function(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService,newServiceText, newlimit) {
 		this.rule = rule;
 		this.perfdata = 	perfdata;
 		this.display = 	display;
@@ -410,26 +423,37 @@ function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-
 		this.newHost = 	newHost;
 		this.newService = 	newService;
 		this.hostGroup = hostGroup;
+		this.newServiceText = newServiceText;
+		this.limit = newlimit;
 	}
 	
-	this.updateVal(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService);	
+	this.updateVal(rule, perfdata, display, actionOK, actionNOK, this.hostGroup, newHost, newService, newServiceText, newlimit);	
 	
-	this.render = function(index,current) {
-		let htm = '<tr ' + (current == true ? 'style="background-color: yellow;"' : '')  + '>';
+	this.render = function(index,current,last=false) {
+		let htm = "<tr ";
+		if ( current == true ) {
+			htm += 'style="background-color: yellow;"' 
+		}
+		else {
+			htm += "onclick='ruleList.ruleEdit( " + index + ")'";
+		}
+		htm += ">";
 		htm += '<td>' + (index == 0 ? 'Default' : index ) + '</td>';
 		htm += '<td>' + this.rule + '</td>';
 		htm += '<td>' + this.display + '</td>';
 		htm += '<td>' + this.perfdata + '</td>';
 		htm += '<td>' + actionList[this.actionOK] + '</td>';
-		htm += '<td>' + (this.newHost == '' ? 'No' : this.newHost ) + (this.hostGroup == true ? '(grp)' : '' ) + '</td>';
-		htm += '<td>' + (this.newService == '' ? 'No' : this.newService ) + '</td>';
+		htm += '<td>' + (this.newHost == '' ? 'No' : this.newHost  + (this.hostGroup == true ? '(grp)' : '' ) ) + '</td>';
+		htm += '<td>' + (this.newService == '-1' ? 'No' : this.newServiceText ) + '</td>';
 		if ( index == 0) { 
-			htm+='<td>- -</td>'
+			htm+='<td>- / -</td>'
 		}
 		else 
 		{
-			htm += '<td><button type="button" onclick="ruleList.ruleUp(' + index + ')">Up</button>';
-			htm += '- <button type="button" onclick="ruleList.ruleDown(' + index + ')">Down</button></td>';
+			htm += '<td>' + (index > 1 ? '<button type="button" onclick="ruleList.ruleUp(' + index + ')">Up</button>' : '-');
+			htm += ' / ';
+			htm += (last == true) ? '-' : '<button type="button" onclick="ruleList.ruleDown(' + index + ')">Down</button>' ;
+			htm += '</td>';
 		}
 		htm += '<td><button type="button" onclick="ruleList.ruleEdit(' + index + ')">Edit</button></td>';
 		if ( index == 0) { 
@@ -442,11 +466,38 @@ function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-
 		htm += '</tr>';
 		return htm;
 	}
-
 	
+	this.check_rule = function(translate = false) {
+		// Check rule
+		newRule = this.rule;
+		newDisplay = this.display;
+		newPerfdata = this.perfdata;
+		for (i=1;i<objectsList_id;i++)
+		{
+			if (objectsList[i]==null) continue;
+			var objRegexp = new RegExp("\\$"+objectsList[i][0]+"\\$","g");
+			newRule=newRule.replace(objRegexp,'_OID('+ objectsList[i][1] +')');
+			newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');
+			newPerfdata=newPerfdata.replace(objRegexp,'_OID('+ objectsList[i][1] +')');			
+		}
+		let noOidRegexp = /\$[\d]+\$/;
+		if ( noOidRegexp.test(newRule) ) { trapDir.displayWarning("Invalid $N$ in rule"); return false; }
+		if ( noOidRegexp.test(newDisplay) ) { trapDir.displayWarning("Invalid $N$ in display"); return false; }
+		if ( noOidRegexp.test(newPerfdata) ) { trapDir.displayWarning("Invalid $N$ in perfdata"); return false; }
+		if (translate == true) {
+			this.rule = newRule;
+			this.display = newDisplay ;
+			this.perfdata = newPerfdata;			
+		}
+		let limitRegexp = /^[\d]+[hms]?$/;
+		if ( ! limitRegexp.test(this.limit) ) { trapDir.displayWarning("Invalid limit : " + this.limit); return false; }
+		
+		return true;
 	}
+	
+}
 
-function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
+function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,limit=0)
 {
 	this.ruleListArray=[];
 	this.ruleListIndex=0;
@@ -457,31 +508,36 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
 		$("#id_rules").val(CurRuleElmt.rule);
 		$("#id_display").val(CurRuleElmt.display);
 		$("#id_rule_action_true").val(CurRuleElmt.actionOK);
-		$("#id_rule_action_false").prop( "disabled", ! isDefault );
+		//$("#id_rule_action_false").prop( "disabled", ! isDefault );
 		$("#id_rule_action_false").val(CurRuleElmt.actionNOK);
+		$("#id_rule_limit").val(CurRuleElmt.limit);
 		$("#id_perfdata").val(CurRuleElmt.perfdata);
 		$("#id_rule_host_or_hostgroup").prop('checked', CurRuleElmt.hostGroup);
+		//$("#id_rule_host_or_hostgroup").prop( "disabled", isDefault );
 		$("#id_host_reassign").val(CurRuleElmt.newHost);
-		$("#id_host_reassign").prop( "disabled", isDefault );
-		$("#id_service_reassign").val(CurRuleElmt.newService);
-		$("#id_service_reassign").prop( "disabled", isDefault );
+		//$("#id_host_reassign").prop( "disabled", isDefault );
+		
+		$(".trapdir_rule_list_entries").toggle( ! isDefault );
+		$(".trapdir_rule_default_entries").toggle( isDefault );
+		this.ruleServiceGet(CurRuleElmt.newService);
+		//$("#id_service_reassign").prop( "disabled", isDefault );
 		this.setRuleDisplay();
-
 	};
-	this.setRuleDisplay = function () { $("#id_rule_number").html((this.curRule==0 ? 'Default' : this.curRule)); }
+	this.setRuleDisplay = function () { $("#id_rule_number").html(this.curRule==0 ? 'Default' : this.curRule); }
 
-	this.render = function() {
+	this.render = function() { // render table
 		htm = '<thead><tr><th>Order</th><th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>';
 		htm += '<th>Host reassign</th><th>Service reassign</th><th>Move</th><th>Edit</th><th>Delete</th></tr></thead>';
 		for (i=1;i<=this.ruleListIndex;i++)
 		{
-			htm += this.ruleListArray[i].render(i,(this.curRule == i ? true : false));
+			htm += this.ruleListArray[i].render(i,(this.curRule == i ? true : false), (i == this.ruleListIndex ? true : false ));
 		}
 		htm += this.ruleListArray[0].render(0,(this.curRule == 0 ? true : false));
 		$("#id_rules_table").html(htm);
 		this.setRuleDisplay();
 	};
-	this.newRule = function() {
+	this.newRule = function() {  // Save current and add new rule
+		if (this.saveCurrentRule() == false) return;
 		this.ruleListIndex++;
 		this.ruleListArray[this.ruleListIndex] = new CRuleElmt(false);
 		this.isDefault=false;
@@ -494,9 +550,13 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
 			$("#id_rules").val(),$("#id_perfdata").val(),
 			$("#id_display").val(),$("#id_rule_action_true").val(),
 			$("#id_rule_action_false").val(),$("#id_rule_host_or_hostgroup").is(":checked"),
-			$("#id_host_reassign").val(),$("#id_service_reassign").val()
+			$("#id_host_reassign").val(),
+			$("#id_service_reassign").val(),$("#id_service_reassign option:selected").text(),
+			$("#id_rule_limit").val()
 		);
+		if (this.ruleListArray[this.curRule].check_rule() == false) return false;
 		this.render();
+		return true;
 	}
 	this.ruleUp = function(index) {
 		if (index == 1) return;
@@ -517,6 +577,7 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
 		this.render();
 	}	
 	this.ruleEdit = function(index) {
+		this.saveCurrentRule();
 		this.curRule = index;
 		this.isDefault= (index==0 ? true : false);
 		this.editRulesetup(this.ruleListArray[this.curRule],this.isDefault);
@@ -538,12 +599,42 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1)
 	this.hostFilterGet = function (source,options) {
 		if (this.ruleListArray[this.curRule].hostGroup == true) 
 		{
-			//TODO
+			hostGroupFilterGet(source,options);
 		}
 		else
 		{
 			hostFilterGet(source,options);
 		}
+	}
+	this.ruleServiceGet = function (serviceIdToSet = null) {
+		destination = '#id_service_reassign';
+		checkService=true;
+		if (this.ruleListArray[this.curRule].hostGroup == true) 
+		{
+			source = '#id_host_reassign';
+			if ($(source).val() == '') {
+				if ($("#id_host_or_hostgroup").is(":checked")) { // If host is empty and main destination host is hostgroup
+					source = '#id_hostgroupfilter';
+				} else {
+					$(destination).html('<option value="-1">No host group selected</option>');
+					checkService=false;
+				}
+			}
+			hostGroupServiceGet(serviceIdToSet,source,destination,null,-1,'Unchanged');
+		}
+		else
+		{
+			source = '#id_host_reassign';
+			if ($(source).val() == '') {
+				if ( ! $("#id_host_or_hostgroup").is(":checked")) 	{ // If host is empty and main destination host is not host
+					source = '#id_hostfilter';
+				} else {
+					$(destination).html('<option value="-1">No host selected</option>')
+					checkService=false;
+				}					
+			}				
+			serviceGet(serviceIdToSet,source,destination,null,-1,'Unchanged');
+		}				
 	}
 }
 
@@ -959,41 +1050,45 @@ function TrapNameGet(selectMib,selectUpdate)
 
 }
 
-function serviceGet(serviceSet=null)
+function serviceGet(serviceSet=null,source = null, destination = null, hostidSet = null, addOption = null, addOptionVal = null)
 {
-
-	// Get host list
-	data = { "host": $("#id_hostfilter").val() };
-	
+	// Get host services
+	source = $(source);
+	destination = $(destination);
+	if (source.length == 0 || destination.length == 0) { trapDir.displayWarning ("Error in service get, open issue");return;}
+	data = { "host": source.val() };
 	trapDir.ajaxCall (serviceHelper, data, 
 		function(data) { // status OK
 			serviceList=data.services;
 			// Set host object id
 			hostid=data.hostid;
-			$("#id_Hidden_hostid").val(hostid);
+			if (hostidSet != null) { $("#id_Hidden_hostid").val(hostid); }
 			html='';
 			serviceList.forEach(function (service){
 				html+='<option value="'+service[0]+'">'+service[1]+'</option>';
 			});
-			$("#id_service").html(html);
+			if (addOption != null) html = '<option value="'+addOption+'">'+addOptionVal+'</option>' + html;
+			destination.html(html);
 			if (serviceSet != null)
 			{
-				$('#id_service').val(serviceSet);	
-					}		
-			}, 
+				destination.val(serviceSet);	
+			}		
+		}, 
 		function(data) { // status not OK
     		html='<option value=-1 selected>'+data.status+'<option>'
-    		$("#id_service").html(html);
+    		destination.html(html);
     		trapDir.displayWarning ("Services : " + data.status);		
 	} , null );
 
 	return;	
 }
 
-function hostGroupServiceGet(serviceSet=null)
+function hostGroupServiceGet(serviceSet=null,source = null, destination = null, groupIdSet = null, addOption = null, addOptionVal = null)
 {
+	source = (source == null ? $("#id_hostgroupfilter") : $(source))
+	destination = (destination == null ? $("#id_service_hostgroup") : $(destination))
 	// Get Host name
-	host=$("#id_hostgroupfilter").val();
+	host=source.val();
 	// Get service list
 	
 	$.ajax({
@@ -1013,21 +1108,22 @@ function hostGroupServiceGet(serviceSet=null)
 					serviceList=data.services;
 					// Set host object id
 					hostid=data.hostid;
-					$("#id_Hidden_hostgroup").val(hostid);
+					if (groupIdSet != null) { $("#id_Hidden_hostgroup").val(hostid); }
 					html='';
 					serviceList.forEach(function (service){
 						html+='<option value="'+service[0]+'">'+service[1]+'</option>';
 					});
-					$("#id_service_hostgroup").html(html);
+					if (addOption != null) html = '<option value="'+addOption+'">'+addOptionVal+'</option>' + html;
+					destination.html(html);
 					if (serviceSet != null)
 					{
-						$('#id_service_hostgroup').val(serviceSet);	
+						destination.val(serviceSet);	
 					}
 				} 
 				else 
 				{
 					html='<option value=-1 selected>'+data.status+'<option>'
-					$("#id_service_hostgroup").html(html);
+					destination.html(html);
 					//alert ("Error");
 				}
 			}
@@ -1051,11 +1147,10 @@ function hostFilterGet(id_source,id_options)
 	}, null , null );
 }
 
-function hostGroupFilterGet()
+function hostGroupFilterGet(id_source,id_options)
 {
-
 	// Get hostgroup list
-	data = { "hostFilter": $("#id_hostgroupfilter").val() };
+	data = { "hostFilter": $(id_source).val() };
 	
 	trapDir.ajaxCall (hostgroupHelper, data, function(data) {
 					hostList=data.hosts;
@@ -1064,7 +1159,7 @@ function hostGroupFilterGet()
 					{
 						html+='<option >'+host+'</option>';
 					});
-					$("#hostgroups_list").html(html);		
+					$(id_options).html(html);		
 	}, null , null );
 }
 
@@ -1179,8 +1274,9 @@ $(function() {
 	if ($this->serviceGet == true) { 
 		echo "serviceGet(";
 		if ($this->serviceSet != null) // add param to service get to set service after ajax call
-		  { echo '"'.$this->serviceSet . '"'; }		
-		echo ");\n" ;  
+		  { echo '"'.$this->serviceSet . '"'; }
+		else {echo "null";}
+		echo ",'#id_hostfilter','#id_service',1);\n" ;  
 	}
 ?>
 
