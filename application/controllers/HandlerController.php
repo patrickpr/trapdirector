@@ -16,7 +16,9 @@ use Icinga\Module\Trapdirector\Tables\HandlerTable;
 */
 class HandlerController extends TrapsController
 {
-
+    /** @var array $curObjectList OID list in rules/display/perfdata */
+    private $curObjectList=array();
+    
 	/** index : list existing rules 
 	*/
 	public function indexAction()
@@ -229,68 +231,63 @@ class HandlerController extends TrapsController
 
 	/**
 	 * Check if host & service still exists or set warning message
-	 * @param object $ruleDetail 
+     * @param string $hostgroupName Name of hostgroup
+     * @param string $service Name of service
+     * @throws Exception
+     * @return array (service_id, service_name)
 	 */
-	private function add_check_host_exists($ruleDetail)
+	private function add_check_host_exists(string $hostName, string $service)
 	{
 	    // Check if hostname still exists
-	    $host_get=$this->getIdoConn()->getHostByName($this->view->hostname);
+	    $host_get=$this->getIdoConn()->getHostByName($hostName);
 	    
 	    if (count($host_get)==0)
 	    {
-	        $this->view->warning_message='Host '.$this->view->hostname. ' doesn\'t exists anymore';
-	        $this->view->serviceGet=false;
+	        throw new Exception('Host '.$hostName. ' doesn\'t exists anymore');
+	        
 	    }
-	    else
-	    {
-	        // Tell JS to get services when page is loaded
-	        $this->view->serviceGet=true;
-	        // get service id for form to set :
-	        $serviceID=$this->getIdoConn()->getServiceIDByName($this->view->hostname,$ruleDetail->service_name);
-	        if (count($serviceID) ==0)
-	        {
-	            $this->view->warning_message=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
-	        }
-	        else
-	        {
-	            $this->view->serviceSet=$serviceID[0]->id;
-	        }
-	    }
+        // get service id for form to set :
+        $serviceID=$this->getIdoConn()->getServiceIDByName($hostName,$service);
+        if (count($serviceID) ==0)
+        {
+            throw new Exception('Service '.$service. ' doesn\'t exists anymore');
+        }
+        return $serviceID[0]->id;
 	}
 
-	/**
-	 * Check if hostgroup & service still exists or set warning message
-	 * @param array $ruleDetail
-	 */
-	private function add_check_hostgroup_exists($ruleDetail)
+    /** 
+     * Check if host / hostgroup & service still exists
+     * @param string $hostgroupName Name of hostgroup
+     * @param string $service Name of service
+     * @throws Exception
+     * @return string service_id
+     */
+	private function add_check_hostgroup_exists(string $hostgroupName, string $service)
 	{
 	    // Check if groupe exists
-	    $group_get=$this->getIdoConn()->getHostGroupByName($this->view->hostgroupname);
+	    $group_get=$this->getIdoConn()->getHostGroupByName($hostgroupName);
 	    if (count($group_get)==0)
-	    {
-	        $this->view->warning_message='HostGroup '.$this->view->hostgroupname. ' doesn\'t exists anymore';
-	        $this->view->serviceGroupGet=false;
+	    {	        
+	        throw new Exception('HostGroup '.$hostgroupName. ' doesn\'t exists anymore.');
 	    }
-	    else
-	    {
-	        $grpServices=$this->getIdoConn()->getServicesByHostGroupid($group_get[0]->id);
-	        $foundGrpService=0;
-	        foreach ($grpServices as $grpService)
-	        {
-	            if ($grpService[0] == $ruleDetail->service_name)
-	            {
-	                $foundGrpService=1;
-	                $this->view->serviceSet=$ruleDetail->service_name;
-	            }
-	        }
-	        
-	        // Tell JS to get services when page is loaded
-	        $this->view->serviceGroupGet=true;
-	        if ($foundGrpService==0)
-	        {
-	            $this->view->warning_message.=' Service '.$ruleDetail->service_name. ' doesn\'t exists anymore';
-	        }
-	    }
+
+        $grpServices=$this->getIdoConn()->getServicesByHostGroupid($group_get[0]->id);
+        $foundGrpService=0;
+        foreach ($grpServices as $grpService)
+        {
+            if ($grpService[0] == $service)
+            {
+                $foundGrpService=1;
+            }
+        }
+        
+        // Tell JS to get services when page is loaded
+        $this->view->serviceGroupGet=true;
+        if ($foundGrpService==0)
+        {
+            throw new Exception(' Service '.$service. ' doesn\'t exists anymore.');
+        }
+        return $service;
 	}
 	
 	/**
@@ -343,6 +340,62 @@ class HandlerController extends TrapsController
 	    }
 	    return $curObjectList;
 	}
+
+	/**
+	 * Update object list array with all OIDs in evalString
+	 * Replace in evalString by $<n>$ and store oid in $this->curObjectList
+	 * @param string|null $evalString
+	 */
+	private function update_trap_object_list( &$evalString )
+	{
+	    if ($evalString === NULL) return;
+	    // Replace existing elements
+	    $index=1;
+	    foreach ($this->curObjectList as $curOidObj)
+	    {
+	        if ($curOidObj[0] >= $index ) $index = $curOidObj[0]+1;
+	        $curOid = $curOidObj[1];
+	        $curOid = preg_replace('/\*/','\*',$curOid);
+	        $evalString=preg_replace('/_OID\('.$curOid.'\)/','\$'.$curOidObj[0].'\$',$evalString);
+	    }
+	    
+	    // check in display & rule for : OID(<oid>)
+	    $matches=array();
+	    while ( preg_match('/_OID\(([\.0-9\*]+)\)/',$evalString,$matches) )
+	    {
+	        $curOid=$matches[1];
+	        
+	        if ( (preg_match('/\*/',$curOid) == 0 )
+	            && ($object=$this->getMIB()->translateOID($curOid)) != null)
+	        {
+	            array_push($this->curObjectList, array(
+	                $index,
+	                $curOid,
+	                $object['mib'],
+	                $object['name'],
+	                '',
+	                $object['type'],
+	                $object['type_enum']
+	            ));
+	        }
+	        else
+	        {
+	            array_push($this->curObjectList, array(
+	                $index,
+	                $curOid,
+	                'not found',
+	                'not found',
+	                '',
+	                'not found',
+	                'not found'
+	            ));
+	        }
+	        $curOid = preg_replace('/\*/','\*',$curOid);
+	        $evalString=preg_replace('/_OID\('.$curOid.'\)/','\$'.$index.'\$',$evalString);
+	        $index++;
+	    }
+	    return;
+	}
 	
 	/** Add a handler  
 	*	Get params fromid : setup from existing trap (id of trap table)
@@ -394,19 +447,38 @@ class HandlerController extends TrapsController
 			
 			$this->view->comment = $ruleDetail->comment;
 			$this->view->category = $ruleDetail->category;
+			$this->view->limit = $ruleDetail->limit;
 			
 			// Warning message if host/service don't exists anymore
 			$this->view->warning_message='';
 			if ($this->view->hostname != null)
 			{
 			    $this->view->selectGroup=false;
+			    $baseHostName = $this->view->hostname;
 			    // Check if hostname still exists
-			    $this->add_check_host_exists($ruleDetail);
+			    try 
+			    {
+			        $service_info = $this->add_check_host_exists( $ruleDetail->host_name , $ruleDetail->service_name);
+			        $this->view->serviceSet = $service_info;
+			        $this->view->serviceGet = true;
+			    } catch (Exception $e) 
+			    {
+			        $this->view->warning_message .= $e->getMessage();
+			        $this->view->serviceGet = false;
+			    }		   
 			}
 			else
 			{
+			    $baseHostName = $ruleDetail->host_group_name;
 			    $this->view->selectGroup=true;
-			    $this->add_check_hostgroup_exists($ruleDetail); //  Check if groupe exists				
+			    try {
+			        $service_info = $this->add_check_hostgroup_exists($ruleDetail->host_group_name, $ruleDetail->service_name);
+			        $this->view->serviceSet = $service_info;
+			        $this->view->serviceGroupGet = true;
+			    } catch (Exception $e) {
+			        $this->view->warning_message .= $e->getMessage();
+			        $this->view->serviceGroupGet = false;
+			    }			
 			}
 			
 			$this->view->mainoid=$ruleDetail->trap_oid;
@@ -421,15 +493,25 @@ class HandlerController extends TrapsController
 			// Create object list with : display & rules references (OID) and complete with all objects if found
 			$display=$ruleDetail->display;
 			$rule=$ruleDetail->rule;
+			$perfdata=$ruleDetail->perfdata;
 			
 			// Create object list array with all OIDs in rule & display
-			$curObjectList=$this->add_create_trap_object_list($display, $rule);
+			$this->update_trap_object_list($rule);
+			$this->update_trap_object_list($display);
+			$this->update_trap_object_list($perfdata);
+			//$curObjectList=$this->add_create_trap_object_list($display, $rule);
 			
 			// set display
 			$this->view->display=$display;
 			$this->view->rule=$rule;
+			$this->view->perfdata = $perfdata;
 			
-			$this->view->objectList=$curObjectList; 			
+			// Rules attached
+			$ruleWarning='';
+			$this->view->ruleList = $this->getRuleListDetail($ruleid,$baseHostName,$this->view->selectGroup,$ruleWarning);
+			$this->view->warning_message .= $ruleWarning;
+			
+			$this->view->objectList=$this->curObjectList; 			
 		}
 	}
 	
@@ -698,6 +780,95 @@ class HandlerController extends TrapsController
 
 	}
 
+	/** 
+	 * Get all rules linked to default rule by ruleid.
+	 * @param int $ruleid id of rule in rule table
+	 * @param string $baseHostName host name of base rule
+	 * @param bool $isGroup if host in base rule is hostgroup
+	 * @param string $warningMessage wrning(s) messages if any
+	 * @throws Exception
+	 * @return array column objects in db
+	 */
+	protected function getRuleListDetail(int $ruleid,string $baseHostName,bool $isGroup, string &$warningMessage)
+	{
+	    if (!preg_match('/^[0-9]+$/',$ruleid)) { throw new Exception('Invalid id');  }
+	    
+	    $ruleListObjects=$this->getUIDatabase()->getRulesList($ruleid);
+	    $index=1;
+	    foreach ( $ruleListObjects as &$ruleObject )
+	    {
+	        $ruleObject->id = $index; // Rewrite order if error in numbering (getRuleList sorts element)
+	        $this->update_trap_object_list($ruleObject->rule);
+	        $this->update_trap_object_list($ruleObject->display);
+	        $this->update_trap_object_list($ruleObject->perfdata);
+	        
+	        $temp_host=FALSE;
+	        $ruleObject->isGroup = $isGroup;
+	        if ($ruleObject->service_name !== NULL &&  $ruleObject->host_name === NULL && $ruleObject->host_group_name == NULL)
+	        {
+	            $temp_host = TRUE;
+	            if ( $isGroup === TRUE )
+	            {
+	                $ruleObject->host_group_name = $baseHostName;
+	            }
+	            else
+	            {
+	                $ruleObject->host_name = $baseHostName;
+	            }
+	        }
+	        if ($ruleObject->host_name !== NULL)
+	        {
+	            $ruleObject->isGroup = false;
+	            if ($ruleObject->service_name === NULL)
+	            {
+	                $warningMessage .= 'Rule ' . $index . ' missing service for host ' . $ruleObject->host_name . ' ';
+	                $ruleObject->service_id = NULL;
+	            }
+	            else 
+	            {
+	                try
+	                {
+	                    $ruleObject->service_id = $this->add_check_host_exists( $ruleObject->host_name , $ruleObject->service_name);
+	                } catch (Exception $e)
+	                {
+	                    $warningMessage .= 'Rule '. $index . ' : ' .$e->getMessage();
+	                    $ruleObject->service_id = NULL;
+	                }	
+	            }
+	        }
+	        else if  ($ruleObject->host_group_name !== NULL)
+	        {
+	            $ruleObject->isGroup = true;
+	            if ($ruleObject->service_name === NULL)
+	            {
+	                $warningMessage .= 'Rule ' + $index + ' missing service for host group ' + $ruleObject->host_group_name + ' ';
+	                $ruleObject->service_id = NULL;
+	            }
+	            else
+	            {
+	                try
+	                {
+	                    $ruleObject->service_id = $this->add_check_hostgroup_exists( $ruleObject->host_group_name , $ruleObject->service_name);
+	                } catch (Exception $e)
+	                {
+	                    $warningMessage .= 'Rule '. $index . ' : ' . $e->getMessage();
+	                    $ruleObject->service_id = NULL;
+	                }
+	            }
+	        }
+	        else
+	        {
+	            $ruleObject->service_id = NULL;
+	        }
+	        
+	        if ($temp_host === TRUE )
+	        {
+	            $ruleObject->host_group_name = $ruleObject->host_name = NULL;
+	        }
+	    }
+	    return $ruleListObjects;
+	}
+	
 	/** Setup tabs for rules 
 	*/
 	protected function prepareTabs()

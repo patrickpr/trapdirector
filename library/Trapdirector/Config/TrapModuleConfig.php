@@ -62,6 +62,12 @@ class TrapModuleConfig
 	{ 
 		return array('r' => $this->table_prefix . 'rules'); 
 	}		
+
+	// DB table name of rules_list : prefix 'l'
+	public function getTrapRuleListName()
+	{
+	    return array('l' => $this->table_prefix . 'rules_list');
+	}
 	
 	// DB table name of db config : prefix 'c'
 	public function getDbConfigTableName() 
@@ -206,20 +212,39 @@ class TrapModuleConfig
 			'ip6'			=> "r.ip6",
 			'trap_oid'		=> 'r.trap_oid',
 			'host_name'		=> 'r.host_name',
-			'host_group_name'		=> 'r.host_group_name',
+			'host_group_name'	=> 'r.host_group_name',
 			'rule'			=> 'r.rule',
 			'action_match'	=> 'r.action_match',
 			'action_nomatch'=> 'r.action_nomatch',
 			'service_name'	=> 'r.service_name',
 			'revert_ok'		=> 'r.revert_ok',
 			'display'		=> 'r.display',
+		    'perfdata'      => 'r.performance_data',
 			'modified'		=> 'UNIX_TIMESTAMP(r.modified)',
             'modifier'		=> 'r.modifier',
 		    'comment'       => 'r.comment',
-		    'category'      => 'r.rule_type'
+		    'category'      => 'r.rule_type',
+		    'last_matched'  => 'UNIX_TIMESTAMP(r.last_matched)',
+		    'limit'         => 'r.limit'		    
 		);
 	}	
-		
+
+	// rule list update (<key> => <sql select>)
+	public function ruleListDetailQuery()
+	{
+	    return array(
+	        'id'           	=> 'l.id',
+	        'rule'			=> 'l.rule',
+	        'rule_order'         => 'l.evaluation_order',
+	        'display'		=> 'l.display',
+	        'action_match'	=> 'l.status',
+	        'service_name'	=> 'l.reassign_service',
+	        'host_name'		=> 'l.reassign_host',
+	        'host_group_name'	=> 'l.reassign_hostgroup',
+	        'perfdata'      => 'l.performance_data'
+	    );
+	}	
+	
 	// Trap detail (<key> => <title> <sql select>)
 	public function trapDetailQuery()
 	{

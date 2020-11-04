@@ -129,6 +129,20 @@ trait TrapDBQuery
         return $returnRow->lastmodified;
     }
     
+    public function getRulesList(int $ruleID)
+    {
+        $dbConn = $this->getDbConn();
+        if ($dbConn === null) throw new \ErrorException('uncatched db error');
+        $query = $dbConn->select()
+        ->from(
+            $this->getTrapCtrl()->getModuleConfig()->getTrapRuleListName(),
+            $this->getTrapCtrl()->getModuleConfig()->ruleListDetailQuery())
+        ->where('l.handler='.$ruleID)
+        ->order('l.evaluation_order ASC');
+        $returnList=$dbConn->fetchall($query);
+        return $returnList;
+    }
+    
     /** Delete trap by ip & oid
      *	@param $ipAddr string source IP (v4 or v6)
      *	@param $oid string oid

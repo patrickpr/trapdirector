@@ -238,7 +238,7 @@ use Icinga\Web\Url;
 		</table>
 	</fieldset>
 	
-	<fieldset id="fieldset-rules_list" class=""><legend>Multiple rules list</legend>
+	<fieldset id="fieldset_rules_list" class="" display=none><legend>Multiple rules list</legend>
 			<table class="simple common-table"  id="id_rules_table">
 			<thead>
 				<tr>
@@ -248,16 +248,16 @@ use Icinga\Web\Url;
 			</thead>
 			<tr style="background-color: yellow;">
 				<td>Default</td>
-				<td>$1$ = 3</td>
-				<td>Result : $1$</td>
-				<td>result:$1$</td>
+				<td></td>
+				<td>Display</td>
+				<td></td>
 				<td>OK</td>
 				<td>No</td>
 				<td>No</td>
-				<td><button type="button" onclick="ruleListc.setDefaultRule(true)">Up</button> 
-					- <button type="button" onclick="ruleListc.setDefaultRule(false)">Down</button></td>
-				<td><button type="button" onclick="click_button_rule_del(1)">Edit</button></td>
-				<td><button type="button" onclick="click_button_rule_del(1)">Del.</button></td>
+				<td><button type="button" onclick="">Up</button> 
+					- <button type="button" onclick="">Down</button></td>
+				<td><button type="button" onclick="">Edit</button></td>
+				<td><button type="button" onclick="">Del.</button></td>
 			</tr>
 			</table>	
 	</fieldset>
@@ -405,7 +405,8 @@ count_id=1;
 trapDir=null;
 
 var actionList= { '-2' : 'Ignore' ,  '-1' : 'Nothing' ,  '0' : 'OK' ,  '1' : 'Warning' ,  '2' : 'Critical' ,  '3' : 'Unknown'  };
-var ruleList = new CruleList('<?= preg_replace("/'/","\'",$this->rule) ?>', '', '<?= preg_replace("/'/","\'",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
+var ruleList = new CruleList('<?= preg_replace("/'/","\'",$this->rule) ?>', '<?= preg_replace("/'/","\'",$this->perfdata) ?>', 
+	'<?= preg_replace("/'/","\'",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>, <?= $this->limit ?>);
 // ************** Rule List ***************
 
 function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=null,newHost='', newService=-1, newServiceText = '', newlimit = '0')
@@ -504,27 +505,29 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 	this.curRule=0;
 	this.ruleListArray[0] = new CRuleElmt(true,rule,perfdata, display, actionOK, actionNOK);
 	this.isDefault=true;
+	$("#fieldset_rules_list").toggle(false);
 	this.editRulesetup = function(CurRuleElmt,isDefault) {
 		$("#id_rules").val(CurRuleElmt.rule);
 		$("#id_display").val(CurRuleElmt.display);
 		$("#id_rule_action_true").val(CurRuleElmt.actionOK);
-		//$("#id_rule_action_false").prop( "disabled", ! isDefault );
 		$("#id_rule_action_false").val(CurRuleElmt.actionNOK);
 		$("#id_rule_limit").val(CurRuleElmt.limit);
 		$("#id_perfdata").val(CurRuleElmt.perfdata);
 		$("#id_rule_host_or_hostgroup").prop('checked', CurRuleElmt.hostGroup);
-		//$("#id_rule_host_or_hostgroup").prop( "disabled", isDefault );
 		$("#id_host_reassign").val(CurRuleElmt.newHost);
-		//$("#id_host_reassign").prop( "disabled", isDefault );
 		
 		$(".trapdir_rule_list_entries").toggle( ! isDefault );
 		$(".trapdir_rule_default_entries").toggle( isDefault );
 		this.ruleServiceGet(CurRuleElmt.newService);
-		//$("#id_service_reassign").prop( "disabled", isDefault );
 		this.setRuleDisplay();
 	};
 	this.setRuleDisplay = function () { $("#id_rule_number").html(this.curRule==0 ? 'Default' : this.curRule); }
 
+	this.addRule = function(rule) {
+		$("#fieldset_rules_list").toggle(true); // Display rules list
+		this.ruleListIndex++;
+		this.ruleListArray[this.ruleListIndex] = rule;		
+	}
 	this.render = function() { // render table
 		htm = '<thead><tr><th>Order</th><th>Rule</th><th>Display</th><th>Perf. Data</th><th>on match</th>';
 		htm += '<th>Host reassign</th><th>Service reassign</th><th>Move</th><th>Edit</th><th>Delete</th></tr></thead>';
@@ -538,6 +541,7 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 	};
 	this.newRule = function() {  // Save current and add new rule
 		if (this.saveCurrentRule() == false) return;
+		$("#fieldset_rules_list").toggle(true); // Display rules list
 		this.ruleListIndex++;
 		this.ruleListArray[this.ruleListIndex] = new CRuleElmt(false);
 		this.isDefault=false;
@@ -1333,8 +1337,20 @@ $(function() {
 
 	//var ruleList = new CruleList('<?= preg_replace('/"/',"&quot;",$this->rule) ?>', '', '<?= preg_replace('/"/',"&quot;",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>);
 	//ruleList.setDefaultRule(true);
-	ruleList.render();
 	ruleList.editRulesetup(ruleList.ruleListArray[0],true);
+
+<?php 
+	foreach ($this->ruleList as $curRule)
+	{
+		//(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=null,newHost='', newService=-1, newServiceText = '', newlimit = '0')
+		if ($curRule->service_id === NULL) $curRule->service_id = -1;
+		echo 'rule = new CRuleElmt(false, '; 
+		echo "'" . $curRule->rule . "', '" . $curRule->perfdata . "', '" . $curRule->display . "', " . $curRule->action_match . ", -1, ";
+		echo "'" . ($curRule->isGroup ? "true" : "false" ) . "','" . $curRule->host_name . "', '" . $curRule->service_id . "', '" . $curRule->service_name . "');\n";
+		echo "ruleList.addRule(rule);\n";
+	}
+?>	
+	ruleList.render();
 });
 
 </script>
