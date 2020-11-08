@@ -225,7 +225,7 @@ class TrapModuleConfig
 		    'comment'       => 'r.comment',
 		    'category'      => 'r.rule_type',
 		    'last_matched'  => 'UNIX_TIMESTAMP(r.last_matched)',
-		    'limit'         => 'r.limit'		    
+		    'rule_limit'         => 'r.rule_limit'		    
 		);
 	}	
 
@@ -237,11 +237,12 @@ class TrapModuleConfig
 	        'rule'			=> 'l.rule',
 	        'rule_order'         => 'l.evaluation_order',
 	        'display'		=> 'l.display',
-	        'action_match'	=> 'l.status',
+	        'action_match'	=> 'l.action_match',
 	        'service_name'	=> 'l.reassign_service',
 	        'host_name'		=> 'l.reassign_host',
 	        'host_group_name'	=> 'l.reassign_hostgroup',
-	        'perfdata'      => 'l.performance_data'
+	        'perfdata'      => 'l.performance_data',
+	        'rule_limit'         => 'l.rule_limit'
 	    );
 	}	
 	

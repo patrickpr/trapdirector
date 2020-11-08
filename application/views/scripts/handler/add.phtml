@@ -409,18 +409,19 @@ var ruleList = new CruleList('<?= preg_replace("/'/","\'",$this->rule) ?>', '<?=
 	'<?= preg_replace("/'/","\'",$this->display) ?>', <?= $this->setRuleMatch ?>, <?= $this->setRuleNoMatch ?>, <?= $this->limit ?>);
 // ************** Rule List ***************
 
-function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=null,newHost='', newService=-1, newServiceText = '', newlimit = '0')
+function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-1, actionNOK=-1, hostGroup=null,newHostID=-1, newHost='', newService=-1, newServiceText = '', newlimit = '0')
 {
 	this.isDefault=isDefault;
 	
 	if (hostGroup == null) this.hostGroup = $("#id_host_or_hostgroup").is(":checked"); // on new rule setup set host/hostgroup select as main select
 	
-	this.updateVal = function(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHost, newService,newServiceText, newlimit) {
+	this.updateVal = function(rule, perfdata, display, actionOK, actionNOK, hostGroup, newHostID, newHost, newService,newServiceText, newlimit) {
 		this.rule = rule;
 		this.perfdata = 	perfdata;
 		this.display = 	display;
 		this.actionOK = 	actionOK;
 		this.actionNOK = 	actionNOK;
+		this.newHostID = (newHostID == null ? this.newHostID : newHostID);
 		this.newHost = 	newHost;
 		this.newService = 	newService;
 		this.hostGroup = hostGroup;
@@ -428,7 +429,7 @@ function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-
 		this.limit = newlimit;
 	}
 	
-	this.updateVal(rule, perfdata, display, actionOK, actionNOK, this.hostGroup, newHost, newService, newServiceText, newlimit);	
+	this.updateVal(rule, perfdata, display, actionOK, actionNOK, this.hostGroup, newHostID, newHost, newService, newServiceText, newlimit);	
 	
 	this.render = function(index,current,last=false) {
 		let htm = "<tr ";
@@ -456,7 +457,10 @@ function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-
 			htm += (last == true) ? '-' : '<button type="button" onclick="ruleList.ruleDown(' + index + ')">Down</button>' ;
 			htm += '</td>';
 		}
-		htm += '<td><button type="button" onclick="ruleList.ruleEdit(' + index + ')">Edit</button></td>';
+		htm += '<td>';
+		if (current == true ) htm += 'Editing...';
+		else htm += '<button type="button" onclick="ruleList.ruleEdit(' + index + ')">Edit</button>';
+		htm += '</td>';
 		if ( index == 0) { 
 			htm+='<td>- -</td>'
 		}
@@ -485,14 +489,26 @@ function CRuleElmt(isDefault=false, rule='', perfdata='', display='', actionOK=-
 		if ( noOidRegexp.test(newRule) ) { trapDir.displayWarning("Invalid $N$ in rule"); return false; }
 		if ( noOidRegexp.test(newDisplay) ) { trapDir.displayWarning("Invalid $N$ in display"); return false; }
 		if ( noOidRegexp.test(newPerfdata) ) { trapDir.displayWarning("Invalid $N$ in perfdata"); return false; }
-		if (translate == true) {
-			this.rule = newRule;
-			this.display = newDisplay ;
-			this.perfdata = newPerfdata;			
-		}
+		
 		let limitRegexp = /^[\d]+[hms]?$/;
 		if ( ! limitRegexp.test(this.limit) ) { trapDir.displayWarning("Invalid limit : " + this.limit); return false; }
-		
+
+		if (translate == true) {
+			var objret = {
+			'rule' : newRule,
+			'perfdata' : newPerfdata,
+			'display' : newDisplay,
+			'actionOK': this.actionOK,
+			'actionNOK': this.actionNOK,
+			'hostGroup': (this.hostGroup == true ? 1 : 0),
+			'newhostID' : this.newHostID,
+			'newHost': this.newHost,
+			'newServiceID' : this.newService,
+			'newService': this.newServiceText,
+			'newlimit': this.limit
+			}
+			return objret;
+		}		
 		return true;
 	}
 	
@@ -554,7 +570,7 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 			$("#id_rules").val(),$("#id_perfdata").val(),
 			$("#id_display").val(),$("#id_rule_action_true").val(),
 			$("#id_rule_action_false").val(),$("#id_rule_host_or_hostgroup").is(":checked"),
-			$("#id_host_reassign").val(),
+			null,$("#id_host_reassign").val(),
 			$("#id_service_reassign").val(),$("#id_service_reassign option:selected").text(),
 			$("#id_rule_limit").val()
 		);
@@ -580,18 +596,21 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 		else if (this.curRule == index+1 ) this.curRule--;		
 		this.render();
 	}	
-	this.ruleEdit = function(index) {
-		this.saveCurrentRule();
+	this.ruleEdit = function(index,save = true) {
+		if (save == true) this.saveCurrentRule();
 		this.curRule = index;
 		this.isDefault= (index==0 ? true : false);
 		this.editRulesetup(this.ruleListArray[this.curRule],this.isDefault);
 		this.render();
 	}
 	this.ruleDelete = function(index) {
-		this.ruleListArray.splice(index,1);
+		if (index == 0) return;
+		for ( i=index; i < this.ruleListIndex ; i++)
+			this.ruleListArray[i] = this.ruleListArray[i+1];
+
 		this.ruleListIndex--;
 		if (this.curRule == index) { 
-			this.ruleEdit(0); 
+			this.ruleEdit(0,false); 
 		} else {
 			this.render();
 		}
@@ -612,6 +631,7 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 	}
 	this.ruleServiceGet = function (serviceIdToSet = null) {
 		destination = '#id_service_reassign';
+		$(destination).html('');
 		checkService=true;
 		if (this.ruleListArray[this.curRule].hostGroup == true) 
 		{
@@ -619,12 +639,16 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 			if ($(source).val() == '') {
 				if ($("#id_host_or_hostgroup").is(":checked")) { // If host is empty and main destination host is hostgroup
 					source = '#id_hostgroupfilter';
+					if ($(source).val() == '' ) {
+						$(destination).html('<option value="-1">No host group selected</option>')
+						checkService=false;
+					}
 				} else {
 					$(destination).html('<option value="-1">No host group selected</option>');
 					checkService=false;
 				}
 			}
-			hostGroupServiceGet(serviceIdToSet,source,destination,null,-1,'Unchanged');
+			if (checkService == true) hostGroupServiceGet(serviceIdToSet,source,destination,null,-1,'Unchanged',1);
 		}
 		else
 		{
@@ -632,13 +656,34 @@ function CruleList(rule='', perfdata='', display='', actionOK=-1, actionNOK=-1,l
 			if ($(source).val() == '') {
 				if ( ! $("#id_host_or_hostgroup").is(":checked")) 	{ // If host is empty and main destination host is not host
 					source = '#id_hostfilter';
+					if ($(source).val() == '' ) {
+						$(destination).html('<option value="-1">No host selected</option>')
+						checkService=false;
+					}		
 				} else {
 					$(destination).html('<option value="-1">No host selected</option>')
 					checkService=false;
 				}					
 			}				
-			serviceGet(serviceIdToSet,source,destination,null,-1,'Unchanged');
+			if (checkService == true) serviceGet(serviceIdToSet,source,destination,null,-1,'Unchanged',1);
 		}				
+	}
+	this.setRuleHostID = function (hostID) {
+		if (this.ruleListArray[this.curRule].newHost != '') {// Only set id if host is not default host
+			this.ruleListArray[this.curRule].newHostID = hostID;
+		}
+	}
+	this.checkAndTransform = function() {
+		for (let i=0;i<=this.ruleListIndex;i++)
+		{ // check if all rules are OK
+			if (this.ruleListArray[i].check_rule() == false) return false;
+		} 
+		objectList = new Object();
+		for (let i=0;i<=this.ruleListIndex;i++)
+		{  // change $N$ to _OID()
+			objectList[i]=this.ruleListArray[i].check_rule(true);
+		}
+		return JSON.stringify(objectList);
 	}
 }
 
@@ -739,7 +784,13 @@ function submitMain(clone)
 		newDisplay=newDisplay.replace(objRegexp,'_OID('+ objectsList[i][1] +')');	
 		
 	}
-
+	// save current rule
+	if (ruleList.saveCurrentRule() == false) return;
+	// Translate $N$ in rules, display & perfdata
+	rulesData = ruleList.checkAndTransform();
+	if ( rulesData == false) return;
+	
+	
 	// Get comment and category
 	comment = $("#id_comment").val();
 	category = $("#id_handler_category").val();
@@ -775,6 +826,8 @@ function submitMain(clone)
 				"rule"			:	newRule,
 				"ruleMatch"		:	$("#id_rule_action_true").val(),
 				"ruleNoMatch"	:	$("#id_rule_action_false").val(),
+				'test'			:	3,
+				"rulesData"		:   rulesData,
 				"action_form"	:	actionFormVal
 			},
 	        success: function (data) 
@@ -1054,7 +1107,7 @@ function TrapNameGet(selectMib,selectUpdate)
 
 }
 
-function serviceGet(serviceSet=null,source = null, destination = null, hostidSet = null, addOption = null, addOptionVal = null)
+function serviceGet(serviceSet=null,source = null, destination = null, hostidSet = null, addOption = null, addOptionVal = null, setRuleHostId = null)
 {
 	// Get host services
 	source = $(source);
@@ -1067,6 +1120,7 @@ function serviceGet(serviceSet=null,source = null, destination = null, hostidSet
 			// Set host object id
 			hostid=data.hostid;
 			if (hostidSet != null) { $("#id_Hidden_hostid").val(hostid); }
+			if (setRuleHostId != null) { ruleList.setRuleHostID(hostid);}
 			html='';
 			serviceList.forEach(function (service){
 				html+='<option value="'+service[0]+'">'+service[1]+'</option>';
@@ -1087,7 +1141,7 @@ function serviceGet(serviceSet=null,source = null, destination = null, hostidSet
 	return;	
 }
 
-function hostGroupServiceGet(serviceSet=null,source = null, destination = null, groupIdSet = null, addOption = null, addOptionVal = null)
+function hostGroupServiceGet(serviceSet=null,source = null, destination = null, groupIdSet = null, addOption = null, addOptionVal = null, setRuleHostId = null)
 {
 	source = (source == null ? $("#id_hostgroupfilter") : $(source))
 	destination = (destination == null ? $("#id_service_hostgroup") : $(destination))
@@ -1113,6 +1167,7 @@ function hostGroupServiceGet(serviceSet=null,source = null, destination = null, 
 					// Set host object id
 					hostid=data.hostid;
 					if (groupIdSet != null) { $("#id_Hidden_hostgroup").val(hostid); }
+					if (setRuleHostId != null) { ruleList.setRuleHostID(hostid);}
 					html='';
 					serviceList.forEach(function (service){
 						html+='<option value="'+service[0]+'">'+service[1]+'</option>';
@@ -1346,7 +1401,9 @@ $(function() {
 		if ($curRule->service_id === NULL) $curRule->service_id = -1;
 		echo 'rule = new CRuleElmt(false, '; 
 		echo "'" . $curRule->rule . "', '" . $curRule->perfdata . "', '" . $curRule->display . "', " . $curRule->action_match . ", -1, ";
-		echo "'" . ($curRule->isGroup ? "true" : "false" ) . "','" . $curRule->host_name . "', '" . $curRule->service_id . "', '" . $curRule->service_name . "');\n";
+		echo "'" . ($curRule->isGroup ? "true" : "false" );
+		echo "',-1,'" . $curRule->host_name;  // Host ID ( = -1  : will be set if needed when updating services) and host name.
+		echo "', '" . $curRule->service_id . "', '" . $curRule->service_name . "');\n";
 		echo "ruleList.addRule(rule);\n";
 	}
 ?>	

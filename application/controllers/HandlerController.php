@@ -8,7 +8,7 @@ use Exception;
 
 use Icinga\Module\Trapdirector\TrapsController;
 use Icinga\Module\Trapdirector\Tables\HandlerTable;
-
+use Icinga\Module\Trapdirector\TrapsActions\RuleManagement;
 
 //use Icinga\Web\Form as Form;
 /** Rules management
@@ -16,6 +16,8 @@ use Icinga\Module\Trapdirector\Tables\HandlerTable;
 */
 class HandlerController extends TrapsController
 {
+    use RuleManagement;
+    
     /** @var array $curObjectList OID list in rules/display/perfdata */
     private $curObjectList=array();
     
@@ -91,38 +93,6 @@ class HandlerController extends TrapsController
 	    {
 	        $this->view->rule='';
 	    }
-	}
-	
-	/**
-	 * Setup default veiw values for add action
-	 */
-	private function add_setup_vars()
-	{
-	    // variables to send to view
-	    $this->view->hostlist=array(); // host list to input datalist
-	    $this->view->hostname=''; // Host name in input text
-	    $this->view->serviceGet=false; // Set to true to get list of service if only one host set
-	    $this->view->serviceSet=null; // Select service in services select (must have serviceGet=true).
-	    $this->view->mainoid=''; // Trap OID
-	    $this->view->mib=''; // Trap mib
-	    $this->view->name=''; // Trap name
-	    $this->view->trapListForMIB=array(); // Trap list if mib exists for trap
-	    $this->view->objectList=array(); // objects sent with trap
-	    $this->view->display=''; // Initial display
-	    $this->view->rule=''; // rule display
-	    $this->view->revertOK=''; // revert OK in seconds
-	    $this->view->hostid=-1; // normally set by javascript serviceGet()
-	    $this->view->ruleid=-1; // Rule id in DB for update & delete
-	    $this->view->setToUpdate=false; // set form as update form
-	    $this->view->setRuleMatch=-1; // set action on rule match (default nothing)
-	    $this->view->setRuleNoMatch=-1; // set action on rule no match (default nothing)
-	    
-	    $this->view->selectGroup=false; // Select by group if true
-	    $this->view->hostgroupid=-1; // host group id
-	    $this->view->serviceGroupGet=false; // Get list of service for group (set serviceSet to select one)
-	    
-	    $this->view->modifier=null;
-	    $this->view->modified=null;
 	}
 	
 	/**
@@ -447,7 +417,7 @@ class HandlerController extends TrapsController
 			
 			$this->view->comment = $ruleDetail->comment;
 			$this->view->category = $ruleDetail->category;
-			$this->view->limit = $ruleDetail->limit;
+			$this->view->limit = $ruleDetail->rule_limit;
 			
 			// Warning message if host/service don't exists anymore
 			$this->view->warning_message='';
@@ -524,27 +494,7 @@ class HandlerController extends TrapsController
 		$postData=$this->getRequest()->getPost();
 		//print_r($postData ).'<br>';
 	
-		$params=array(
-			// id (also db) => 	array('post' => post id, 'val' => default val, 'db' => send to table)
-			'hostgroup'		=>	array('post' => 'hostgroup',                    'db'=>false),
-			'db_rule'		=>	array('post' => 'db_rule',                      'db'=>false),
-			'hostid'		=>	array('post' => 'hostid',                       'db'=>false),
-			'host_name'		=>	array('post' => 'hostname',      'val' => null,  'db'=>true),
-			'host_group_name'=>	array('post' => null,            'val' => null,  'db'=>true),
-			'serviceid'		=>	array('post' => 'serviceid',                     'db'=>false),
-			'service_name'	=>	array('post' => 'serviceName',                    'db'=>true),
-		    'comment'       =>  array('post' => 'comment',       'val' => '',    'db'=>true),
-		    'rule_type'     =>  array('post' => 'category',       'val' => 0,    'db'=>true),
-			'trap_oid'		=>	array('post' => 'oid',                            'db'=>true),
-			'revert_ok'		=>	array('post' => 'revertOK',      'val' => 0,      'db'=>true),
-			'display'		=>	array('post' => 'display',        'val' => '',     'db'=>true),
-			'rule'			=>	array('post' => 'rule',          'val' => '',        'db'=>true),			
-			'action_match'	=>	array('post' => 'ruleMatch',       'val' => -1,    'db'=>true),
-			'action_nomatch'=>	array('post' => 'ruleNoMatch',    'val' => -1,    'db'=>true),					
-			'ip4'			=>	array('post' => null,             'val' => null,  'db'=>true),
-			'ip6'			=>	array('post' => null,             'val' => null,  'db'=>true),
-		    'action_form'	=>	array('post' => 'action_form',    'val' => null, 'db'=>false)
-		);
+		$params = $this->postParams;
 		
 		if (isset($postData[$params['action_form']['post']]) 
 			&& $postData[$params['action_form']['post']] == 'delete' )
@@ -582,6 +532,7 @@ class HandlerController extends TrapsController
 				}
 			}
 		}
+		
 		$this->getIdoConn(); //Set apiMode
 		try 
 		{
@@ -647,9 +598,14 @@ class HandlerController extends TrapsController
 				$params['host_group_name']['val'] = $params['host_name']['val'];
 				$params['host_name']['val']=null;
 			}
+			
+			// Get all rules
+			$rulesArray = $this->processRuleListForm($params);
+			
 			$dbparams=array();
 			foreach ($params as $key=>$val)
 			{
+			    if (!isset($val['db'])) throw new Exception('No db in ' . $key . ', val = ' . print_r($val,true));
 				if ($val['db']==true )
 				{
 					$dbparams[$key] = $val['val'];
@@ -657,14 +613,17 @@ class HandlerController extends TrapsController
 			}
 			// echo '<br>';	print_r($dbparams);echo '<br>';
 			
+			
 			if ($params['db_rule']['val'] == -1 || $params['action_form']['val'] == 'clone') 
 			{  // If no rule number or action is clone, add the handler
 			    $ruleID=$this->getUIDatabase()->addHandlerRule($dbparams);
+			    $this->getUIDatabase()->updateRulesList($ruleID, $rulesArray);
 			}
 			else
 			{
 			    $this->getUIDatabase()->updateHandlerRule($dbparams,$params['db_rule']['val']);
 				$ruleID=$params['db_rule']['val'];
+				$this->getUIDatabase()->updateRulesList($ruleID, $rulesArray);
 			}
 		}
 		catch (Exception $e)

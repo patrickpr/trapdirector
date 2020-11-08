@@ -82,7 +82,6 @@ trait TrapDBQuery
      */
     public function updateHandlersOnCategoryDelete($catIndex)
     {
-        // TODO Check for rule consistency
         $dbConn = $this->getDbConn();
         if ($dbConn === null) throw new \ErrorException('uncatched db error');
         
@@ -129,6 +128,12 @@ trait TrapDBQuery
         return $returnRow->lastmodified;
     }
     
+    /**
+     * Get extended rules list
+     * @param int $ruleID Main rule ID
+     * @throws \ErrorException
+     * @return array extended rules array
+     */
     public function getRulesList(int $ruleID)
     {
         $dbConn = $this->getDbConn();
@@ -142,6 +147,39 @@ trait TrapDBQuery
         $returnList=$dbConn->fetchall($query);
         return $returnList;
     }
+
+    /**
+     * update or create extended rules list
+     * @param int $ruleID Main rule ID
+     * @param array $dbElements list of rules
+     * @throws \ErrorException
+     */
+    public function updateRulesList(int $ruleID, array $dbElements)
+    {
+        $dbConn = $this->getDbConn();
+        if ($dbConn === null) throw new \ErrorException('uncatched db error');
+        
+        // Delete old rules if any
+        $query=$dbConn->delete(
+            $this->getTrapCtrl()->getModuleConfig()->getTrapRuleListName(),
+            'handler='.$ruleID
+            );
+              
+        // Create all rules 
+        foreach ($dbElements as $curRule)
+        {
+            $curRule['handler']=$ruleID;
+            $query=$dbConn->insert(
+                $this->getTrapCtrl()->getModuleConfig()->getTrapRuleListName(),
+                $curRule
+                );
+            if($query==false)
+            {
+                throw new Exception('Error inserting rule : ' . print_r($curRule,true));
+            }
+        }
+    }
+    
     
     /** Delete trap by ip & oid
      *	@param $ipAddr string source IP (v4 or v6)
