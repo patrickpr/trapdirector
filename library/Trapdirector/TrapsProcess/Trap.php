@@ -208,13 +208,13 @@ class Trap
      */
     public function read_trap($stream='php://stdin')
     {
-        //Read data from snmptrapd from stdin
+        //Read data from snmptrapd from stram
         $input_stream=fopen($stream, 'r');
         
         if ($input_stream === false)
         {
             $this->writeTrapErrorToDB("Error reading trap (code 1/Stdin)");
-            $this->logging->log("Error reading stdin !",ERROR,'');
+            $this->logging->log("Error reading $stream !",ERROR,'');
             return null; // note : exception thrown by logging
         }
         
@@ -613,10 +613,12 @@ class Trap
      *	@param id int : rule id
      *   @param set int : value to set
      */
-    protected function add_rule_match($id, $set)
+    protected function add_rule_match($id, $set, $mainRule = TRUE)
     {
         $db_conn=$this->trapsDB->db_connect_trap();
-        $sql="UPDATE ".$this->dbPrefix."rules SET num_match = '".$set."' WHERE (id = '".$id."');";
+        
+        $table = ($mainRule === TRUE) ? 'rules' : 'rules_list';
+        $sql="UPDATE ". $this->dbPrefix . $table . " SET num_match = '".$set."' WHERE (id = '".$id."');";
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error in update query : ' . $sql,WARN,'');
         }
@@ -628,9 +630,10 @@ class Trap
      * @param string $service
      * @param integer $state numerical staus
      * @param string $display
+     * @param string $perfdata
      * @returnn bool true is service check was sent without error
      */
-    public function serviceCheckResult($host,$service,$state,$display)
+    public function serviceCheckResult($host,$service,$state,$display,$perfdata = '')
     {
         if ($this->apiUse === false)
         {
@@ -823,7 +826,7 @@ class Trap
         }
         if ($this->trapData['status']=='error')
         {
-            $this->trapToDb=true; // Always put errors in DB for the use can see
+            $this->trapToDb=true; // Always put errors in DB for the user can see it
         }
         else
         {
