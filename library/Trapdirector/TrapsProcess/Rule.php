@@ -230,7 +230,7 @@ class Rule
         }
         $item=0;
         $rule=$this->eval_cleanup($rule);
-        $this->logging->log('Rule after clenup: '.$rule,INFO );
+        $this->logging->log('Rule after cleanup: '.$rule,INFO );
         
         return  $this->evaluation($rule,$item);
     }

@@ -155,45 +155,49 @@ class RuleElmt
             
         $actionString = ($actionString==null)? '' : $actionString . ', ';
 
-        $this->mainRule->logging->log('Rule to eval : '.$this->rule,INFO );
+        $this->mainTrap->logging->log('Rule to eval : '.$this->rule,INFO );
         $evalr=$this->mainTrap->ruleClass->eval_rule($this->rule, $this->mainTrap->trapDataExt) ;
         
         if ($evalr == true)
         {
-            $this->mainRule->logging->log('action OK : '.$this->actionMatch,INFO );
-            $this->mainTrap->add_rule_match($this->id,$this->numMatch+1, FALSE);
+            $this->mainTrap->logging->log('action OK : '.$this->actionMatch,INFO );
+            $this->mainRule->add_rule_match($this->id,$this->numMatch+1, $this->isDefault);
             
             if ($this->actionMatch >= 0)
             {
-                if ($this->mainTrap->serviceCheckResult($this->hostName, $this->serviceName, $this->actionMatch,$this->getDisplay(),$this->getPerfdata()) == false)
+                try 
                 {
-                    $actionString .='Error sending status : check cmd/API';
-                }
-                else
-                {                      
+                    $this->mainTrap->serviceCheckResult($this->hostName, $this->serviceName, $this->actionMatch,$this->getDisplay(),$this->getPerfdata());
                     $actionString .='Status '. $this->actionMatch .' to '. $this->hostName .'/'. $this->serviceName;
+                } 
+                catch (Exception $e) 
+                {
+                    $actionString .='Error sending status : ' . $e->getMessage();
                 }
             }
             $trapToDb= ( $this->actionMatch == -2 ) ? false : true;
+            return TRUE;
             
         }
-        if ($this->isDefault === FALSE) return; // No no match action if not default rule.
+        if ($this->isDefault === FALSE) return FALSE; // No no match action if not default rule.
         
-        $this->logging->log('action NOK : '.$this->actionNoMatch ,INFO );
+        $this->mainTrap->logging->log('action NOK : '.$this->actionNoMatch ,INFO );
                 
         if ($this->actionNoMatch >= 0)
         {
-            if ($this->mainTrap->serviceCheckResult($this->hostName, $this->serviceName, $this->actionNoMatch,$this->getDisplay(),$this->getPerfdata()) == false)
+            try
             {
-                $actionString .='Error sending status : check cmd/API';
-            }
-            else
-            {
+                $this->mainTrap->serviceCheckResult($this->hostName, $this->serviceName, $this->actionNoMatch,$this->getDisplay(),$this->getPerfdata());
                 $actionString .='Status '. $this->actionMatch .' to '. $this->hostName .'/'. $this->serviceName;
+            }
+            catch (Exception $e)
+            {
+                $actionString .='Error sending status : ' . $e->getMessage();
             }
         }
         
         $this->trapToDb=( $this->actionNoMatch == -2 ) ? false : true;
+        return FALSE;
 
     }
 

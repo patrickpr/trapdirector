@@ -13,9 +13,14 @@ include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Mib.php');
 
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/RuleUtils.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Rule.php');
+include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/RuleObject.php');
+include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/RuleElmt.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Plugins.php');
+
 
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/TrapConfig.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/TrapApi.php');
 include (dirname(__DIR__).'/library/Trapdirector/TrapsProcess/Trap.php');
+
+
 

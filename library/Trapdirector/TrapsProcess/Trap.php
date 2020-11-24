@@ -34,7 +34,7 @@ class Trap
     /** @var string $icinga2cmd */
     protected $icinga2cmd='/var/run/icinga2/cmd/icinga2.cmd';
     /** @var string $dbPrefix */
-    protected $dbPrefix='traps_';
+    public $dbPrefix='traps_';
     
     // API
     /** @var boolean $apiUse */
@@ -71,7 +71,7 @@ class Trap
     /** @var string $trapAction trap action for final write*/
     public $trapAction=null;
     /** @var boolean $trapToDb log trap to DB */
-    protected $trapToDb=true;
+    public $trapToDb=true;
     
     /** @var Mib mib class */
     public $mibClass = null;
@@ -246,7 +246,7 @@ class Trap
             $this->trapData['source_port']=$matches[2];
             $this->trapData['destination_port']=$matches[4];
         }
-        
+        $this->logging->log('received : ' . $IP,DEBUG);
         while (($vars=fgets($input_stream)) !==false)
         {
             $vars=chop($vars);
@@ -259,6 +259,7 @@ class Trap
             if (($matches[1]=='.1.3.6.1.6.3.1.1.4.1.0') || ($matches[1]=='.1.3.6.1.6.3.1.1.4.1'))
             {
                 $this->trapData['trap_oid']=$matches[2];
+                $this->logging->log('trap OID : ' . $this->trapData['trap_oid'],DEBUG);
                 continue;
             }
             if ( $this->useSnmpTrapAddess === TRUE &&  preg_match('/'.$this->snmpTrapAddressOID.'/', $matches[1]) == 1)
@@ -276,6 +277,7 @@ class Trap
             $object->oid =$matches[1];
             $object->value = $matches[2];
             array_push($this->trapDataExt,$object);
+            $this->logging->log('trap info : ' . $object->oid . ' : ' . $object->value,DEBUG);
         }
         
         if ($this->trapData['trap_oid']=='unknown')
@@ -631,7 +633,8 @@ class Trap
      * @param integer $state numerical staus
      * @param string $display
      * @param string $perfdata
-     * @returnn bool true is service check was sent without error
+     * @return string Return message or empty
+     * @throws Exception on error.
      */
     public function serviceCheckResult($host,$service,$state,$display,$perfdata = '')
     {
@@ -641,9 +644,9 @@ class Trap
                 $host.';' .$service .';' . $state . ';'.$display;
                 $this->logging->log( $send." : to : " .$this->icinga2cmd,INFO );
                 
-                // TODO : file_put_contents & fopen (,'w' or 'a') does not work. See why. Or not as using API will be by default....
-                exec('echo "'.$send.'" > ' .$this->icinga2cmd);
-                return true;
+                // file_put_contents & fopen (,'w' or 'a') does not work.
+                $retmessage = exec('echo "'.$send.'" > ' .$this->icinga2cmd);
+                return $retmessage;
         }
         else
         {
@@ -665,14 +668,12 @@ class Trap
             if ($retcode == false)
             {
                 $this->logging->log( "Error sending result : " .$retmessage,WARN,'');
-                return false;
+                throw new \Exception($retmessage);
             }
-            else
-            {
-                $this->logging->log( "Sent result : " .$retmessage,INFO );
-                return true;
-            }
+            $this->logging->log( "Sent result : " .$retmessage,INFO );
+            return $retmessage;
         }
+        
     }
     
     public function getHostByIP($ip)
@@ -730,6 +731,10 @@ class Trap
      */
     public function applyRules()
     {
+        $ruleObject = new RuleObject($this, $this->trapData['trap_oid'], $this->trapData['source_ip']);
+        $ruleObject->applyRules();
+        return;
+        
         $rules = $this->getRules($this->trapData['source_ip'],$this->trapData['trap_oid']);
         
         if ($rules===false || count($rules)==0)
@@ -763,14 +768,14 @@ class Trap
                     $this->logging->log('action OK : '.$action,INFO );
                     if ($action >= 0)
                     {
-                        if ($this->serviceCheckResult($host_name,$service_name,$action,$display) == false)
-                        {
-                            $this->trapAction.='Error sending status : check cmd/API';
-                        }
-                        else
-                        {
+                        try {
+                            $this->serviceCheckResult($host_name,$service_name,$action,$display);
                             $this->add_rule_match($rule['id'],$rule['num_match']+1);
                             $this->trapAction.='Status '.$action.' to '.$host_name.'/'.$service_name;
+                        } 
+                        catch (Exception $e) 
+                        {
+                            $this->trapAction.='Error sending status : '.$e->getMessage();
                         }
                     }
                     else
@@ -787,14 +792,14 @@ class Trap
                     $this->logging->log('action NOK : '.$action,INFO );
                     if ($action >= 0)
                     {
-                        if ($this->serviceCheckResult($host_name,$service_name,$action,$display)==false)
-                        {
-                            $this->trapAction.='Error sending status : check cmd/API';
-                        }
-                        else
-                        {
+                        try {
+                            $this->serviceCheckResult($host_name,$service_name,$action,$display);
                             $this->add_rule_match($rule['id'],$rule['num_match']+1);
                             $this->trapAction.='Status '.$action.' to '.$host_name.'/'.$service_name;
+                        }
+                        catch (Exception $e)
+                        {
+                            $this->trapAction.='Error sending status : '.$e->getMessage();
                         }
                     }
                     else
@@ -845,6 +850,7 @@ class Trap
             $this->trapAction='No action';
         }
         $sql="UPDATE ".$this->dbPrefix."received SET process_time = '".$time."' , status_detail='".$this->trapAction."'  WHERE (id = '".$this->trapId."');";
+        $this->logging->log('final action : ' . $sql, DEBUG);
         if ($db_conn->query($sql) === false) {
             $this->logging->log('Error in update query : ' . $sql,WARN,'');
         }

@@ -100,6 +100,7 @@ class RuleObject
             }
         }
         //echo "rule rest :\n";print_r($rules_ret);echo "\n";exit(0);
+        $this->mainTrap->logging->log('Found ' . count($rules_ret) . ' rules',DEBUG);
         return $rules_ret;
     }
     
@@ -108,41 +109,55 @@ class RuleObject
         $db_conn=$this->mainTrap->trapsDB->db_connect_trap();
         
         // fetch rules based on IP in rule and OID
-        $sql='SELECT * from '. $this->mainTrap->dbPrefix. 'rules_list WHERE hanler=\''. $ruleID .'\' ';
+        $sql='SELECT * from '. $this->mainTrap->dbPrefix. 'rules_list WHERE handler=\''. $ruleID .'\' ';
         $this->mainTrap->logging->log('SQL query : '.$sql,DEBUG );
         
         if (($ret_code=$db_conn->query($sql)) === false) {
-            $this->mainTrap->logging->log('No result in query : ' . $sql,WARN,'');
-            return false;
+            $this->mainTrap->logging->log('No extended rules found : ' . $sql,INFO,'');
+            return array();
         }
         $rules_all=$ret_code->fetchAll();
        
-        //echo "rule all :\n";print_r($rules_all);echo "\n";
         
+        $this->mainTrap->logging->log('Found ' . count($rules_all) . ' extended rules',DEBUG);
         return $rules_all;
+    }
+
+    /** Add rule match to rule
+     *	@param id int : rule id
+     *   @param set int : value to set
+     */
+    public function add_rule_match($id, $set, $mainRule = TRUE)
+    {
+        $db_conn=$this->mainTrap->trapsDB->db_connect_trap();
+        
+        $table = ($mainRule === TRUE) ? 'rules' : 'rules_list';
+        $sql="UPDATE ". $this->mainTrap->dbPrefix . $table . " SET num_match = '".$set."' WHERE (id = '".$id."');";
+        if ($db_conn->query($sql) === false) {
+            $this->mainTrap->logging->log('Error in update query : ' . $sql,WARN,'');
+        }
     }
     
     /** Match rules for current trap and do action
      */
     public function applyRules()
     {
-        $rules = $this->getRules();
+        $rules = $this->getMainRules();
         
         if ($rules===false || count($rules)==0)
         {
-            $this->logging->log('No rules found for this trap',INFO );
-            $this->trapData['status']='unknown';
-            $this->trapToDb=true;
+            $this->mainTrap->logging->log('No rules found for this trap',INFO );
+            $this->mainTrap->trapData['status']='unknown';
+            $this->mainTrap->trapToDb=true;
             return;
         }
         //print_r($rules);
         // Evaluate all rules in sequence
-        $this->trapAction=null;
-        $this->actionString = '';
+        $this->trapAction='';
         $this->trapToDb = TRUE;
-        foreach ($rules as $rule)
+        try
         {
-            try 
+            foreach ($rules as $rule)
             {
                 $mainRule = new RuleElmt($this, $this->mainTrap);
                 $mainRule->setupRule(true, $rule);
@@ -159,20 +174,20 @@ class RuleObject
                 }
                 
                 $retCode = FALSE;
-                for ( $index=1 ; $index < count($extRuleArray) ; $index++ )
+                for ( $index=1 ; $index <= count($extRuleArray) ; $index++ )
                 {
-                    $retCode = $extRuleArray[$index]->applyRule($this->actionString, $this->trapToDb);
+                    if (! isset($extRuleArray[$index]) ) throw new \Exception('Index error in extended rules at rule : ' . $index);
+                    $retCode = $extRuleArray[$index]->applyRule($this->trapAction, $this->trapToDb);
                     if ($retCode == TRUE) break;
                 }
                 
                 if ($retCode == FALSE)
                 { // no extended rules matched, eval default rule
-                    $retCode = $mainRule->applyRule($this->actionString, $this->trapToDb);
+                    $retCode = $mainRule->applyRule($this->trapAction, $this->trapToDb);
                 }
     
                 if ($retCode == TRUE)
                 {
-                    $this->mainTrap->add_rule_match($mainRule->id, $mainRule->numMatch);
                     // Put name in source_name
                     if (!isset($this->trapData['source_name']))
                     {
@@ -188,15 +203,15 @@ class RuleObject
                     
                 }
             }
-            catch (Exception $e)
-            {
-                $this->mainTrap->logging->log('Error in rule eval : '.$e->getMessage(),WARN,'');
-                $this->trapAction.=' ERR : '.$e->getMessage();
-                $this->mainTrap->trapData['status']='error';
-            }
+        }
+        catch (Exception $e)
+        {
+            $this->mainTrap->logging->log('Error in rule eval : '.$e->getMessage(),WARN,'');
+            $this->trapAction.=' ERR : '.$e->getMessage();
+            $this->mainTrap->trapData['status']='error';
         }
         
-        $this->mainTrap->trapAction = $this->trapAction;
+        $this->mainTrap->trapAction = ($this->trapAction == '' )? NULL : $this->trapAction;
         
         if ($this->mainTrap->trapData['status']=='error')
         {
