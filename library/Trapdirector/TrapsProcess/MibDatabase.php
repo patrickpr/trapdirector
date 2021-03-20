@@ -80,7 +80,7 @@ trait MibDatabase
                 ':syntax' => $this->oidDesc['syntax']==null??'null',
                 ':type_enum' => $this->oidDesc['type_enum']??'null',
                 ':description' => $this->oidDesc['description']??'null',
-                ':id' => $this->dbOidAll[$this->dbOidIndex[$this->oidDesc['oid']]['id']]
+                ':id' => $this->dbOidIndex[$this->oidDesc['oid']]['id']
             );
             
             if ($sqlQuery->execute($sqlParam) === false) {
