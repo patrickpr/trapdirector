@@ -217,7 +217,7 @@ systemctl disable snmptrapd
 
 3. Edit `/etc/systemd/system/snmptrapd.service` to contain:
 ```
-ExecStart=/usr/sbin/snmptrapd -Lsd -n -t -Oed -f
+ExecStart=/usr/sbin/snmptrapd -Lsd -n -t -Oen -f
 ```
 
 On Debian based distros with System V-style init, `/etc/default/snmptrapd` should contain:
