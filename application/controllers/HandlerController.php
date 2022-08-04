@@ -32,7 +32,7 @@ class HandlerController extends TrapsController
 		      $this->moduleConfig->getHandlerListTitles(),
 		      $this->moduleConfig->getHandlerListDisplayColumns(),
 		      $this->moduleConfig->getHandlerColumns(),
-		      $dbConn->getConnection(),
+		      $dbConn->getDbAdapter(),
 		      $this->view,
 		      $this->moduleConfig->urlPath());
 		
